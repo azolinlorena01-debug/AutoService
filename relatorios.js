@@ -1,60 +1,124 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const STORAGE_KEY = 'agendamentos_toyota_v1';
+document.addEventListener('DOMContentLoaded', async function() {
+    // 1. Configuração do Supabase
+    const SUPABASE_URL = 'https://potvtrepcoswvzmkewic.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    function carregarAgendamentos() {
-        const dados = localStorage.getItem(STORAGE_KEY);
-        return dados ? JSON.parse(dados) : [];
+    // 2. Validação da Sessão
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session || !session.user) {
+        window.location.href = 'login.html';
+        return;
     }
 
-    const agendamentos = carregarAgendamentos();
+    const usuarioAtual = session.user;
 
-    // 1. Agrupar dados por mês de execução (dataRevisao)
-    const consolidadoPorMes = {};
+    const areaAuth = document.getElementById('area-autenticacao');
+    if (areaAuth && usuarioAtual) {
+        let nomeExibicao = 'Usuário';
 
-    agendamentos.forEach(item => {
-        if (!item.dataRevisao) return;
-        const chaveMes = item.dataRevisao.substring(0, 7); // "YYYY-MM"
+        // 1. Tenta obter o nome guardado convertendo com segurança para texto
+        const metaNome = usuarioAtual.user_metadata?.nome_completo;
+        if (typeof metaNome === 'string' && metaNome.trim().length > 0) {
+            nomeExibicao = metaNome.trim().split(' ')[0];
+        } 
+        // 2. Caso contrário, trata o prefixo do e-mail
+        else if (usuarioAtual.email) {
+            const prefixoEmail = usuarioAtual.email.split('@')[0];
+            const apenasLetras = prefixoEmail.replace(/[0-9]/g, '');
+            if (apenasLetras.length > 0) {
+                nomeExibicao = apenasLetras.charAt(0).toUpperCase() + apenasLetras.slice(1);
+            } else {
+                nomeExibicao = prefixoEmail;
+            }
+        }
 
-        if (!consolidadoPorMes[chaveMes]) {
-            consolidadoPorMes[chaveMes] = {
+        areaAuth.innerHTML = `
+            <span class="usuario-logado-tag">Olá, <strong>${nomeExibicao}</strong> 👋</span>
+            <button id="btn-sair-header" class="botao-sair-header">Sair</button>
+        `;
+
+        const btnSair = document.getElementById('btn-sair-header');
+        if (btnSair) {
+            btnSair.addEventListener('click', async () => {
+                await supabaseClient.auth.signOut();
+                window.location.href = 'login.html';
+            });
+        }
+    }
+
+    // 4. Procurar agendamentos do utilizador autenticado
+    const { data: agendamentos, error } = await supabaseClient
+        .from('agendamentos')
+        .select('*')
+        .order('data_revisao', { ascending: true });
+
+    if (error) {
+        console.error('Erro ao procurar dados para o relatório:', error);
+        return;
+    }
+
+    const lista = agendamentos || [];
+
+    // 5. Agrupar dados cronologicamente por mês (AAAA-MM)
+    const dadosPorMes = {};
+
+    lista.forEach(item => {
+        if (!item.data_revisao) return;
+        const mesChave = item.data_revisao.substring(0, 7); // Ex: "2026-10"
+
+        if (!dadosPorMes[mesChave]) {
+            dadosPorMes[mesChave] = {
                 totalAgendados: 0,
-                totalComparecidos: 0,
-                bonusRealizado: 0
+                compareceram: 0,
+                bonusConfirmado: 0
             };
         }
 
-        consolidadoPorMes[chaveMes].totalAgendados++;
+        dadosPorMes[mesChave].totalAgendados++;
 
         if (item.status === 'compareceu') {
-            consolidadoPorMes[chaveMes].totalComparecidos++;
-            consolidadoPorMes[chaveMes].bonusRealizado += (item.valorUnitario || 0);
+            dadosPorMes[mesChave].compareceram++;
+            dadosPorMes[mesChave].bonusConfirmado += parseFloat(item.valor_unitario) || 0;
         }
     });
 
-    // 2. Ordenar os meses cronologicamente
-    const mesesOrdenados = Object.keys(consolidadoPorMes).sort();
+    // Se ainda não existirem registos, define o mês corrente como referência visual
+    const chavesMeses = Object.keys(dadosPorMes).sort();
+    if (chavesMeses.length === 0) {
+        const hoje = new Date();
+        const mesAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+        chavesMeses.push(mesAtual);
+        dadosPorMes[mesAtual] = { totalAgendados: 0, compareceram: 0, bonusConfirmado: 0 };
+    }
 
-    const rotulos = mesesOrdenados.map(mes => {
-        const [ano, m] = mes.split('-');
-        return `${m}/${ano}`;
+    // Formatar etiquetas do eixo X (ex: "10/2026")
+    const rotulos = chavesMeses.map(chave => {
+        const [ano, mes] = chave.split('-');
+        return `${mes}/${ano}`;
     });
 
-    const dadosBonusReal = mesesOrdenados.map(mes => consolidadoPorMes[mes].bonusRealizado);
-    const dadosAgendados = mesesOrdenados.map(mes => consolidadoPorMes[mes].totalAgendados);
-    const dadosComparecidos = mesesOrdenados.map(mes => consolidadoPorMes[mes].totalComparecidos);
+    const valoresBonus = chavesMeses.map(m => dadosPorMes[m].bonusConfirmado);
+    const valoresTotal = chavesMeses.map(m => dadosPorMes[m].totalAgendados);
+    const valoresPresenca = chavesMeses.map(m => dadosPorMes[m].compareceram);
 
-    // 3. Gráfico 1: Bônus Realizado
+    // 6. Renderizar Gráfico 1: Evolução do Bónus Realizado
     const canvasBonus = document.getElementById('graficoBonus');
     if (canvasBonus) {
-        new Chart(canvasBonus.getContext('2d'), {
-            type: 'bar',
+        new Chart(canvasBonus, {
+            type: 'line',
             data: {
-                labels: rotulos.length ? rotulos : ['Sem dados'],
+                labels: rotulos,
                 datasets: [{
-                    label: 'Bônus Realizado (R$)',
-                    data: dadosBonusReal.length ? dadosBonusReal : [0],
-                    backgroundColor: '#15803d',
-                    borderRadius: 6
+                    label: 'Bónus Realizado (R$)',
+                    data: valoresBonus,
+                    borderColor: '#16a34a',
+                    backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#16a34a'
                 }]
             },
             options: {
@@ -64,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            callback: valor => `R$ ${valor}`
+                            callback: valor => `R$ ${valor.toFixed(2).replace('.', ',')}`
                         }
                     }
                 }
@@ -72,25 +136,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 4. Gráfico 2: Agendados vs Comparecidos
+    // 7. Renderizar Gráfico 2: Volume de Agendamentos & Presença
     const canvasVolume = document.getElementById('graficoVolume');
     if (canvasVolume) {
-        new Chart(canvasVolume.getContext('2d'), {
+        new Chart(canvasVolume, {
             type: 'bar',
             data: {
-                labels: rotulos.length ? rotulos : ['Sem dados'],
+                labels: rotulos,
                 datasets: [
                     {
-                        label: 'Total Agendados',
-                        data: dadosAgendados.length ? dadosAgendados : [0],
-                        backgroundColor: '#94a3b8',
-                        borderRadius: 6
+                        label: 'Total Agendado',
+                        data: valoresTotal,
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 4
                     },
                     {
                         label: 'Compareceram',
-                        data: dadosComparecidos.length ? dadosComparecidos : [0],
-                        backgroundColor: '#2563eb',
-                        borderRadius: 6
+                        data: valoresPresenca,
+                        backgroundColor: '#10b981',
+                        borderRadius: 4
                     }
                 ]
             },
@@ -100,9 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
-                        }
+                        ticks: { precision: 0 }
                     }
                 }
             }

@@ -1,5 +1,5 @@
 const SUPABASE_URL = 'https://potvtrepcoswvzmkewic.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY'; 
+const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -56,9 +56,14 @@ btnCadastrar.addEventListener('click', async function() {
 
     exibirMensagem('A registar conta e a enviar e-mail de confirmação...');
 
-    const { data, error } = await supabaseClient.auth.signUp({
+const { data, error } = await supabaseClient.auth.signUp({
         email: email,
-        password: password
+        password: password,
+        options: {
+            data: {
+                nome_completo: nome || email.split('@')[0]
+            }
+        }
     });
 
     if (error) {

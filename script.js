@@ -1,4 +1,11 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // 1. Conexão ao Supabase
+    const SUPABASE_URL = 'https://potvtrepcoswvzmkewic.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // 2. Elementos do Ecrã
     const formulario = document.querySelector('.formulario-agendamento');
     const corpoTabela = document.querySelector('tbody');
     const contadorRegistros = document.querySelector('.contador-registros');
@@ -8,19 +15,53 @@ document.addEventListener('DOMContentLoaded', function() {
     const filtroMes = document.getElementById('filtro-mes');
     const inputDataContato = document.getElementById('data-contato');
 
-    const STORAGE_KEY = 'agendamentos_toyota_v1';
+    // 3. Verificar se o utilizador tem sessão iniciada
+    const { data: { session } } = await supabaseClient.auth.getSession();
 
-    // 1. Funções de persistência no localStorage
-    function carregarAgendamentos() {
-        const dados = localStorage.getItem(STORAGE_KEY);
-        return dados ? JSON.parse(dados) : [];
+    if (!session || !session.user) {
+        // Se não tiver sessão iniciada, redireciona para a página de login
+        window.location.href = 'login.html';
+        return;
     }
 
-    function salvarAgendamentos(lista) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+    const usuarioAtual = session.user;
+
+    // Configurar Menu Superior (E-mail e Botão Sair)
+    const areaAuth = document.getElementById('area-autenticacao');
+    if (areaAuth && usuarioAtual) {
+        let nomeExibicao = 'Usuário';
+
+        // 1. Tenta obter o nome guardado convertendo com segurança para texto
+        const metaNome = usuarioAtual.user_metadata?.nome_completo;
+        if (typeof metaNome === 'string' && metaNome.trim().length > 0) {
+            nomeExibicao = metaNome.trim().split(' ')[0];
+        } 
+        // 2. Caso contrário, trata o prefixo do e-mail
+        else if (usuarioAtual.email) {
+            const prefixoEmail = usuarioAtual.email.split('@')[0];
+            const apenasLetras = prefixoEmail.replace(/[0-9]/g, '');
+            if (apenasLetras.length > 0) {
+                nomeExibicao = apenasLetras.charAt(0).toUpperCase() + apenasLetras.slice(1);
+            } else {
+                nomeExibicao = prefixoEmail;
+            }
+        }
+
+        areaAuth.innerHTML = `
+            <span class="usuario-logado-tag">Olá, <strong>${nomeExibicao}</strong> 👋</span>
+            <button id="btn-sair-header" class="botao-sair-header">Sair</button>
+        `;
+
+        const btnSair = document.getElementById('btn-sair-header');
+        if (btnSair) {
+            btnSair.addEventListener('click', async () => {
+                await supabaseClient.auth.signOut();
+                window.location.href = 'login.html';
+            });
+        }
     }
 
-    // 2. Data padrão de hoje (DD/MM/AAAA e YYYY-MM)
+    // 4. Configurar datas padrão
     const hoje = new Date();
     const anoAtual = hoje.getFullYear();
     const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
@@ -34,8 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
         filtroMes.value = `${anoAtual}-${mesAtual}`;
     }
 
-    // 3. Regra de negócio: Faixas de bonificação
-    // 1ª a 4ª = R$ 2,00 | 5ª a 7ª = R$ 6,00 | 8ª em diante = R$ 10,00
+    // 5. Regras de bonificação da Toyota
     function obterValorPorRevisao(numRevisao) {
         const num = parseInt(numRevisao, 10);
         if (num >= 1 && num <= 4) return 2;
@@ -49,17 +89,28 @@ document.addEventListener('DOMContentLoaded', function() {
         return partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : dataISO;
     }
 
-    // 4. Renderização da tabela e dos cards filtrando pelo MÊS DA REVISÃO
-    function renderizarTabela() {
-        const agendamentos = carregarAgendamentos();
+    // 6. Consultar dados do Supabase
+    async function renderizarTabela() {
         const mesSelecionado = filtroMes.value; // Ex: "2026-10"
+        corpoTabela.innerHTML = '<tr><td colspan="8" style="text-align:center;">A carregar dados...</td></tr>';
+
+        // O RLS do Supabase garante que apenas os agendamentos deste utilizador chegam aqui
+        const { data: agendamentos, error } = await supabaseClient
+            .from('agendamentos')
+            .select('*')
+            .order('data_revisao', { ascending: true });
+
+        if (error) {
+            console.error('Erro ao procurar agendamentos:', error);
+            corpoTabela.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Erro ao carregar dados.</td></tr>';
+            return;
+        }
 
         corpoTabela.innerHTML = '';
 
-        // Filtra pelo mês em que o serviço ocorrerá
-        const agendamentosDoMes = agendamentos.filter(item => {
-            if (!item.dataRevisao) return false;
-            return item.dataRevisao.startsWith(mesSelecionado);
+        // Filtra pelo mês selecionado
+        const agendamentosDoMes = (agendamentos || []).filter(item => {
+            return item.data_revisao && item.data_revisao.startsWith(mesSelecionado);
         });
 
         let totalComparecidas = 0;
@@ -67,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let somaBonusPrevisto = 0;
 
         agendamentosDoMes.forEach(item => {
-            const valorUnitario = item.valorUnitario;
+            const valorUnitario = parseFloat(item.valor_unitario) || 0;
 
             if (item.status === 'compareceu') {
                 totalComparecidas++;
@@ -93,8 +144,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const tr = document.createElement('tr');
             tr.dataset.id = item.id;
             tr.innerHTML = `
-                <td>${formatarDataBR(item.dataContato)}</td>
-                <td><input type="date" class="input-data-tabela" value="${item.dataRevisao}"></td>
+                <td>${formatarDataBR(item.data_contato)}</td>
+                <td><input type="date" class="input-data-tabela" value="${item.data_revisao}"></td>
                 <td><span class="chip-placa">${item.placa}</span></td>
                 <td>${item.evento}</td>
                 <td>${item.os}</td>
@@ -112,15 +163,15 @@ document.addEventListener('DOMContentLoaded', function() {
             corpoTabela.appendChild(tr);
         });
 
-        // Atualiza os cards superiores
+        // Atualização dos cartões superiores
         if (valorConfirmadoEl) valorConfirmadoEl.textContent = `R$ ${somaBonusRealizado.toFixed(2).replace('.', ',')}`;
         if (valorPrevistoEl) valorPrevistoEl.textContent = `R$ ${somaBonusPrevisto.toFixed(2).replace('.', ',')}`;
         if (detalheConfirmadoEl) detalheConfirmadoEl.textContent = `${totalComparecidas} revisões comparecidas`;
-        if (contadorRegistros) contadorRegistros.textContent = `${agendamentosDoMes.length} registros neste mês`;
+        if (contadorRegistros) contadorRegistros.textContent = `${agendamentosDoMes.length} registos neste mês`;
     }
 
-    // 5. Cadastrar novo agendamento
-    formulario.addEventListener('submit', function(evento) {
+    // 7. Gravar novo agendamento no Supabase
+    formulario.addEventListener('submit', async function(evento) {
         evento.preventDefault();
 
         const dataContato = document.getElementById('data-contato').value;
@@ -131,23 +182,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const revisaoNum = document.getElementById('revisao').value;
         const statusInicial = document.getElementById('status').value;
 
-        const novoAgendamento = {
-            id: Date.now().toString(),
-            dataContato: dataContato,
-            dataRevisao: dataRevisao,
-            placa: placa,
-            evento: eventoNum,
-            os: osNum,
-            revisao: revisaoNum,
-            status: statusInicial,
-            valorUnitario: obterValorPorRevisao(revisaoNum)
-        };
+        const { error } = await supabaseClient
+            .from('agendamentos')
+            .insert([{
+                user_id: usuarioAtual.id,
+                data_contato: dataContato,
+                data_revisao: dataRevisao,
+                placa: placa,
+                evento: eventoNum,
+                os: osNum,
+                revisao: revisaoNum,
+                status: statusInicial,
+                valor_unitario: obterValorPorRevisao(revisaoNum)
+            }]);
 
-        const lista = carregarAgendamentos();
-        lista.push(novoAgendamento);
-        salvarAgendamentos(lista);
+        if (error) {
+            alert('Erro ao gravar no Supabase: ' + error.message);
+            return;
+        }
 
-        // Se o agendamento foi marcado para outro mês, muda o seletor para você já ver o registro
         const mesRevisao = dataRevisao.substring(0, 7);
         if (filtroMes && filtroMes.value !== mesRevisao) {
             filtroMes.value = mesRevisao;
@@ -158,37 +211,39 @@ document.addEventListener('DOMContentLoaded', function() {
             inputDataContato.value = `${anoAtual}-${mesAtual}-${diaAtual}`;
         }
 
-        renderizarTabela();
+        await renderizarTabela();
     });
 
-    // 6. Atualização em tempo real caso mude Status ou Data na tabela
-    corpoTabela.addEventListener('change', function(evento) {
+    // 8. Alterar dados em tempo real (Status ou Data)
+    corpoTabela.addEventListener('change', async function(evento) {
         const linha = evento.target.closest('tr');
         if (!linha) return;
         const id = linha.dataset.id;
 
-        const lista = carregarAgendamentos();
-        const item = lista.find(ag => ag.id === id);
-        if (!item) return;
-
         if (evento.target.classList.contains('select-status-tabela')) {
-            item.status = evento.target.value;
-            salvarAgendamentos(lista);
-            renderizarTabela();
+            const novoStatus = evento.target.value;
+            await supabaseClient
+                .from('agendamentos')
+                .update({ status: novoStatus })
+                .eq('id', id);
+            await renderizarTabela();
         }
 
         if (evento.target.classList.contains('input-data-tabela')) {
-            item.dataRevisao = evento.target.value;
-            salvarAgendamentos(lista);
-            renderizarTabela();
+            const novaData = evento.target.value;
+            await supabaseClient
+                .from('agendamentos')
+                .update({ data_revisao: novaData })
+                .eq('id', id);
+            await renderizarTabela();
         }
     });
 
-    // 7. Troca de mês no seletor
+    // 9. Seletor de mês
     if (filtroMes) {
         filtroMes.addEventListener('change', renderizarTabela);
     }
 
-    // Inicialização
-    renderizarTabela();
+    // Inicialização da tabela
+    await renderizarTabela();
 });
