@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Bônus - Agendamentos</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="cabecalho-principal">
+            <div class="logo-area">
+                <h1>Painel de Bônus</h1>
+                <span class="subtitulo-toyota">Toyota Service</span>
+            </div>
+            <nav class="navegacao-menu">
+                <a href="index.html" class="link-nav ativo">Agendamentos</a>
+                <a href="relatorios.html" class="link-nav">Relatórios & Gráficos</a>
+            </nav>
+        </header>
+
+    <main>
+
+        <section class="cards-indicadores">
+            <div class="card">
+                <span class="card-titulo">Bônus Realizado</span>
+                <p class="card-valor bonus-confirmado">R$380,00</p>
+                <span class="card-detalhe">38 revisões comparecidas</span>
+            </div>
+            <div class="card">
+                <span class="card-titulo">Previsão Máxima</span>
+                <p class="card-valor bonus-previsto">R$ 520,00</p>
+                <span class="card-detalhe">Se todos os agendados comparecerem</span>
+            </div>
+        </section>
+
+            <section class="secao-formulario">
+                <h2>+ Novo Agendamento</h2>
+                <form class="formulario-agendamento">
+                    <div class="campo">
+                        <label for="data-contato">Data do Contato</label>
+                        <input type="date" id="data-contato" required>
+                    </div>
+
+                    <div class="campo">
+                        <label for="data-revisao">Data da Revisão</label>
+                        <input type="date" id="data-revisao" required>
+                    </div>
+
+                    <div class="campo">
+                        <label for="placa">Placa do Veículo</label>
+                        <input type="text" id="placa" placeholder="Ex: 104589" required>
+                    </div>
+
+                    <div class="campo">
+                        <label for="evento">Nº do Evento</label>
+                        <input type="text" id="evento" placeholder="Ex: 123456" required>
+                    </div>
+
+                    <div class="campo">
+                        <label for="os">Ordem de Serviço</label>
+                        <input type="text" id="os" placeholder="Ex: 123456" required>
+                    </div>
+
+                    <div class="campo">
+                        <label for="revisao">Revisão</label>
+                        <select id="revisao">
+                            <option value="1">1ª Revisão</option>
+                            <option value="2">2ª Revisão</option>
+                            <option value="3">3ª Revisão</option>
+                            <option value="4">4ª Revisão</option>
+                            <option value="5">5ª Revisão</option>
+                            <option value="6">6ª Revisão</option>
+                            <option value="7">7ª Revisão</option>
+                            <option value="8">8ª Revisão ou mais</option>
+                        </select>
+                    </div>
+
+                    <div class="campo">
+                        <label for="status">Estado do Agendamento</label>
+                        <select id="status">
+                            <option value="pendente">Pendente</option>
+                            <option value="compareceu">Compareceu</option>
+                            <option value="faltou">Não Compareceu</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="botao-adicionar">Adicionar</button>
+                </form>
+            </section>
+
+            <section class="secao-tabela">
+                <div class="tabela-topo">
+                <h2>Agendamentos Registrados</h2>
+
+                <div class="filtro-mes-container">
+                    <label for="filtro-mes">Mês de Referência:</label>
+                    <input type="month" id="filtro-mes" class="input-mes-filtro">
+                </div>
+
+                <span class="contador-registros">0 registros neste mês</span>
+                </div>
+
+                <div class="tabela-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data Contato</th>
+                                <th>Data Revisão</th>
+                                <th>Placa</th>
+                                <th>Evento</th>
+                                <th>O.S</th>
+                                <th>Revisão</th>
+                                <th>Status</th>
+                                <th>Previsão Bônus</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+    </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

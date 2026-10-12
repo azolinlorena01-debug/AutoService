@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Painel de Bônus Toyota</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="corpo-login">
+    <div class="cartao-login">
+        <div class="login-topo">
+            <h1>Painel de Bônus</h1>
+            <span class="subtitulo-toyota">Toyota Service</span>
+            <p>Entre com seu e-mail para acessar seus agendamentos</p>
+        </div>
+
+        <form id="form-login">
+            <div class="campo-login">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" placeholder="seu.email@exemplo.com" required>
+            </div>
+
+            <div class="campo-login">
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" placeholder="Mínimo 6 caracteres" minlength="6" required>
+            </div>
+
+            <div class="login-acoes">
+                <button type="submit" id="btn-entrar" class="botao-adicionar">Entrar</button>
+                <button type="button" id="btn-cadastrar" class="botao-secundario">Criar Conta</button>
+            </div>
+
+            <p id="mensagem-status" class="mensagem-status"></p>
+        </form>
+    </div>
+
+    <script src="login.js"></script>
+</body>
+</html>

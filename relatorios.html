@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Bônus - Relatórios</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="cabecalho-principal">
+            <div class="logo-area">
+                <h1>Painel de Bônus</h1>
+                <span class="subtitulo-toyota">Toyota Service</span>
+            </div>
+            <nav class="navegacao-menu">
+                <a href="index.html" class="link-nav">Agendamentos</a>
+                <a href="relatorios.html" class="link-nav ativo">Relatórios & Gráficos</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="grade-graficos">
+                <div class="card-grafico">
+                    <h3>Evolução do Bônus Realizado</h3>
+                    <p>Comparativo mensal dos valores confirmados.</p>
+                    <div class="grafico-container">
+                        <canvas id="graficoBonus"></canvas>
+                    </div>
+                </div>
+
+                <div class="card-grafico">
+                    <h3>Volume de Agendamentos & Presença</h3>
+                    <p>Total de agendamentos previstos vs. quantos compareceram no mês.</p>
+                    <div class="grafico-container">
+                        <canvas id="graficoVolume"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="relatorios.js"></script>
+</body>
+</html>
