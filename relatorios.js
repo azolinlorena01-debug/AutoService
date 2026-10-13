@@ -13,28 +13,44 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     const usuarioAtual = session.user;
 
+    // 3. Consulta se o utilizador autenticado é Admin
+    let isAdmin = false;
+    try {
+        const { data: perfil } = await supabaseClient
+            .from('perfis')
+            .select('role')
+            .eq('id', usuarioAtual.id)
+            .maybeSingle();
+
+        if (perfil && perfil.role === 'admin') {
+            isAdmin = true;
+        }
+    } catch (e) {
+        console.warn('Não foi possível verificar perfil admin:', e);
+    }
+
+    // 4. Montar Cabeçalho (Área de Autenticação)
     const areaAuth = document.getElementById('area-autenticacao');
     if (areaAuth && usuarioAtual) {
         let nomeExibicao = 'Usuário';
 
-        // 1. Tenta obter o nome guardado convertendo com segurança para texto
         const metaNome = usuarioAtual.user_metadata?.nome_completo;
         if (typeof metaNome === 'string' && metaNome.trim().length > 0) {
             nomeExibicao = metaNome.trim().split(' ')[0];
-        } 
-        // 2. Caso contrário, trata o prefixo do e-mail
-        else if (usuarioAtual.email) {
+        } else if (usuarioAtual.email) {
             const prefixoEmail = usuarioAtual.email.split('@')[0];
             const apenasLetras = prefixoEmail.replace(/[0-9]/g, '');
-            if (apenasLetras.length > 0) {
-                nomeExibicao = apenasLetras.charAt(0).toUpperCase() + apenasLetras.slice(1);
-            } else {
-                nomeExibicao = prefixoEmail;
-            }
+            nomeExibicao = apenasLetras.length > 0 
+                ? apenasLetras.charAt(0).toUpperCase() + apenasLetras.slice(1) 
+                : prefixoEmail;
         }
 
+        const tagAdmin = isAdmin 
+            ? ' <span style="background-color: #dbeafe; color: #1d4ed8; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 9999px; margin-left: 4px;">Admin</span>' 
+            : '';
+
         areaAuth.innerHTML = `
-            <span class="usuario-logado-tag">Olá, <strong>${nomeExibicao}</strong> 👋</span>
+            <span class="usuario-logado-tag">Olá, <strong>${nomeExibicao}</strong>${tagAdmin} 👋</span>
             <button id="btn-sair-header" class="botao-sair-header">Sair</button>
         `;
 
@@ -47,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    // 4. Procurar agendamentos do utilizador autenticado
+    // 5. Procurar agendamentos (RLS entrega todos se for Admin, ou apenas os próprios)
     const { data: agendamentos, error } = await supabaseClient
         .from('agendamentos')
         .select('*')
@@ -60,12 +76,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     const lista = agendamentos || [];
 
-    // 5. Agrupar dados cronologicamente por mês (AAAA-MM)
+    // 6. Agrupar dados por mês (AAAA-MM)
     const dadosPorMes = {};
 
     lista.forEach(item => {
         if (!item.data_revisao) return;
-        const mesChave = item.data_revisao.substring(0, 7); // Ex: "2026-10"
+        const mesChave = item.data_revisao.substring(0, 7);
 
         if (!dadosPorMes[mesChave]) {
             dadosPorMes[mesChave] = {
@@ -83,7 +99,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 
-    // Se ainda não existirem registos, define o mês corrente como referência visual
     const chavesMeses = Object.keys(dadosPorMes).sort();
     if (chavesMeses.length === 0) {
         const hoje = new Date();
@@ -92,7 +107,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         dadosPorMes[mesAtual] = { totalAgendados: 0, compareceram: 0, bonusConfirmado: 0 };
     }
 
-    // Formatar etiquetas do eixo X (ex: "10/2026")
     const rotulos = chavesMeses.map(chave => {
         const [ano, mes] = chave.split('-');
         return `${mes}/${ano}`;
@@ -102,9 +116,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     const valoresTotal = chavesMeses.map(m => dadosPorMes[m].totalAgendados);
     const valoresPresenca = chavesMeses.map(m => dadosPorMes[m].compareceram);
 
-    // 6. Renderizar Gráfico 1: Evolução do Bónus Realizado
+    // 7. Renderizar Gráfico 1: Evolução do Bónus Realizado
     const canvasBonus = document.getElementById('graficoBonus');
-    if (canvasBonus) {
+    if (canvasBonus && typeof Chart !== 'undefined') {
         new Chart(canvasBonus, {
             type: 'line',
             data: {
@@ -136,9 +150,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    // 7. Renderizar Gráfico 2: Volume de Agendamentos & Presença
+    // 8. Renderizar Gráfico 2: Volume de Agendamentos & Presença
     const canvasVolume = document.getElementById('graficoVolume');
-    if (canvasVolume) {
+    if (canvasVolume && typeof Chart !== 'undefined') {
         new Chart(canvasVolume, {
             type: 'bar',
             data: {

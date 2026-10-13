@@ -19,36 +19,50 @@ document.addEventListener('DOMContentLoaded', async function() {
     const { data: { session } } = await supabaseClient.auth.getSession();
 
     if (!session || !session.user) {
-        // Se não tiver sessão iniciada, redireciona para a página de login
         window.location.href = 'login.html';
         return;
     }
 
     const usuarioAtual = session.user;
 
-    // Configurar Menu Superior (E-mail e Botão Sair)
+    // 4. Consulta se o utilizador logado tem cargo de Administrador
+    let isAdmin = false;
+    try {
+        const { data: perfil } = await supabaseClient
+            .from('perfis')
+            .select('role')
+            .eq('id', usuarioAtual.id)
+            .maybeSingle();
+
+        if (perfil && perfil.role === 'admin') {
+            isAdmin = true;
+        }
+    } catch (e) {
+        console.warn('Não foi possível verificar perfil admin:', e);
+    }
+
+    // 5. Monta o cabeçalho com indicador se for Admin
     const areaAuth = document.getElementById('area-autenticacao');
     if (areaAuth && usuarioAtual) {
         let nomeExibicao = 'Usuário';
 
-        // 1. Tenta obter o nome guardado convertendo com segurança para texto
         const metaNome = usuarioAtual.user_metadata?.nome_completo;
         if (typeof metaNome === 'string' && metaNome.trim().length > 0) {
             nomeExibicao = metaNome.trim().split(' ')[0];
-        } 
-        // 2. Caso contrário, trata o prefixo do e-mail
-        else if (usuarioAtual.email) {
+        } else if (usuarioAtual.email) {
             const prefixoEmail = usuarioAtual.email.split('@')[0];
             const apenasLetras = prefixoEmail.replace(/[0-9]/g, '');
-            if (apenasLetras.length > 0) {
-                nomeExibicao = apenasLetras.charAt(0).toUpperCase() + apenasLetras.slice(1);
-            } else {
-                nomeExibicao = prefixoEmail;
-            }
+            nomeExibicao = apenasLetras.length > 0 
+                ? apenasLetras.charAt(0).toUpperCase() + apenasLetras.slice(1) 
+                : prefixoEmail;
         }
 
+        const tagAdmin = isAdmin 
+            ? ' <span style="background-color: #dbeafe; color: #1d4ed8; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 9999px; margin-left: 4px;">Admin</span>' 
+            : '';
+
         areaAuth.innerHTML = `
-            <span class="usuario-logado-tag">Olá, <strong>${nomeExibicao}</strong> 👋</span>
+            <span class="usuario-logado-tag">Olá, <strong>${nomeExibicao}</strong>${tagAdmin} 👋</span>
             <button id="btn-sair-header" class="botao-sair-header">Sair</button>
         `;
 
@@ -61,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    // 4. Configurar datas padrão
+    // 6. Configurar datas padrão
     const hoje = new Date();
     const anoAtual = hoje.getFullYear();
     const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
@@ -75,7 +89,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         filtroMes.value = `${anoAtual}-${mesAtual}`;
     }
 
-    // 5. Regras de bonificação da Toyota
+    // 7. Regras de bonificação da Toyota
     function obterValorPorRevisao(numRevisao) {
         const num = parseInt(numRevisao, 10);
         if (num >= 1 && num <= 4) return 2;
@@ -89,12 +103,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         return partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : dataISO;
     }
 
-    // 6. Consultar dados do Supabase
+    // 8. Consultar dados do Supabase
     async function renderizarTabela() {
-        const mesSelecionado = filtroMes.value; // Ex: "2026-10"
-        corpoTabela.innerHTML = '<tr><td colspan="8" style="text-align:center;">A carregar dados...</td></tr>';
+        const mesSelecionado = filtroMes.value;
+        corpoTabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">A carregar dados...</td></tr>';
 
-        // O RLS do Supabase garante que apenas os agendamentos deste utilizador chegam aqui
+        // O RLS do Supabase garante a exibição adequada para consultor ou admin
         const { data: agendamentos, error } = await supabaseClient
             .from('agendamentos')
             .select('*')
@@ -102,13 +116,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         if (error) {
             console.error('Erro ao procurar agendamentos:', error);
-            corpoTabela.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Erro ao carregar dados.</td></tr>';
+            corpoTabela.innerHTML = '<tr><td colspan="9" style="text-align:center; color:red;">Erro ao carregar dados.</td></tr>';
             return;
         }
 
         corpoTabela.innerHTML = '';
 
-        // Filtra pelo mês selecionado
         const agendamentosDoMes = (agendamentos || []).filter(item => {
             return item.data_revisao && item.data_revisao.startsWith(mesSelecionado);
         });
@@ -158,6 +171,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                     </select>
                 </td>
                 <td class="valor-tabela ${classeSuave}">${textoValor}</td>
+                <td style="text-align: center;">
+                    <button class="btn-excluir-linha" title="Excluir agendamento">🗑️</button>
+                </td>
             `;
 
             corpoTabela.appendChild(tr);
@@ -170,7 +186,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (contadorRegistros) contadorRegistros.textContent = `${agendamentosDoMes.length} registos neste mês`;
     }
 
-    // 7. Gravar novo agendamento no Supabase
+    // 9. Gravar novo agendamento no Supabase
     formulario.addEventListener('submit', async function(evento) {
         evento.preventDefault();
 
@@ -214,7 +230,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         await renderizarTabela();
     });
 
-    // 8. Alterar dados em tempo real (Status ou Data)
+    // 10. Alterar dados em tempo real (Status ou Data)
     corpoTabela.addEventListener('change', async function(evento) {
         const linha = evento.target.closest('tr');
         if (!linha) return;
@@ -239,7 +255,31 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 
-    // 9. Seletor de mês
+    // 11. Excluir agendamento
+    corpoTabela.addEventListener('click', async function(evento) {
+        const btnExcluir = evento.target.closest('.btn-excluir-linha');
+        if (!btnExcluir) return;
+
+        const linha = btnExcluir.closest('tr');
+        const id = linha.dataset.id;
+
+        const confirmou = confirm('Tem a certeza de que deseja eliminar este agendamento?');
+        if (!confirmou) return;
+
+        const { error } = await supabaseClient
+            .from('agendamentos')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            alert('Erro ao eliminar: ' + error.message);
+            return;
+        }
+
+        await renderizarTabela();
+    });
+
+    // 12. Seletor de mês
     if (filtroMes) {
         filtroMes.addEventListener('change', renderizarTabela);
     }
