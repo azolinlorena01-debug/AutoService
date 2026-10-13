@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const detalheConfirmadoEl = document.querySelector('.card:first-child .card-detalhe');
     const filtroMes = document.getElementById('filtro-mes');
     const inputDataContato = document.getElementById('data-contato');
+    const thConsultor = document.getElementById('th-consultor');
 
     // 3. Verificar se o utilizador tem sessão iniciada
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -39,6 +40,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     } catch (e) {
         console.warn('Não foi possível verificar perfil admin:', e);
+    }
+
+    // Se for Admin, exibe a coluna extra no cabeçalho
+    if (isAdmin && thConsultor) {
+        thConsultor.style.display = '';
     }
 
     // 5. Monta o cabeçalho com indicador se for Admin
@@ -89,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         filtroMes.value = `${anoAtual}-${mesAtual}`;
     }
 
-    // 7. Regras de bonificação da Toyota
+    // 7. Regras de bonificação
     function obterValorPorRevisao(numRevisao) {
         const num = parseInt(numRevisao, 10);
         if (num >= 1 && num <= 4) return 2;
@@ -106,17 +112,20 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 8. Consultar dados do Supabase
     async function renderizarTabela() {
         const mesSelecionado = filtroMes.value;
-        corpoTabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">A carregar dados...</td></tr>';
+        const totalColunas = isAdmin ? 10 : 9;
+        corpoTabela.innerHTML = `<tr><td colspan="${totalColunas}" style="text-align:center;">A carregar dados...</td></tr>`;
 
-        // O RLS do Supabase garante a exibição adequada para consultor ou admin
+        // Se for admin consulta a view completa com dados do criador; se for consultor consulta agendamentos
+        const fonteTabela = isAdmin ? 'vw_agendamentos_completos' : 'agendamentos';
+
         const { data: agendamentos, error } = await supabaseClient
-            .from('agendamentos')
+            .from(fonteTabela)
             .select('*')
             .order('data_revisao', { ascending: true });
 
         if (error) {
             console.error('Erro ao procurar agendamentos:', error);
-            corpoTabela.innerHTML = '<tr><td colspan="9" style="text-align:center; color:red;">Erro ao carregar dados.</td></tr>';
+            corpoTabela.innerHTML = `<tr><td colspan="${totalColunas}" style="text-align:center; color:red;">Erro ao carregar dados.</td></tr>`;
             return;
         }
 
@@ -154,9 +163,18 @@ document.addEventListener('DOMContentLoaded', async function() {
                 textoValor = 'R$ 0,00';
             }
 
+            // Coluna com o e-mail/nome do usuário exclusiva para Admin
+            const colunaAdmin = isAdmin ? `
+                <td style="font-size: 12px; color: var(--texto-secundario);">
+                    <strong style="color: var(--texto-principal);">${item.autor_nome || 'Consultor'}</strong><br>
+                    <span style="font-size: 11px; opacity: 0.8;">${item.autor_email || '-'}</span>
+                </td>
+            ` : '';
+
             const tr = document.createElement('tr');
             tr.dataset.id = item.id;
             tr.innerHTML = `
+                ${colunaAdmin}
                 <td>${formatarDataBR(item.data_contato)}</td>
                 <td><input type="date" class="input-data-tabela" value="${item.data_revisao}"></td>
                 <td><span class="chip-placa">${item.placa}</span></td>

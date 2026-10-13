@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entrar - Painel de Bônus</title>
+    <title>Painel de Bônus - Acesso</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -11,14 +11,21 @@
     <div class="cartao-login">
         <div class="login-topo">
             <h1>Painel de Bônus</h1>
-            <span class="subtitulo-toyota">Toyota Service</span>
-            <p>Entre com o seu e-mail para aceder aos seus agendamentos</p>
+            <span class="subtitulo-toyota">AutoService</span>
+            <p id="subtitulo-modo">Entre com o seu e-mail para acessar seus agendamentos</p>
         </div>
 
-        <form id="form-login">
-            <div class="campo-login">
+        <!-- Seletor de Abas -->
+        <div class="abas-login">
+            <button type="button" id="aba-entrar" class="aba-item ativa">Entrar</button>
+            <button type="button" id="aba-cadastrar" class="aba-item">Criar Conta</button>
+        </div>
+
+        <form id="form-auth">
+            <!-- Campo Nome (aparece apenas no cadastro) -->
+            <div class="campo-login" id="grupo-nome" style="display: none;">
                 <label for="nome-completo">Nome Completo</label>
-                <input type="text" id="nome-completo" placeholder="O seu nome ou apelido">
+                <input type="text" id="nome-completo" placeholder="Seu nome ou apelido">
             </div>
 
             <div class="campo-login">
@@ -31,9 +38,14 @@
                 <input type="password" id="senha" required placeholder="Mínimo 6 caracteres">
             </div>
 
+            <!-- Campo Confirmar Senha (aparece apenas no cadastro) -->
+            <div class="campo-login" id="grupo-confirmar-senha" style="display: none;">
+                <label for="confirmar-senha">Confirmar Senha</label>
+                <input type="password" id="confirmar-senha" placeholder="Repita sua senha">
+            </div>
+
             <div class="login-acoes">
-                <button type="submit" id="btn-entrar" class="botao-adicionar" style="width: 100%; height: 40px;">Entrar</button>
-                <button type="button" id="btn-cadastrar" class="botao-secundario">Criar Conta</button>
+                <button type="submit" id="btn-submit" class="botao-adicionar" style="width: 100%; height: 42px;">Entrar</button>
             </div>
         </form>
 

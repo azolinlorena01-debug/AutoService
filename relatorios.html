@@ -11,22 +11,49 @@
 <body>
     <div class="container">
         <header class="cabecalho-principal">
-    <div class="logo-area">
-        <h1>Painel de Bônus</h1>
-        <span class="subtitulo-toyota">Toyota Service</span>
-    </div>
-    <nav class="navegacao-menu">
-        <div class="links-paginas">
-            <a href="index.html" class="link-nav">Agendamentos</a>
-            <a href="relatorios.html" class="link-nav ativo">Relatórios & Gráficos</a>
-        </div>
-        <div id="area-autenticacao" class="auth-area"></div>
-    </nav>
+            <div class="logo-area">
+                <h1>Painel de Bônus</h1>
+                <span class="subtitulo-toyota">AutoService</span>
+            </div>
+            <nav class="navegacao-menu">
+                <div class="links-paginas">
+                    <a href="index.html" class="link-nav">Agendamentos</a>
+                    <a href="relatorios.html" class="link-nav ativo">Relatórios & Gráficos</a>
+                </div>
+                <div id="area-autenticacao" class="auth-area"></div>
+            </nav>
         </header>
 
         <main>
-            <section class="grade-graficos">
-                <div class="card-grafico">
+            <!-- Barra Superior Integrada: Mês + Métricas -->
+            <section class="barra-metricas-topo">
+                <!-- Card de Controle do Mês -->
+                <div class="card card-filtro-mes">
+                    <label for="filtro-mes" class="card-titulo">MÊS DE REFERÊNCIA</label>
+                    <div class="campo-mes-custom">
+                        <input type="month" id="filtro-mes" class="input-mes-estilizado">
+                    </div>
+                    <span class="card-detalhe">Filtre o período de apuração</span>
+                </div>
+
+                <!-- Card 1: Bônus Realizado -->
+                <div class="card">
+                    <span class="card-titulo">BÔNUS REALIZADO</span>
+                    <h2 class="bonus-confirmado">R$ 0,00</h2>
+                    <span class="card-detalhe">0 presenças</span>
+                </div>
+
+                <!-- Card 2: Previsão Máxima -->
+                <div class="card">
+                    <span class="card-titulo">PREVISÃO MÁXIMA</span>
+                    <h2 class="bonus-previsto">R$ 0,00</h2>
+                    <span class="card-detalhe">Se todos os agendados comparecerem</span>
+                </div>
+            </section>
+
+            <!-- Área de Gráficos -->
+            <section class="grade-graficos" id="grade-graficos">
+                <div class="card-grafico" id="card-grafico-bonus">
                     <h3>Evolução do Bônus Realizado</h3>
                     <p>Comparativo mensal dos valores confirmados.</p>
                     <div class="grafico-container">
@@ -34,12 +61,40 @@
                     </div>
                 </div>
 
-                <div class="card-grafico">
-                    <h3>Volume de Agendamentos & Presença</h3>
-                    <p>Total de agendamentos previstos vs. quantos compareceram no mês.</p>
+                <div class="card-grafico" id="card-grafico-volume">
+                    <h3 id="titulo-grafico-volume">Volume de Agendamentos & Presença</h3>
+                    <p id="subtitulo-grafico-volume">Total de agendamentos previstos vs. quantos compareceram no mês.</p>
                     <div class="grafico-container">
                         <canvas id="graficoVolume"></canvas>
                     </div>
+                </div>
+            </section>
+
+            <!-- Tabela Exclusiva do Administrador -->
+            <section id="secao-admin-ranking" class="secao-tabela" style="display: none; margin-top: 24px;">
+                <div class="tabela-topo" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div>
+                        <h2 style="font-size: 16px; font-weight: 700; color: var(--texto-principal);">Volume e Presença por Operador</h2>
+                        <span style="font-size: 12px; color: var(--texto-secundario);">Acompanhamento consolidado de agendamentos e comparecimento por usuário</span>
+                    </div>
+                </div>
+
+                <div class="tabela-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>OPERADOR</th>
+                                <th style="text-align: center;">TOTAL AGENDADOS</th>
+                                <th style="text-align: center;">COMPARECIDOS</th>
+                                <th style="text-align: center;">PENDENTES</th>
+                                <th style="text-align: center;">FALTAS</th>
+                                <th style="text-align: center;">TAXA DE PRESENÇA</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-corpo-admin">
+                            <tr><td colspan="6" style="text-align: center;">Carregando dados dos operadores...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </section>
         </main>

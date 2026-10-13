@@ -12,7 +12,7 @@
     <header class="cabecalho-principal">
     <div class="logo-area">
         <h1>Painel de Bônus</h1>
-        <span class="subtitulo-toyota">Toyota Service</span>
+        <span class="subtitulo-toyota">AutoService</span>
     </div>
     <nav class="navegacao-menu">
         <div class="links-paginas">
@@ -28,12 +28,12 @@
         <section class="cards-indicadores">
             <div class="card">
                 <span class="card-titulo">Bônus Realizado</span>
-                <p class="card-valor bonus-confirmado">R$380,00</p>
-                <span class="card-detalhe">38 revisões comparecidas</span>
+                <p class="card-valor bonus-confirmado">R$0,00</p>
+                <span class="card-detalhe">0 revisões comparecidas</span>
             </div>
             <div class="card">
                 <span class="card-titulo">Previsão Máxima</span>
-                <p class="card-valor bonus-previsto">R$ 520,00</p>
+                <p class="card-valor bonus-previsto">R$ 0,00</p>
                 <span class="card-detalhe">Se todos os agendados comparecerem</span>
             </div>
         </section>
@@ -53,12 +53,12 @@
 
                     <div class="campo">
                         <label for="placa">Placa do Veículo</label>
-                        <input type="text" id="placa" placeholder="Ex: 104589" required>
+                        <input type="text" id="placa" placeholder="Ex: ABC1D23" required>
                     </div>
 
                     <div class="campo">
                         <label for="evento">Nº do Evento</label>
-                        <input type="text" id="evento" placeholder="Ex: 123456" required>
+                        <input type="text" id="evento" placeholder="Ex: 12345678" required>
                     </div>
 
                     <div class="campo">
@@ -108,7 +108,8 @@
                 <div class="tabela-container">
                     <table>
                         <thead>
-                            <tr>
+                            <tr id="cabecalho-tabela">
+                                <th id="th-consultor" style="display: none;">CRIADO POR</th>
                                 <th>DATA CONTATO</th>
                                 <th>DATA REVISÃO</th>
                                 <th>PLACA</th>
