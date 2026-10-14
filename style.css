@@ -38,7 +38,6 @@ body {
     width: 100%;
 }
 
-/* --- CABEÇALHO ESPAÇADO DE PONTA A PONTA --- */
 .cabecalho-principal {
     display: flex;
     justify-content: space-between;
@@ -75,7 +74,7 @@ body {
     display: flex;
     align-items: center;
     gap: 24px;
-    margin-left: auto; /* Empurra o menu inteiro para a direita */
+    margin-left: auto; 
 }
 
 .links-paginas {
@@ -105,7 +104,6 @@ body {
     color: #ffffff;
 }
 
-/* --- ÁREA DO USUÁRIO LOGADO & BOTÃO SAIR --- */
 .auth-area {
     display: flex;
     align-items: center;
@@ -152,7 +150,6 @@ body {
     color: #ffffff;
 }
 
-/* --- CARDS INDICADORES --- */
 .cards-indicadores {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -273,7 +270,6 @@ body {
     background-color: #1d4ed8;
 }
 
-/* --- TABELA --- */
 .secao-tabela {
     background-color: var(--fundo-cartao);
     border: 1px solid var(--cor-borda);
@@ -423,7 +419,6 @@ tr:last-child td {
     color: var(--texto-secundario);
 }
 
-/* --- GRÁFICOS --- */
 .grade-graficos {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));

@@ -1,11 +1,11 @@
 document.addEventListener('DOMContentLoaded', async function() {
-    // 1. Conexão ao Supabase
+    // Conexão ao Supabase
     const SUPABASE_URL = 'https://potvtrepcoswvzmkewic.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
 
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 2. Elementos do Ecrã
+    // Elementos do Ecrã
     const formulario = document.querySelector('.formulario-agendamento');
     const corpoTabela = document.querySelector('tbody');
     const contadorRegistros = document.querySelector('.contador-registros');
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const inputDataContato = document.getElementById('data-contato');
     const thConsultor = document.getElementById('th-consultor');
 
-    // 3. Verificar se o utilizador tem sessão iniciada
+    // Verificar se o utilizador tem sessão iniciada
     const { data: { session } } = await supabaseClient.auth.getSession();
 
     if (!session || !session.user) {
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     const usuarioAtual = session.user;
 
-    // 4. Consulta se o utilizador logado tem cargo de Administrador
+    // Consulta se o utilizador logado tem cargo de Administrador
     let isAdmin = false;
     try {
         const { data: perfil } = await supabaseClient
@@ -42,12 +42,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.warn('Não foi possível verificar perfil admin:', e);
     }
 
-    // Se for Admin, exibe a coluna extra no cabeçalho
+    // Se for Admin, exibe a coluna extra
     if (isAdmin && thConsultor) {
         thConsultor.style.display = '';
     }
 
-    // 5. Monta o cabeçalho com indicador se for Admin
+    // Monta o cabeçalho com indicador se for Admin
     const areaAuth = document.getElementById('area-autenticacao');
     if (areaAuth && usuarioAtual) {
         let nomeExibicao = 'Usuário';
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    // 6. Configurar datas padrão
+    // Configurar datas
     const hoje = new Date();
     const anoAtual = hoje.getFullYear();
     const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         filtroMes.value = `${anoAtual}-${mesAtual}`;
     }
 
-    // 7. Regras de bonificação
+    // Regras de bonificação
     function obterValorPorRevisao(numRevisao) {
         const num = parseInt(numRevisao, 10);
         if (num >= 1 && num <= 4) return 2;
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         return partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : dataISO;
     }
 
-    // 8. Consultar dados do Supabase
+    // Consultar dados do Supabase
     async function renderizarTabela() {
         const mesSelecionado = filtroMes.value;
         const totalColunas = isAdmin ? 10 : 9;
@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 textoValor = 'R$ 0,00';
             }
 
-            // Coluna com o e-mail/nome do usuário exclusiva para Admin
+            // Coluna com o e-mail/nome do usuário para Admin
             const colunaAdmin = isAdmin ? `
                 <td style="font-size: 12px; color: var(--texto-secundario);">
                     <strong style="color: var(--texto-principal);">${item.autor_nome || 'Consultor'}</strong><br>
@@ -197,14 +197,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             corpoTabela.appendChild(tr);
         });
 
-        // Atualização dos cartões superiores
+        // Atualização dos cartões 
         if (valorConfirmadoEl) valorConfirmadoEl.textContent = `R$ ${somaBonusRealizado.toFixed(2).replace('.', ',')}`;
         if (valorPrevistoEl) valorPrevistoEl.textContent = `R$ ${somaBonusPrevisto.toFixed(2).replace('.', ',')}`;
         if (detalheConfirmadoEl) detalheConfirmadoEl.textContent = `${totalComparecidas} revisões comparecidas`;
         if (contadorRegistros) contadorRegistros.textContent = `${agendamentosDoMes.length} registos neste mês`;
     }
 
-    // 9. Gravar novo agendamento no Supabase
+    // Gravar novo agendamento no Supabase
     formulario.addEventListener('submit', async function(evento) {
         evento.preventDefault();
 
@@ -248,7 +248,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         await renderizarTabela();
     });
 
-    // 10. Alterar dados em tempo real (Status ou Data)
+    // Alterar dados em tempo real
     corpoTabela.addEventListener('change', async function(evento) {
         const linha = evento.target.closest('tr');
         if (!linha) return;
@@ -273,7 +273,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 
-    // 11. Excluir agendamento
+    // Excluir agendamento
     corpoTabela.addEventListener('click', async function(evento) {
         const btnExcluir = evento.target.closest('.btn-excluir-linha');
         if (!btnExcluir) return;
@@ -297,7 +297,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         await renderizarTabela();
     });
 
-    // 12. Seletor de mês
+    // Seletor de mês
     if (filtroMes) {
         filtroMes.addEventListener('change', renderizarTabela);
     }

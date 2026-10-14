@@ -1,10 +1,9 @@
 document.addEventListener('DOMContentLoaded', async function() {
-    // 1. Conexão ao Supabase
+    // Conexão ao Supabase
     const SUPABASE_URL = 'https://potvtrepcoswvzmkewic.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 2. Elementos do Ecrã
     const filtroMes = document.getElementById('filtro-mes');
     const valorConfirmadoEl = document.querySelector('.bonus-confirmado');
     const valorPrevistoEl = document.querySelector('.bonus-previsto');
@@ -16,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const secaoAdminRanking = document.getElementById('secao-admin-ranking');
     const tabelaCorpoAdmin = document.getElementById('tabela-corpo-admin');
 
-    // 3. Validação de Sessão
+    // Validação de Sessão
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session || !session.user) {
         window.location.href = 'login.html';
@@ -24,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     const usuarioAtual = session.user;
 
-    // 4. Verificar se o utilizador é Administrador
+    // Verificar se o utilizador é Administrador
     let isAdmin = false;
     try {
         const { data: perfil } = await supabaseClient
@@ -40,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.warn('Erro ao verificar permissões de admin:', e);
     }
 
-    // Adaptar o layout visual conforme o papel do utilizador
+    // Adaptar o layout visual conforme utilizador
     if (isAdmin) {
         // Esconde o cartão de evolução de bónus
         if (cardGraficoBonus) cardGraficoBonus.style.display = 'none';
@@ -50,7 +49,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (subtituloGraficoVolume) subtituloGraficoVolume.textContent = 'Consolidado de agendamentos e presenças de toda a equipe.';
     }
 
-    // 5. Cabeçalho do Utilizador
+    // Cabeçalho do Utilizador
     const areaAuth = document.getElementById('area-autenticacao');
     if (areaAuth && usuarioAtual) {
         let nomeExibicao = 'Utilizador';
@@ -131,7 +130,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 totalFaltou++;
             }
 
-            // Agrupamento por Operador exclusivo para o Administrador
+            // Agrupamento por Operador Administrador
             if (isAdmin) {
                 const chave = item.user_id || 'desconhecido';
                 const nome = item.autor_nome || 'Operador';
@@ -159,7 +158,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
 
-        // Atualizar cartões superiores
+        // Atualizar cartões 
         if (valorConfirmadoEl) valorConfirmadoEl.textContent = `R$ ${somaBonusRealizado.toFixed(2).replace('.', ',')}`;
         if (valorPrevistoEl) valorPrevistoEl.textContent = `R$ ${somaBonusPrevisto.toFixed(2).replace('.', ',')}`;
         
@@ -167,7 +166,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             detalheConfirmadoEl.textContent = `${totalCompareceu} ${totalCompareceu === 1 ? 'presença confirmada' : 'presenças confirmadas'}`;
         }
 
-        // Renderizar o gráfico de Volume & Presença (geral ou individual)
+        // Renderizar o gráfico de Volume & Presença 
         renderizarGraficoVolume(totalCompareceu, totalPendente, totalFaltou);
 
         // Se for consultor normal, mantém o gráfico de bónus ativo
@@ -213,7 +212,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    // 7. Funções dos Gráficos com Chart.js
+    // Funções dos Gráficos 
     function renderizarGraficoVolume(compareceu, pendente, faltou) {
         const ctx = document.getElementById('graficoVolume')?.getContext('2d');
         if (!ctx) return;
