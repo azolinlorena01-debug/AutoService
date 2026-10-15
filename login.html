@@ -3,52 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Bônus - Acesso</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Painel de Bônus - Autenticação</title>
+    <!-- SDK oficial do Supabase para gerenciar login e cadastro -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="corpo-login">
     <div class="cartao-login">
         <div class="login-topo">
             <h1>Painel de Bônus</h1>
             <span class="subtitulo-toyota">AutoService</span>
-            <p id="subtitulo-modo">Entre com o seu e-mail para acessar seus agendamentos</p>
+            <p id="subtitulo-login">Acesse sua conta para continuar</p>
         </div>
 
+        <!-- Abas para alternar entre "Entrar" e "Criar Conta" -->
         <div class="abas-login">
             <button type="button" id="aba-entrar" class="aba-item ativa">Entrar</button>
             <button type="button" id="aba-cadastrar" class="aba-item">Criar Conta</button>
         </div>
 
-        <form id="form-auth">
-            <div class="campo-login" id="grupo-nome" style="display: none;">
-                <label for="nome-completo">Nome Completo</label>
-                <input type="text" id="nome-completo" placeholder="Seu nome ou apelido">
+        <form id="formulario-autenticacao">
+            <!-- Campo de Nome Completo (exibido apenas no cadastro) -->
+            <div class="campo-login oculto" id="grupo-nome">
+                <label for="campo-nome">Nome Completo</label>
+                <input type="text" id="campo-nome" placeholder="Digite seu nome">
             </div>
 
             <div class="campo-login">
-                <label for="email">E-mail</label>
-                <input type="email" id="email" required placeholder="seuemail@exemplo.com">
+                <label for="campo-email">E-mail</label>
+                <input type="email" id="campo-email" placeholder="seu.email@autoservice.com.br" required>
             </div>
 
             <div class="campo-login">
-                <label for="senha">Senha</label>
-                <input type="password" id="senha" required placeholder="Mínimo 6 caracteres">
+                <label for="campo-senha">Senha</label>
+                <input type="password" id="campo-senha" placeholder="••••••••" required minlength="6">
             </div>
 
-            <div class="campo-login" id="grupo-confirmar-senha" style="display: none;">
-                <label for="confirmar-senha">Confirmar Senha</label>
-                <input type="password" id="confirmar-senha" placeholder="Repita sua senha">
+            <!-- Campo de Seleção de Equipe (exibido apenas no cadastro) -->
+            <div class="campo-login oculto" id="grupo-equipe">
+                <label for="campo-equipe">Equipe de Trabalho</label>
+                <select id="campo-equipe">
+                    <option value="" disabled selected>Selecione sua equipe...</option>
+                    <option value="Pós-Venda">Pós-Venda</option>
+                    <option value="Equipe Alfa">Equipe Alfa</option>
+                    <option value="Equipe Beta">Equipe Beta</option>
+                </select>
             </div>
 
             <div class="login-acoes">
-                <button type="submit" id="btn-submit" class="botao-adicionar" style="width: 100%; height: 42px;">Entrar</button>
+                <button type="submit" id="btn-submit-auth" class="botao-login-principal">
+                    Acessar Painel
+                </button>
             </div>
-        </form>
 
-        <p id="mensagem-status" class="mensagem-status"></p>
+            <!-- Mensagem dinâmica de sucesso ou erro (ex: senha incorreta) -->
+            <div id="mensagem-status" class="mensagem-status"></div>
+        </form>
     </div>
 
+    <!-- Script de autenticação e criação de usuário -->
     <script src="login.js"></script>
 </body>
 </html>

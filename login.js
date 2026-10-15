@@ -1,120 +1,163 @@
-document.addEventListener('DOMContentLoaded', function() {
+/* ==========================================================================
+   CADERNO DE ESTUDOS - JAVASCRIPT
+   Objetivo do arquivo:
+   1. Gerenciar o fluxo de Login.
+   2. Gerenciar o fluxo de Cadastro gravando metadados no Auth.
+   3. Criar ou sincronizar o registro na tabela pública 'perfis'.
+   4. Redirecionar usuários logados direto para a aplicação.
+   ========================================================================== */
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // 1. INICIALIZAÇÃO DO CLIENTE SUPABASE
     const SUPABASE_URL = 'https://potvtrepcoswvzmkewic.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const formAuth = document.getElementById('form-auth');
+    // Se o usuário já tiver uma sessão válida gravada no LocalStorage do navegador,
+    // não faz sentido mostrar a tela de login. Redirecionamos para a tela principal
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session && session.user) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    // 2. CAPTURA DOS ELEMENTOS DA TELA
     const abaEntrar = document.getElementById('aba-entrar');
     const abaCadastrar = document.getElementById('aba-cadastrar');
     const grupoNome = document.getElementById('grupo-nome');
-    const grupoConfirmarSenha = document.getElementById('grupo-confirmar-senha');
-    const btnSubmit = document.getElementById('btn-submit');
-    const subtituloModo = document.getElementById('subtitulo-modo');
-    const msgStatus = document.getElementById('mensagem-status');
+    const grupoEquipe = document.getElementById('grupo-equipe');
+    const campoNome = document.getElementById('campo-nome');
+    const campoEmail = document.getElementById('campo-email');
+    const campoSenha = document.getElementById('campo-senha');
+    const campoEquipe = document.getElementById('campo-equipe');
+    const btnSubmit = document.getElementById('btn-submit-auth');
+    const subtituloLogin = document.getElementById('subtitulo-login');
+    const mensagemStatus = document.getElementById('mensagem-status');
+    const form = document.getElementById('formulario-autenticacao');
 
-    let modoAtual = 'entrar'; // 'entrar' ou 'cadastrar'
+    // Variável que armazena em qual modo estamos: 'entrar' ou 'cadastrar'
+    let modoAtual = 'entrar';
 
-    function exibirMensagem(texto, cor = '#dc2626') {
-        if (msgStatus) {
-            msgStatus.style.color = cor;
-            msgStatus.textContent = texto;
+    // Função utilitária para exibir alertas de erro ou sucesso
+    function exibirMensagem(texto, tipo = 'erro') {
+        mensagemStatus.textContent = texto;
+        if (tipo === 'sucesso') {
+            mensagemStatus.className = 'mensagem-status admin-val-sucesso';
+        } else {
+            mensagemStatus.className = 'mensagem-status admin-val-perigo';
         }
     }
 
-    function alternarModo(novoModo) {
-        modoAtual = novoModo;
-        exibirMensagem('');
+    // 3. ALTERNÂNCIA DE ABAS (ENTRAR VS CRIAR CONTA)
+    abaEntrar.addEventListener('click', () => {
+        modoAtual = 'entrar';
+        abaEntrar.classList.add('ativa');
+        abaCadastrar.classList.remove('ativa');
+        grupoNome.classList.add('oculto');
+        grupoEquipe.classList.add('oculto');
+        btnSubmit.textContent = 'Acessar Painel';
+        subtituloLogin.textContent = 'Acesse sua conta para continuar';
+        mensagemStatus.textContent = '';
+    });
 
-        if (modoAtual === 'entrar') {
-            abaEntrar.classList.add('ativa');
-            abaCadastrar.classList.remove('ativa');
-            grupoNome.style.display = 'none';
-            grupoConfirmarSenha.style.display = 'none';
-            btnSubmit.textContent = 'Entrar';
-            subtituloModo.textContent = 'Entre com o seu e-mail para acessar seus agendamentos';
-        } else {
-            abaCadastrar.classList.add('ativa');
-            abaEntrar.classList.remove('ativa');
-            grupoNome.style.display = 'flex';
-            grupoConfirmarSenha.style.display = 'flex';
-            btnSubmit.textContent = 'Criar Conta';
-            subtituloModo.textContent = 'Preencha seus dados para criar um novo acesso';
-        }
-    }
+    abaCadastrar.addEventListener('click', () => {
+        modoAtual = 'cadastrar';
+        abaCadastrar.classList.add('ativa');
+        abaEntrar.classList.remove('ativa');
+        grupoNome.classList.remove('oculto');
+        grupoEquipe.classList.remove('oculto');
+        btnSubmit.textContent = 'Cadastrar Conta';
+        subtituloLogin.textContent = 'Crie seu perfil profissional no sistema';
+        mensagemStatus.textContent = '';
+    });
 
-    abaEntrar.addEventListener('click', () => alternarModo('entrar'));
-    abaCadastrar.addEventListener('click', () => alternarModo('cadastrar'));
+    // 4. SUBMISSÃO DO FORMULÁRIO (LOGIN OU CADASTRO)
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault(); // Impede o recarregamento tradicional da página
 
-    formAuth.addEventListener('submit', async function(evento) {
-        evento.preventDefault();
+        const email = campoEmail.value.trim();
+        const senha = campoSenha.value;
 
-        const email = document.getElementById('email').value.trim();
-        const senha = document.getElementById('senha').value;
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = 'Processando...';
+        mensagemStatus.textContent = '';
 
-        if (modoAtual === 'entrar') {
-            exibirMensagem('Validando credenciais...', '#2563eb');
+        try {
+            if (modoAtual === 'entrar') {
+                // FLUXO DE LOGIN:
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: senha
+                });
 
-            const { error } = await supabaseClient.auth.signInWithPassword({
-                email: email,
-                password: senha
-            });
+                if (error) throw error;
 
-            if (error) {
-                exibirMensagem('Erro ao entrar: ' + error.message, '#dc2626');
-                return;
-            }
+                exibirMensagem('Login realizado com sucesso! Redirecionando...', 'sucesso');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 800);
 
-            window.location.href = 'index.html';
-
-        } else {
-            // Modo Cadastro
-            const nomeCompleto = document.getElementById('nome-completo').value.trim();
-            const confirmarSenha = document.getElementById('confirmar-senha').value;
-
-            if (!nomeCompleto) {
-                exibirMensagem('Por favor, informe seu nome completo.', '#dc2626');
-                return;
-            }
-
-            if (senha.length < 6) {
-                exibirMensagem('A senha deve ter no mínimo 6 caracteres.', '#dc2626');
-                return;
-            }
-
-            if (senha !== confirmarSenha) {
-                exibirMensagem('As senhas não coincidem. Digite novamente.', '#dc2626');
-                return;
-            }
-
-            exibirMensagem('Criando conta e acessando...', '#2563eb');
-
-            const { error } = await supabaseClient.auth.signUp({
-                email: email,
-                password: senha,
-                options: {
-                    data: {
-                        nome_completo: nomeCompleto
-                    }
-                }
-            });
-
-            if (error) {
-                exibirMensagem('Erro ao registrar: ' + error.message, '#dc2626');
-                return;
-            }
-
-            // Realiza login imediatamente
-            const { error: erroLogin } = await supabaseClient.auth.signInWithPassword({
-                email: email,
-                password: senha
-            });
-
-            if (erroLogin) {
-                exibirMensagem('Conta criada! Faça login com suas credenciais.', '#16a34a');
-                alternarModo('entrar');
             } else {
-                window.location.href = 'index.html';
+                // FLUXO DE CADASTRO:
+                const nomeCompleto = campoNome.value.trim();
+                const equipeSelecionada = campoEquipe.value;
+
+                if (!nomeCompleto) {
+                    exibirMensagem('Por favor, informe seu nome completo.');
+                    btnSubmit.disabled = false;
+                    btnSubmit.textContent = 'Cadastrar Conta';
+                    return;
+                }
+
+                if (!equipeSelecionada) {
+                    exibirMensagem('Por favor, selecione sua equipe de trabalho.');
+                    btnSubmit.disabled = false;
+                    btnSubmit.textContent = 'Cadastrar Conta';
+                    return;
+                }
+
+                // Cria o usuário no Supabase Auth salvando os metadados
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email: email,
+                    password: senha,
+                    options: {
+                        data: {
+                            nome_completo: nomeCompleto,
+                            equipe: equipeSelecionada
+                        }
+                    }
+                });
+
+                if (error) throw error;
+
+                // Cria ou atualiza o perfil do operador na tabela pública 'perfis'
+                if (data.user) {
+                    await supabaseClient.from('perfis').upsert({
+                        id: data.user.id,
+                        email: email,
+                        nome: nomeCompleto,
+                        equipe: equipeSelecionada,
+                        role: 'consultor' // Padrão seguro: novos cadastros nascem como consultores
+                    });
+                }
+
+                exibirMensagem('Conta criada com sucesso! Redirecionando...', 'sucesso');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
             }
+        } catch (erro) {
+            console.error('Erro na autenticação:', erro);
+            let msgAmigavel = erro.message;
+            if (msgAmigavel.includes('Invalid login credentials')) {
+                msgAmigavel = 'E-mail ou senha incorretos.';
+            } else if (msgAmigavel.includes('User already registered')) {
+                msgAmigavel = 'Este e-mail já está cadastrado no sistema.';
+            }
+            exibirMensagem(msgAmigavel);
+        } finally {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = modoAtual === 'entrar' ? 'Acessar Painel' : 'Cadastrar Conta';
         }
     });
 });

@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Bônus - Relatórios</title>
+    <!-- Bibliotecas externas: Supabase e Chart.js para os gráficos interativos -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
+        <!-- Cabeçalho Principal -->
         <header class="cabecalho-principal">
             <div class="logo-area">
                 <h1>Painel de Bônus</h1>
@@ -19,74 +21,156 @@
                 <div class="links-paginas">
                     <a href="index.html" class="link-nav">Agendamentos</a>
                     <a href="relatorios.html" class="link-nav ativo">Relatórios & Gráficos</a>
+                    <a href="importar.html" id="link-menu-importar" class="link-nav oculto">Importar / Exportar</a>
                 </div>
                 <div id="area-autenticacao" class="auth-area"></div>
             </nav>
         </header>
 
         <main>
-            <section class="barra-metricas-topo">
-                <div class="card card-filtro-mes">
-                    <label for="filtro-mes" class="card-titulo">MÊS DE REFERÊNCIA</label>
-                    <div class="campo-mes-custom">
-                        <input type="month" id="filtro-mes" class="input-mes-estilizado">
+            <!-- ==========================================================================
+                 1. PAINEL DO ADMINISTRADOR (Filtros amplos e sem ponto final)
+                 ========================================================================== -->
+            <section id="secao-filtros-admin" class="painel-filtros-admin oculto">
+                <div class="info-titulos">
+                    <h2>Visão Administrador</h2>
+                    <p>Filtre o período e equipe</p>
+                </div>
+                <div class="controles-filtros-admin">
+                    <div>
+                        <label class="filtro-item-label">Mês de Referência</label>
+                        <input type="month" id="filtro-mes-admin" class="input-mes-estilizado filtro-admin-mes-select">
                     </div>
+                    <div>
+                        <label class="filtro-item-label">Filtrar Equipe</label>
+                        <select id="filtro-equipe-admin" class="input-mes-estilizado filtro-admin-equipe-select">
+                            <option value="todas">Todas as Equipes</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cards Operacionais do Administrador (Volume, Presenças, Aguardando e Faltas) -->
+            <section id="metricas-resumo-admin" class="metricas-gerenciais-admin oculto">
+                <div class="card">
+                    <span class="card-titulo">TOTAL AGENDAMENTOS</span>
+                    <h2 id="admin-total-agendados" class="admin-val-neutro">0</h2>
+                    <span class="card-detalhe">Registros na base no mês</span>
+                </div>
+                <div class="card">
+                    <span class="card-titulo">COMPARECIDOS</span>
+                    <h2 id="admin-total-compareceu" class="admin-val-sucesso">0</h2>
+                    <span class="card-detalhe" id="admin-taxa-presenca">0% de presença</span>
+                </div>
+                <div class="card">
+                    <span class="card-titulo">PENDENTES</span>
+                    <h2 id="admin-total-pendente" class="admin-val-alerta">0</h2>
+                    <span class="card-detalhe">Aguardando</span>
+                </div>
+                <div class="card">
+                    <span class="card-titulo">FALTAS</span>
+                    <h2 id="admin-total-faltas" class="admin-val-perigo">0</h2>
+                    <span class="card-detalhe">Não compareceram</span>
+                </div>
+            </section>
+
+            <!-- ==========================================================================
+                 2. PAINEL DO CONSULTOR (Bônus Financeiro e Nota de Auditoria)
+                 ========================================================================== -->
+            <section id="secao-metricas-consultor" class="barra-metricas-consultor oculto">
+                <div class="card card-filtro-mes">
+                    <span class="card-titulo">MÊS DE REFERÊNCIA</span>
+                    <input type="month" id="filtro-mes-consultor" class="input-mes-estilizado">
                     <span class="card-detalhe">Filtre o período de apuração</span>
                 </div>
-
                 <div class="card">
                     <span class="card-titulo">BÔNUS REALIZADO</span>
                     <h2 class="bonus-confirmado">R$ 0,00</h2>
-                    <span class="card-detalhe">0 presenças</span>
+                    <span class="card-detalhe">0 presenças confirmadas</span>
                 </div>
-
                 <div class="card">
                     <span class="card-titulo">PREVISÃO MÁXIMA</span>
                     <h2 class="bonus-previsto">R$ 0,00</h2>
                     <span class="card-detalhe">Se todos os agendados comparecerem</span>
                 </div>
+                <div class="card card-monitoria">
+                    <span class="card-titulo">NOTA DE MONITORIA</span>
+                    <div class="card-monitoria-conteudo">
+                        <input type="number" id="input-monitoria" class="input-monitoria-campo" value="100" min="0" max="100">
+                        <span class="texto-simbolo-porcento">%</span>
+                        <span id="badge-ajuste-monitoria" class="badge-ajuste-monitoria">+10% Bônus</span>
+                    </div>
+                    <span class="card-detalhe">≥80% (+10%) | &lt;80% (-10%)</span>
+                </div>
             </section>
 
-            <section class="grade-graficos" id="grade-graficos">
-                <div class="card-grafico" id="card-grafico-bonus">
-                    <h3>Evolução do Bônus Realizado</h3>
-                    <p>Comparativo mensal dos valores confirmados.</p>
-                    <div class="grafico-container">
-                        <canvas id="graficoBonus"></canvas>
+            <!-- Barra de Progresso da Meta da Equipe (Exclusiva do Consultor) -->
+            <section id="secao-meta-equipe" class="card card-meta-equipe oculto">
+                <div class="meta-equipe-topo">
+                    <div>
+                        <span class="card-titulo" id="titulo-meta-equipe">META DA EQUIPE</span>
+                        <h3 id="texto-progresso-meta" class="meta-progresso-texto">0 / 100 agendamentos (0%)</h3>
                     </div>
+                    <span id="texto-restante-meta" class="meta-badge-restante">
+                        Faltam 100 agendamentos para bater a meta
+                    </span>
                 </div>
+                <div class="meta-barra-trilho">
+                    <div id="barra-progresso-meta" class="meta-barra-preenchimento"></div>
+                </div>
+            </section>
 
+            <!-- ==========================================================================
+                 3. SEÇÃO DE GRÁFICOS (Chart.js)
+                 ========================================================================== -->
+            <section class="grade-graficos" id="grade-graficos">
+                <!-- Gráfico de Rosca: Efetividade / Taxa de presença -->
                 <div class="card-grafico" id="card-grafico-volume">
-                    <h3 id="titulo-grafico-volume">Volume de Agendamentos & Presença</h3>
-                    <p id="subtitulo-grafico-volume">Total de agendamentos previstos vs. quantos compareceram no mês.</p>
+                    <h3 id="titulo-grafico-volume">Efetividade Geral</h3>
+                    <p id="subtitulo-grafico-volume">Taxa de presença</p>
                     <div class="grafico-container">
                         <canvas id="graficoVolume"></canvas>
                     </div>
                 </div>
+
+                <!-- Gráfico de Barras Verticais: Histórico de Bônus (Consultor) -->
+                <div class="card-grafico oculto" id="card-grafico-bonus-mensal">
+                    <h3 id="titulo-grafico-bonus-mensal">Comparativo de Bônus Mensal</h3>
+                    <p id="subtitulo-grafico-bonus-mensal">Evolução dos valores confirmados por mês</p>
+                    <div class="grafico-container">
+                        <canvas id="graficoBonusMensal"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Barras Horizontais: Produção por Consultor da Equipe -->
+                <div class="card-grafico oculto" id="card-grafico-equipe">
+                    <h3 id="titulo-grafico-equipe">Volume por Operador</h3>
+                    <p id="subtitulo-grafico-equipe">Volume por operador desta equipe</p>
+                    <div class="grafico-container">
+                        <canvas id="graficoEquipe"></canvas>
+                    </div>
+                </div>
             </section>
 
-            <section id="secao-admin-ranking" class="secao-tabela" style="display: none; margin-top: 24px;">
-                <div class="tabela-topo" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <!-- ==========================================================================
+                 4. TABELA DE RANKING / EQUIPES (Exclusiva do Administrador)
+                 ========================================================================== -->
+            <section id="secao-admin-ranking" class="secao-tabela-admin oculto">
+                <div class="tabela-topo">
                     <div>
-                        <h2 style="font-size: 16px; font-weight: 700; color: var(--texto-principal);">Volume e Presença por Operador</h2>
-                        <span style="font-size: 12px; color: var(--texto-secundario);">Acompanhamento consolidado de agendamentos e comparecimento por usuário</span>
+                        <h2 id="titulo-tabela-admin">Desempenho por Equipe</h2>
+                        <span id="subtitulo-tabela-admin" class="subtitulo-contador">Acompanhe por equipe ou filtre individualmente</span>
                     </div>
+                    <button id="btn-voltar-admin" class="btn-voltar-admin oculto">
+                        ← Voltar para Todas as Equipes
+                    </button>
                 </div>
 
                 <div class="tabela-container">
                     <table>
-                        <thead>
-                            <tr>
-                                <th>OPERADOR</th>
-                                <th style="text-align: center;">TOTAL AGENDADOS</th>
-                                <th style="text-align: center;">COMPARECIDOS</th>
-                                <th style="text-align: center;">PENDENTES</th>
-                                <th style="text-align: center;">FALTAS</th>
-                                <th style="text-align: center;">TAXA DE PRESENÇA</th>
-                            </tr>
-                        </thead>
+                        <thead id="tabela-cabecalho-admin"></thead>
                         <tbody id="tabela-corpo-admin">
-                            <tr><td colspan="6" style="text-align: center;">Carregando dados dos operadores...</td></tr>
+                            <tr><td colspan="6" class="celula-vazia-mensagem">Carregando dados...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -94,6 +178,7 @@
         </main>
     </div>
 
+    <!-- Script de inteligência de relatórios e gráficos -->
     <script src="relatorios.js"></script>
 </body>
 </html>

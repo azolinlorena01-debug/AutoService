@@ -1,307 +1,283 @@
+/* ==========================================================================
+   CADERNO DE ESTUDOS - JAVASCRIPT (script.js)
+   Objetivo do arquivo:
+   1. Verificar se o usuário está autenticado no Supabase.
+   2. Descobrir se ele é Administrador ou Consultor.
+   3. Carregar os agendamentos da View SQL do banco.
+   4. Aplicar busca em tempo real (placa, evento, OS, autor).
+   5. Paginar de 20 em 20 para deixar a interface rápida.
+   ========================================================================== */
+
 document.addEventListener('DOMContentLoaded', async function() {
-    // Conexão ao Supabase
+    // 1. CONFIGURAÇÃO DO CLIENTE SUPABASE
     const SUPABASE_URL = 'https://potvtrepcoswvzmkewic.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
-
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Elementos do Ecrã
-    const formulario = document.querySelector('.formulario-agendamento');
-    const corpoTabela = document.querySelector('tbody');
-    const contadorRegistros = document.querySelector('.contador-registros');
-    const valorConfirmadoEl = document.querySelector('.bonus-confirmado');
-    const valorPrevistoEl = document.querySelector('.bonus-previsto');
-    const detalheConfirmadoEl = document.querySelector('.card:first-child .card-detalhe');
-    const filtroMes = document.getElementById('filtro-mes');
-    const inputDataContato = document.getElementById('data-contato');
-    const thConsultor = document.getElementById('th-consultor');
-
-    // Verificar se o utilizador tem sessão iniciada
+    // 2. GUARDA DE SEGURANÇA (AUTH GUARD):
+    // Se o usuário não tiver uma sessão ativa, mandamos ele para o login.html
     const { data: { session } } = await supabaseClient.auth.getSession();
-
     if (!session || !session.user) {
         window.location.href = 'login.html';
         return;
     }
-
     const usuarioAtual = session.user;
 
-    // Consulta se o utilizador logado tem cargo de Administrador
+    // 3. CONSULTA DE PERFIL (ROLE-BASED ACCESS CONTROL - RBAC):
+    // Verificamos a tabela 'perfis' para saber o papel (role) e a equipe do usuário.
     let isAdmin = false;
+    let equipeUsuario = 'Geral';
     try {
         const { data: perfil } = await supabaseClient
             .from('perfis')
-            .select('role')
+            .select('role, equipe')
             .eq('id', usuarioAtual.id)
             .maybeSingle();
 
-        if (perfil && perfil.role === 'admin') {
-            isAdmin = true;
+        if (perfil) {
+            if (perfil.role === 'admin') isAdmin = true;
+            if (perfil.equipe) equipeUsuario = perfil.equipe;
         }
     } catch (e) {
-        console.warn('Não foi possível verificar perfil admin:', e);
+        console.warn('Erro ao carregar perfil do banco:', e);
     }
 
-    // Se for Admin, exibe a coluna extra
-    if (isAdmin && thConsultor) {
-        thConsultor.style.display = '';
+    // 4. CONTROLE VISUAL CONFORME O PERFIL:
+    // O Administrador ganha acesso ao link 'Importar / Exportar' e não precisa ver os cards de bônus aqui.
+    const linkMenuImportar = document.getElementById('link-menu-importar');
+    const secaoCardsBonusIndex = document.getElementById('secao-cards-bonus-index');
+
+    if (isAdmin) {
+        if (linkMenuImportar) linkMenuImportar.classList.remove('oculto');
+        if (secaoCardsBonusIndex) secaoCardsBonusIndex.classList.add('oculto');
+    } else {
+        if (linkMenuImportar) linkMenuImportar.classList.add('oculto');
+        if (secaoCardsBonusIndex) secaoCardsBonusIndex.classList.remove('oculto');
     }
 
-    // Monta o cabeçalho com indicador se for Admin
+    // 5. CABEÇALHO DO USUÁRIO:
+    // Monta o "Olá, Nome" e cria o botão de Logout funcional.
     const areaAuth = document.getElementById('area-autenticacao');
-    if (areaAuth && usuarioAtual) {
+    if (areaAuth) {
         let nomeExibicao = 'Usuário';
-
         const metaNome = usuarioAtual.user_metadata?.nome_completo;
         if (typeof metaNome === 'string' && metaNome.trim().length > 0) {
             nomeExibicao = metaNome.trim().split(' ')[0];
         } else if (usuarioAtual.email) {
             const prefixoEmail = usuarioAtual.email.split('@')[0];
             const apenasLetras = prefixoEmail.replace(/[0-9]/g, '');
-            nomeExibicao = apenasLetras.length > 0 
-                ? apenasLetras.charAt(0).toUpperCase() + apenasLetras.slice(1) 
-                : prefixoEmail;
+            nomeExibicao = apenasLetras.length > 0 ? apenasLetras.charAt(0).toUpperCase() + apenasLetras.slice(1) : prefixoEmail;
         }
 
-        const tagAdmin = isAdmin 
-            ? ' <span style="background-color: #dbeafe; color: #1d4ed8; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 9999px; margin-left: 4px;">Admin</span>' 
-            : '';
+        const tagAdmin = isAdmin ? '<span class="tag-badge-admin">Admin</span>' : '';
+        const tagEquipe = !isAdmin ? `<span class="tag-badge-equipe">${equipeUsuario}</span>` : '';
 
         areaAuth.innerHTML = `
-            <span class="usuario-logado-tag">Olá, <strong>${nomeExibicao}</strong>${tagAdmin} 👋</span>
+            <span class="usuario-logado-tag">Olá, <strong>${nomeExibicao}</strong>${tagEquipe}${tagAdmin}</span>
             <button id="btn-sair-header" class="botao-sair-header">Sair</button>
         `;
 
-        const btnSair = document.getElementById('btn-sair-header');
-        if (btnSair) {
-            btnSair.addEventListener('click', async () => {
-                await supabaseClient.auth.signOut();
-                window.location.href = 'login.html';
-            });
-        }
+        document.getElementById('btn-sair-header')?.addEventListener('click', async () => {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'login.html';
+        });
     }
 
-    // Configurar datas
+    // 6. ELEMENTOS DO DOM (DOCUMENT OBJECT MODEL):
+    const filtroMes = document.getElementById('filtro-mes');
+    const filtroBusca = document.getElementById('filtro-busca');
+    const valorConfirmadoEl = document.querySelector('.bonus-confirmado');
+    const valorPrevistoEl = document.querySelector('.bonus-previsto');
+    const detalheConfirmadoEl = document.querySelector('.bonus-confirmado')?.parentElement.querySelector('.card-detalhe');
+    const contadorAgendamentos = document.getElementById('contador-agendamentos');
+    const corpoTabela = document.getElementById('tabela-agendamentos-corpo');
+
+    const infoPaginacao = document.getElementById('info-paginacao');
+    const numPaginaAtualEl = document.getElementById('numero-pagina-atual');
+    const btnPagAnt = document.getElementById('btn-pag-anterior');
+    const btnPagProx = document.getElementById('btn-pag-proxima');
+
+    // Inicializa o seletor de mês com o ano e mês atuais no formato YYYY-MM
     const hoje = new Date();
-    const anoAtual = hoje.getFullYear();
-    const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
-    const diaAtual = String(hoje.getDate()).padStart(2, '0');
+    const ano = hoje.getFullYear();
+    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+    if (filtroMes) filtroMes.value = `${ano}-${mes}`;
 
-    if (inputDataContato) {
-        inputDataContato.value = `${anoAtual}-${mesAtual}-${diaAtual}`;
+    // 7. VARIÁVEIS DE ESTADO DA PAGINAÇÃO E DADOS:
+    let paginaAtual = 1;
+    const itensPorPagina = 20; // Mostra de 20 em 20 para evitar peso na página
+    let todosAgendamentosMes = [];
+    let agendamentosFiltrados = [];
+
+    // Função utilitária: Converte data do banco (YYYY-MM-DD) para padrão brasileiro (DD/MM/YYYY)
+    function formatarDataBR(dataIso) {
+        if (!dataIso) return '-';
+        const partes = dataIso.split('-');
+        if (partes.length < 3) return dataIso;
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
     }
 
-    if (filtroMes) {
-        filtroMes.value = `${anoAtual}-${mesAtual}`;
-    }
-
-    // Regras de bonificação
-    function obterValorPorRevisao(numRevisao) {
-        const num = parseInt(numRevisao, 10);
-        if (num >= 1 && num <= 4) return 2;
-        if (num >= 5 && num <= 7) return 6;
-        return 10;
-    }
-
-    function formatarDataBR(dataISO) {
-        if (!dataISO) return '-';
-        const partes = dataISO.split('-');
-        return partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : dataISO;
-    }
-
-    // Consultar dados do Supabase
-    async function renderizarTabela() {
+    // 8. BUSCA NO SUPABASE:
+    // Puxa dados da View SQL 'vw_agendamentos_completos' que já junta o agendamento com o autor
+    async function carregarAgendamentos() {
         const mesSelecionado = filtroMes.value;
-        const totalColunas = isAdmin ? 10 : 9;
-        corpoTabela.innerHTML = `<tr><td colspan="${totalColunas}" style="text-align:center;">A carregar dados...</td></tr>`;
+        corpoTabela.innerHTML = '<tr><td colspan="9" class="celula-vazia-mensagem">Carregando agendamentos...</td></tr>';
 
-        // Se for admin consulta a view completa com dados do criador; se for consultor consulta agendamentos
-        const fonteTabela = isAdmin ? 'vw_agendamentos_completos' : 'agendamentos';
+        let query = supabaseClient.from('vw_agendamentos_completos').select('*');
 
-        const { data: agendamentos, error } = await supabaseClient
-            .from(fonteTabela)
-            .select('*')
-            .order('data_revisao', { ascending: true });
+        // Se for consultor comum, a query é filtrada apenas pelo seu próprio ID
+        if (!isAdmin) {
+            query = query.eq('user_id', usuarioAtual.id);
+        }
+
+        const { data, error } = await query.order('data_revisao', { ascending: true });
 
         if (error) {
-            console.error('Erro ao procurar agendamentos:', error);
-            corpoTabela.innerHTML = `<tr><td colspan="${totalColunas}" style="text-align:center; color:red;">Erro ao carregar dados.</td></tr>`;
+            console.error('Erro na requisição ao Supabase:', error);
+            corpoTabela.innerHTML = '<tr><td colspan="9" class="celula-vazia-mensagem admin-val-perigo">Erro ao carregar dados.</td></tr>';
             return;
         }
+
+        // Filtra em memória pelos registros cuja data de revisão inicia com o mês selecionado (ex: "2026-10")
+        todosAgendamentosMes = (data || []).filter(item => 
+            item.data_revisao && item.data_revisao.startsWith(mesSelecionado)
+        );
+
+        paginaAtual = 1;
+        aplicarFiltrosEAtualizar();
+    }
+
+    // 9. FILTRO DE BUSCA MULTI-CAMPO EM TEMPO REAL:
+    // Procura por correspondência em placa, número de evento, ordem de serviço ou nome do consultor
+    function aplicarFiltrosEAtualizar() {
+        const termoBusca = (filtroBusca?.value || '').trim().toUpperCase();
+
+        if (termoBusca.length > 0) {
+            agendamentosFiltrados = todosAgendamentosMes.filter(item => {
+                const placa = (item.placa || '').toUpperCase();
+                const evento = String(item.evento || '').toUpperCase();
+                const os = String(item.os || '').toUpperCase();
+                const autor = (item.autor_nome || '').toUpperCase();
+
+                return placa.includes(termoBusca) || 
+                       evento.includes(termoBusca) || 
+                       os.includes(termoBusca) || 
+                       autor.includes(termoBusca);
+            });
+        } else {
+            agendamentosFiltrados = [...todosAgendamentosMes];
+        }
+
+        atualizarCardsResumo();
+        renderizarTabelaPaginada();
+    }
+
+    // 10. ATUALIZAÇÃO DOS CARDS FINANCEIROS DO CONSULTOR:
+    function atualizarCardsResumo() {
+        let confirmados = 0;
+        let somaRealizado = 0;
+        let somaPrevisto = 0;
+
+        todosAgendamentosMes.forEach(item => {
+            const v = parseFloat(item.valor_unitario) || 0;
+            const st = item.status || 'pendente';
+            if (st === 'compareceu') {
+                confirmados++;
+                somaRealizado += v;
+                somaPrevisto += v;
+            } else if (st === 'pendente') {
+                somaPrevisto += v;
+            }
+        });
+
+        if (valorConfirmadoEl) valorConfirmadoEl.textContent = `R$ ${somaRealizado.toFixed(2).replace('.', ',')}`;
+        if (valorPrevistoEl) valorPrevistoEl.textContent = `R$ ${somaPrevisto.toFixed(2).replace('.', ',')}`;
+        if (detalheConfirmadoEl) detalheConfirmadoEl.textContent = `${confirmados} revisões comparecidas`;
+        if (contadorAgendamentos) contadorAgendamentos.textContent = `${todosAgendamentosMes.length} registros neste mês`;
+    }
+
+    // 11. RENDERIZAÇÃO DA TABELA COM PAGINAÇÃO (ALGORITMO SLICE):
+    function renderizarTabelaPaginada() {
+        const total = agendamentosFiltrados.length;
+        const totalPaginas = Math.ceil(total / itensPorPagina) || 1;
+
+        if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
+        if (paginaAtual < 1) paginaAtual = 1;
+
+        // O 'slice' recorta apenas o intervalo de 20 registros pertencentes à página atual
+        const inicio = (paginaAtual - 1) * itensPorPagina;
+        const fim = Math.min(inicio + itensPorPagina, total);
+        const paginaItens = agendamentosFiltrados.slice(inicio, fim);
 
         corpoTabela.innerHTML = '';
 
-        const agendamentosDoMes = (agendamentos || []).filter(item => {
-            return item.data_revisao && item.data_revisao.startsWith(mesSelecionado);
-        });
+        if (paginaItens.length === 0) {
+            corpoTabela.innerHTML = '<tr><td colspan="9" class="celula-vazia-mensagem">Nenhum agendamento encontrado para essa busca.</td></tr>';
+        } else {
+            paginaItens.forEach(item => {
+                const tr = document.createElement('tr');
+                const v = parseFloat(item.valor_unitario) || 0;
+                const status = item.status || 'pendente';
 
-        let totalComparecidas = 0;
-        let somaBonusRealizado = 0;
-        let somaBonusPrevisto = 0;
+                // Aplica a classe CSS correta de pílula de status
+                let tagStatus = `<span class="tag-status-pill tag-status-pendente">Pendente</span>`;
+                if (status === 'compareceu') {
+                    tagStatus = `<span class="tag-status-pill tag-status-compareceu">Compareceu</span>`;
+                } else if (status === 'faltou') {
+                    tagStatus = `<span class="tag-status-pill tag-status-faltou">Não Compareceu</span>`;
+                }
 
-        agendamentosDoMes.forEach(item => {
-            const valorUnitario = parseFloat(item.valor_unitario) || 0;
+                tr.innerHTML = `
+                    <td>
+                        <strong>${item.autor_nome || 'Operador'}</strong><br>
+                        <span class="subtexto-operador">${item.autor_email || ''}</span>
+                    </td>
+                    <td>${formatarDataBR(item.data_contato)}</td>
+                    <td>${formatarDataBR(item.data_revisao)}</td>
+                    <td><span class="chip-placa">${item.placa || 'SEM-PLACA'}</span></td>
+                    <td>${item.evento || '-'}</td>
+                    <td>${item.os || '-'}</td>
+                    <td>${item.revisao ? item.revisao + 'ª Revisão' : '-'}</td>
+                    <td>${tagStatus}</td>
+                    <td class="col-direita valor-celula-destaque">R$ ${v.toFixed(2).replace('.', ',')}</td>
+                `;
+                corpoTabela.appendChild(tr);
+            });
+        }
 
-            if (item.status === 'compareceu') {
-                totalComparecidas++;
-                somaBonusRealizado += valorUnitario;
-                somaBonusPrevisto += valorUnitario;
-            } else if (item.status === 'pendente') {
-                somaBonusPrevisto += valorUnitario;
-            }
-
-            let classeTag = 'tag-pendente';
-            let textoValor = `Prev. R$ ${valorUnitario.toFixed(2).replace('.', ',')}`;
-            let classeSuave = 'texto-suave';
-
-            if (item.status === 'compareceu') {
-                classeTag = 'tag-compareceu';
-                textoValor = `R$ ${valorUnitario.toFixed(2).replace('.', ',')}`;
-                classeSuave = '';
-            } else if (item.status === 'faltou') {
-                classeTag = 'tag-faltou';
-                textoValor = 'R$ 0,00';
-            }
-
-            // Coluna com o e-mail/nome do usuário para Admin
-            const colunaAdmin = isAdmin ? `
-                <td style="font-size: 12px; color: var(--texto-secundario);">
-                    <strong style="color: var(--texto-principal);">${item.autor_nome || 'Consultor'}</strong><br>
-                    <span style="font-size: 11px; opacity: 0.8;">${item.autor_email || '-'}</span>
-                </td>
-            ` : '';
-
-            const tr = document.createElement('tr');
-            tr.dataset.id = item.id;
-            tr.innerHTML = `
-                ${colunaAdmin}
-                <td>${formatarDataBR(item.data_contato)}</td>
-                <td><input type="date" class="input-data-tabela" value="${item.data_revisao}"></td>
-                <td><span class="chip-placa">${item.placa}</span></td>
-                <td>${item.evento}</td>
-                <td>${item.os}</td>
-                <td>${item.revisao}ª Revisão</td>
-                <td>
-                    <select class="select-status-tabela ${classeTag}">
-                        <option value="pendente" ${item.status === 'pendente' ? 'selected' : ''}>Pendente</option>
-                        <option value="compareceu" ${item.status === 'compareceu' ? 'selected' : ''}>Compareceu</option>
-                        <option value="faltou" ${item.status === 'faltou' ? 'selected' : ''}>Não Compareceu</option>
-                    </select>
-                </td>
-                <td class="valor-tabela ${classeSuave}">${textoValor}</td>
-                <td style="text-align: center;">
-                    <button class="btn-excluir-linha" title="Excluir agendamento">🗑️</button>
-                </td>
-            `;
-
-            corpoTabela.appendChild(tr);
-        });
-
-        // Atualização dos cartões 
-        if (valorConfirmadoEl) valorConfirmadoEl.textContent = `R$ ${somaBonusRealizado.toFixed(2).replace('.', ',')}`;
-        if (valorPrevistoEl) valorPrevistoEl.textContent = `R$ ${somaBonusPrevisto.toFixed(2).replace('.', ',')}`;
-        if (detalheConfirmadoEl) detalheConfirmadoEl.textContent = `${totalComparecidas} revisões comparecidas`;
-        if (contadorRegistros) contadorRegistros.textContent = `${agendamentosDoMes.length} registos neste mês`;
+        // Atualiza a barra informativa de paginação
+        if (infoPaginacao) {
+            infoPaginacao.textContent = total > 0 ? `Mostrando ${inicio + 1}–${fim} de ${total} agendamentos` : '0 agendamentos';
+        }
+        if (numPaginaAtualEl) {
+            numPaginaAtualEl.textContent = `${paginaAtual} de ${totalPaginas}`;
+        }
+        if (btnPagAnt) btnPagAnt.disabled = (paginaAtual <= 1);
+        if (btnPagProx) btnPagProx.disabled = (paginaAtual >= totalPaginas);
     }
 
-    // Gravar novo agendamento no Supabase
-    formulario.addEventListener('submit', async function(evento) {
-        evento.preventDefault();
-
-        const dataContato = document.getElementById('data-contato').value;
-        const dataRevisao = document.getElementById('data-revisao').value;
-        const placa = document.getElementById('placa').value.toUpperCase().trim();
-        const eventoNum = document.getElementById('evento').value.trim();
-        const osNum = document.getElementById('os').value.trim();
-        const revisaoNum = document.getElementById('revisao').value;
-        const statusInicial = document.getElementById('status').value;
-
-        const { error } = await supabaseClient
-            .from('agendamentos')
-            .insert([{
-                user_id: usuarioAtual.id,
-                data_contato: dataContato,
-                data_revisao: dataRevisao,
-                placa: placa,
-                evento: eventoNum,
-                os: osNum,
-                revisao: revisaoNum,
-                status: statusInicial,
-                valor_unitario: obterValorPorRevisao(revisaoNum)
-            }]);
-
-        if (error) {
-            alert('Erro ao gravar no Supabase: ' + error.message);
-            return;
-        }
-
-        const mesRevisao = dataRevisao.substring(0, 7);
-        if (filtroMes && filtroMes.value !== mesRevisao) {
-            filtroMes.value = mesRevisao;
-        }
-
-        formulario.reset();
-        if (inputDataContato) {
-            inputDataContato.value = `${anoAtual}-${mesAtual}-${diaAtual}`;
-        }
-
-        await renderizarTabela();
-    });
-
-    // Alterar dados em tempo real
-    corpoTabela.addEventListener('change', async function(evento) {
-        const linha = evento.target.closest('tr');
-        if (!linha) return;
-        const id = linha.dataset.id;
-
-        if (evento.target.classList.contains('select-status-tabela')) {
-            const novoStatus = evento.target.value;
-            await supabaseClient
-                .from('agendamentos')
-                .update({ status: novoStatus })
-                .eq('id', id);
-            await renderizarTabela();
-        }
-
-        if (evento.target.classList.contains('input-data-tabela')) {
-            const novaData = evento.target.value;
-            await supabaseClient
-                .from('agendamentos')
-                .update({ data_revisao: novaData })
-                .eq('id', id);
-            await renderizarTabela();
+    // 12. EVENT LISTENERS:
+    btnPagAnt?.addEventListener('click', () => {
+        if (paginaAtual > 1) {
+            paginaAtual--;
+            renderizarTabelaPaginada();
         }
     });
 
-    // Excluir agendamento
-    corpoTabela.addEventListener('click', async function(evento) {
-        const btnExcluir = evento.target.closest('.btn-excluir-linha');
-        if (!btnExcluir) return;
-
-        const linha = btnExcluir.closest('tr');
-        const id = linha.dataset.id;
-
-        const confirmou = confirm('Tem a certeza de que deseja eliminar este agendamento?');
-        if (!confirmou) return;
-
-        const { error } = await supabaseClient
-            .from('agendamentos')
-            .delete()
-            .eq('id', id);
-
-        if (error) {
-            alert('Erro ao eliminar: ' + error.message);
-            return;
+    btnPagProx?.addEventListener('click', () => {
+        const totalPaginas = Math.ceil(agendamentosFiltrados.length / itensPorPagina);
+        if (paginaAtual < totalPaginas) {
+            paginaAtual++;
+            renderizarTabelaPaginada();
         }
-
-        await renderizarTabela();
     });
 
-    // Seletor de mês
-    if (filtroMes) {
-        filtroMes.addEventListener('change', renderizarTabela);
-    }
+    filtroMes?.addEventListener('change', carregarAgendamentos);
+    filtroBusca?.addEventListener('input', () => {
+        paginaAtual = 1;
+        aplicarFiltrosEAtualizar();
+    });
 
-    // Inicialização da tabela
-    await renderizarTabela();
+    // Início da execução
+    await carregarAgendamentos();
 });

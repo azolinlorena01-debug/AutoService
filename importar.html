@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Bônus - Importar e Exportar</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css">
+    <!-- Estilização mantida internamente conforme sua solicitação -->
+    <style>
+        .painel-duplo {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 24px;
+            max-width: 900px;
+            margin: 40px auto;
+        }
+        .import-wrapper {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .import-header {
+            margin-bottom: 20px;
+        }
+        .import-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 6px 0;
+        }
+        .import-header p {
+            font-size: 13px;
+            color: #64748b;
+            margin: 0;
+        }
+        .grupo-campo {
+            margin-bottom: 18px;
+        }
+        .grupo-campo label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .custom-file-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            background: #f8fafc;
+            box-sizing: border-box;
+            font-size: 13px;
+            color: #334155;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+        .custom-file-input:hover {
+            border-color: #2563eb;
+        }
+        .custom-select {
+            width: 100%;
+            height: 42px;
+            padding: 0 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: #ffffff;
+            font-size: 14px;
+            color: #1e293b;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .btn-enviar-dados {
+            width: 100%;
+            height: 44px;
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .btn-enviar-dados:hover {
+            background: #1d4ed8;
+        }
+        .btn-enviar-dados:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+        .btn-secundario-acao {
+            width: 100%;
+            height: 44px;
+            background: #ffffff;
+            color: #1e293b;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 12px;
+        }
+        .btn-secundario-acao:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+        }
+        .status-box {
+            margin-top: 20px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #334155;
+            max-height: 180px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Cabeçalho -->
+        <header class="cabecalho-principal">
+            <div class="logo-area">
+                <h1>Painel de Bônus</h1>
+                <span class="subtitulo-toyota">AutoService</span>
+            </div>
+            <nav class="navegacao-menu">
+                <div class="links-paginas">
+                    <a href="index.html" class="link-nav">Agendamentos</a>
+                    <a href="relatorios.html" class="link-nav">Relatórios & Gráficos</a>
+                    <a href="importar.html" class="link-nav ativo">Importar / Exportar</a>
+                </div>
+            </nav>
+        </header>
+
+        <main>
+            <div class="painel-duplo">
+                <!-- Caixa 1: Importar Planilha -->
+                <div class="import-wrapper">
+                    <div>
+                        <div class="import-header">
+                            <h2>Importar Planilha CSV</h2>
+                            <p>Envie novos agendamentos da planilha para o banco de dados.</p>
+                        </div>
+
+                        <div class="grupo-campo">
+                            <label for="arquivoCsv">Arquivo CSV do Mês</label>
+                            <input type="file" id="arquivoCsv" class="custom-file-input" accept=".csv">
+                        </div>
+
+                        <div class="grupo-campo">
+                            <label for="mesRef">Mês de Referência</label>
+                            <select id="mesRef" class="custom-select">
+                                <option value="01">Janeiro (01/2026)</option>
+                                <option value="02">Fevereiro (02/2026)</option>
+                                <option value="03">Março (03/2026)</option>
+                                <option value="04">Abril (04/2026)</option>
+                                <option value="05">Maio (05/2026)</option>
+                                <option value="06">Junho (06/2026)</option>
+                                <option value="07">Julho (07/2026)</option>
+                                <option value="08">Agosto (08/2026)</option>
+                                <option value="09">Setembro (09/2026)</option>
+                                <option value="10" selected>Outubro (10/2026)</option>
+                                <option value="11">Novembro (11/2026)</option>
+                                <option value="12">Dezembro (12/2026)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button type="button" id="btnEnviar" class="btn-enviar-dados">
+                            Fazer Upload dos Agendamentos
+                        </button>
+                        <div id="log" class="status-box">Aguardando arquivo para importação...</div>
+                    </div>
+                </div>
+
+                <!-- Caixa 2: Exportar Dados -->
+                <div class="import-wrapper">
+                    <div>
+                        <div class="import-header">
+                            <h2>Exportar Dados</h2>
+                            <p>Guarde o seu relatório mensal ou baixe os dados da equipe.</p>
+                        </div>
+
+                        <div class="grupo-campo">
+                            <label for="mesExport">Mês para Exportação</label>
+                            <select id="mesExport" class="custom-select">
+                                <option value="01">Janeiro (01/2026)</option>
+                                <option value="02">Fevereiro (02/2026)</option>
+                                <option value="03">Março (03/2026)</option>
+                                <option value="04">Abril (04/2026)</option>
+                                <option value="05">Maio (05/2026)</option>
+                                <option value="06">Junho (06/2026)</option>
+                                <option value="07">Julho (07/2026)</option>
+                                <option value="08">Agosto (08/2026)</option>
+                                <option value="09">Setembro (09/2026)</option>
+                                <option value="10" selected>Outubro (10/2026)</option>
+                                <option value="11">Novembro (11/2026)</option>
+                                <option value="12">Dezembro (12/2026)</option>
+                            </select>
+                        </div>
+
+                        <div class="grupo-campo">
+                            <label for="equipeExport">Filtrar por Equipe</label>
+                            <select id="equipeExport" class="custom-select">
+                                <option value="todas">Todas as Equipes</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 24px;">
+                        <button type="button" id="btnExportarCsv" class="btn-secundario-acao">
+                            Exportar Planilha (Excel/CSV)
+                        </button>
+                        <button type="button" id="btnIrParaPdf" class="btn-secundario-acao">
+                            Ver e Gerar Relatório (PDF)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Script de Processamento e Tratamento de Datas -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const SUPABASE_URL = 'https://potvtrepcoswvzmkewic.supabase.co';
+            const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
+            const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+            // Verificação de permissão: Apenas o Administrador pode usar este painel
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session || !session.user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const { data: perfil } = await supabaseClient
+                .from('perfis')
+                .select('role')
+                .eq('id', session.user.id)
+                .maybeSingle();
+
+            if (!perfil || perfil.role !== 'admin') {
+                alert('Acesso restrito! Apenas Administradores podem acessar esta página.');
+                window.location.href = 'relatorios.html';
+                return;
+            }
+
+            const USER_ID = session.user.id;
+            const input = document.getElementById('arquivoCsv');
+            const mesSelect = document.getElementById('mesRef');
+            const btn = document.getElementById('btnEnviar');
+            const logBox = document.getElementById('log');
+
+            const mesExport = document.getElementById('mesExport');
+            const equipeExport = document.getElementById('equipeExport');
+            const btnExportarCsv = document.getElementById('btnExportarCsv');
+            const btnIrParaPdf = document.getElementById('btnIrParaPdf');
+
+            // Carrega equipes disponíveis para filtro de exportação
+            try {
+                const { data: perfis } = await supabaseClient.from('perfis').select('equipe');
+                const listaEquipes = new Set();
+                (perfis || []).forEach(p => {
+                    if (p.equipe && p.equipe.trim().length > 0) listaEquipes.add(p.equipe.trim());
+                });
+                ['Pós-Venda', 'Equipe Alfa', 'Equipe Beta'].forEach(e => listaEquipes.add(e));
+                [...listaEquipes].sort().forEach(eq => {
+                    const opt = document.createElement('option');
+                    opt.value = eq;
+                    opt.textContent = eq;
+                    equipeExport.appendChild(opt);
+                });
+            } catch (e) {
+                console.warn(e);
+            }
+
+            function log(msg) {
+                logBox.innerText += '\n' + msg;
+                logBox.scrollTop = logBox.scrollHeight;
+            }
+
+            // REGRA DE BÔNUS POR TIPO DE REVISÃO
+            function calcularValorPorRevisao(revisao) {
+                const r = parseInt(revisao, 10);
+                if (isNaN(r) || r <= 4) return 2.00; // 1ª a 4ª = R$ 2,00
+                else if (r === 5) return 6.00;       // 5ª = R$ 6,00
+                else return 10.00;                  // 6ª em diante = R$ 10,00
+            }
+
+            // TRATAMENTO DE DATAS (Resolve erros como 31/09 limitando ao calendário real)
+            function formatarData(dataStr, mesFallback) {
+                if (!dataStr || dataStr.trim() === '' || dataStr.trim() === '.') return null;
+                const partes = dataStr.trim().split('/');
+                if (partes.length < 2) return null;
+
+                let dia = parseInt(partes[0], 10);
+                let mes = parseInt(partes[1], 10);
+                let ano = partes.length >= 3 ? parseInt(partes[2], 10) : 2026;
+
+                if (isNaN(dia) || isNaN(mes)) return null;
+                if (isNaN(ano)) ano = 2026;
+                if (ano < 100) ano += 2000;
+                if (mes < 1) mes = 1;
+                if (mes > 12) mes = 12;
+
+                const diasPorMes = [31, (ano % 4 === 0 ? 29 : 28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+                const maxDia = diasPorMes[mes - 1];
+                if (dia > maxDia) dia = maxDia; // Se for 31/09, corrige automaticamente para 30/09
+                if (dia < 1) dia = 1;
+
+                return `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+            }
+
+            // LEITURA DO ARQUIVO CSV E INSERÇÃO NO SUPABASE
+            btn.addEventListener('click', async function() {
+                try {
+                    if (!input.files || input.files.length === 0) {
+                        alert('Selecione o arquivo CSV primeiro!');
+                        return;
+                    }
+
+                    const mesPadrao = mesSelect.value;
+                    const file = input.files[0];
+
+                    btn.disabled = true;
+                    btn.innerText = 'Processando...';
+                    logBox.innerText = `Iniciando leitura de ${file.name}...`;
+
+                    const reader = new FileReader();
+                    reader.onload = async function(e) {
+                        try {
+                            const texto = e.target.result;
+                            const linhas = texto.split(/\r?\n/).filter(l => l.trim().length > 0);
+                            if (linhas.length < 2) {
+                                log('Arquivo vazio ou sem dados suficientes.');
+                                btn.disabled = false;
+                                btn.innerText = 'Fazer Upload dos Agendamentos';
+                                return;
+                            }
+
+                            // Mapeamento dinâmico das colunas pelo cabeçalho
+                            const cabecalho = linhas[0].split(',').map(c => c.trim().toLowerCase());
+                            const idxContato = cabecalho.findIndex(c => c.includes('data que agendei') || c.includes('contato'));
+                            const idxRevisao = cabecalho.findIndex(c => c.includes('data do agendamento') || c.includes('revisao'));
+                            const idxStatus = cabecalho.findIndex(c => c.includes('compareceu'));
+                            const idxPlaca = cabecalho.findIndex(c => c.includes('placa'));
+                            const idxEvento = cabecalho.findIndex(c => c.includes('evento'));
+                            const idxOs = cabecalho.findIndex(c => c.includes('os'));
+                            const idxRevisaoNum = cabecalho.findIndex(c => c.includes('revisão') || c.includes('revisao'));
+
+                            const registros = [];
+                            for (let i = 1; i < linhas.length; i++) {
+                                const cols = linhas[i].split(',');
+                                if (cols.length < 3) continue;
+
+                                const strContato = idxContato !== -1 ? cols[idxContato] : cols[0];
+                                let dataContato = formatarData(strContato, mesPadrao);
+
+                                const strRevisao = idxRevisao !== -1 ? cols[idxRevisao] : cols[7];
+                                let dataRevisao = formatarData(strRevisao, mesPadrao);
+
+                                if (!dataContato && dataRevisao) dataContato = dataRevisao;
+                                if (!dataRevisao && dataContato) dataRevisao = dataContato;
+
+                                const statusRaw = (idxStatus !== -1 ? cols[idxStatus] : (cols[9] || '')).toUpperCase().trim();
+                                let status = 'pendente';
+                                if (statusRaw.includes('COMPARECEU') && !statusRaw.includes('NÃO')) status = 'compareceu';
+                                else if (statusRaw.includes('NÃO') || statusRaw.includes('FALTOU')) status = 'faltou';
+
+                                let placaEncontrada = '';
+                                if (idxPlaca !== -1 && cols[idxPlaca]) placaEncontrada = cols[idxPlaca].trim();
+                                else if (cols[3] && cols[3].trim().length >= 7) placaEncontrada = cols[3].trim();
+                                else if (cols[2] && cols[2].trim().length >= 7 && cols[2].trim().length <= 8) placaEncontrada = cols[2].trim();
+                                if (!placaEncontrada || placaEncontrada === '.' || placaEncontrada.length < 3) placaEncontrada = 'SEM-PLACA';
+
+                                let eventoEncontrado = '';
+                                if (idxEvento !== -1 && cols[idxEvento]) eventoEncontrado = cols[idxEvento].trim();
+                                else if (cols[5]) eventoEncontrado = cols[5].trim();
+                                if (!eventoEncontrado || eventoEncontrado === '.') eventoEncontrado = 'SEM-EVENTO';
+
+                                let osEncontrada = '';
+                                if (idxOs !== -1 && cols[idxOs]) osEncontrada = cols[idxOs].trim();
+                                else if (cols[6]) osEncontrada = cols[6].trim();
+                                if (!osEncontrada || osEncontrada === '.') osEncontrada = 'SEM-OS';
+
+                                let numRevisao = 1;
+                                const strRev = idxRevisaoNum !== -1 ? cols[idxRevisaoNum] : cols[4];
+                                if (strRev && !isNaN(parseInt(strRev, 10))) numRevisao = parseInt(strRev, 10);
+
+                                const valorDestaLinha = calcularValorPorRevisao(numRevisao);
+
+                                if (dataRevisao && dataContato) {
+                                    registros.push({
+                                        user_id: USER_ID,
+                                        data_contato: dataContato,
+                                        data_revisao: dataRevisao,
+                                        status: status,
+                                        placa: placaEncontrada.toUpperCase(),
+                                        evento: eventoEncontrado,
+                                        os: osEncontrada,
+                                        revisao: numRevisao,
+                                        valor_unitario: valorDestaLinha
+                                    });
+                                }
+                            }
+
+                            log(`Foram identificados ${registros.length} registros válidos.`);
+                            log('Enviando dados para o Supabase...');
+
+                            const { data, error } = await supabaseClient.from('agendamentos').insert(registros);
+                            if (error) {
+                                log(`❌ Erro: ${error.message}`);
+                            } else {
+                                log(`✅ SUCESSO! Todos os ${registros.length} agendamentos foram salvos com sucesso!`);
+                            }
+                        } catch (err) {
+                            log(`❌ Erro no processamento: ${err.message}`);
+                        } finally {
+                            btn.disabled = false;
+                            btn.innerText = 'Fazer Upload dos Agendamentos';
+                        }
+                    };
+                    reader.readAsText(file, 'UTF-8');
+                } catch (e) {
+                    log(`❌ Erro: ${e.message}`);
+                    btn.disabled = false;
+                    btn.innerText = 'Fazer Upload dos Agendamentos';
+                }
+            });
+
+            // EXPORTAÇÃO DE PLANILHA CSV/EXCEL
+            btnExportarCsv.addEventListener('click', async function() {
+                const mes = mesExport.value;
+                const equipe = equipeExport.value;
+                const periodoAnoMes = `2026-${mes}`;
+
+                btnExportarCsv.disabled = true;
+                btnExportarCsv.innerText = 'Baixando registros...';
+
+                try {
+                    let query = supabaseClient.from('vw_agendamentos_completos').select('*');
+                    if (equipe !== 'todas') query = query.eq('autor_equipe', equipe);
+
+                    const { data, error } = await query.order('data_revisao', { ascending: true });
+                    if (error) throw error;
+
+                    const filtrados = (data || []).filter(item => item.data_revisao && item.data_revisao.startsWith(periodoAnoMes));
+
+                    if (filtrados.length === 0) {
+                        alert(`Nenhum registro encontrado para o mês ${mes}/2026 nesta seleção.`);
+                        return;
+                    }
+
+                    const cabecalho = ['Operador', 'Equipe', 'Data Contato', 'Data Revisao', 'Status', 'Placa', 'Revisao', 'Evento', 'OS', 'Valor Unitario'];
+                    const linhasCsv = [cabecalho.join(';')];
+
+                    filtrados.forEach(item => {
+                        const linha = [
+                            `"${(item.autor_nome || 'Operador').replace(/"/g, '""')}"`,
+                            `"${(item.autor_equipe || 'Geral').replace(/"/g, '""')}"`,
+                            item.data_contato || '',
+                            item.data_revisao || '',
+                            item.status || '',
+                            item.placa || '',
+                            item.revisao || '',
+                            item.evento || '',
+                            item.os || '',
+                            (parseFloat(item.valor_unitario) || 0).toFixed(2).replace('.', ',')
+                        ];
+                        linhasCsv.push(linha.join(';'));
+                    });
+
+                    // Criação do arquivo Blob com suporte a caracteres acentuados (UTF-8 BOM)
+                    const conteudoCsv = '\uFEFF' + linhasCsv.join('\r\n');
+                    const blob = new Blob([conteudoCsv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.setAttribute('download', `Relatorio_Agendamentos_${periodoAnoMes}_${equipe}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                } catch (err) {
+                    alert('Erro ao exportar dados: ' + err.message);
+                } finally {
+                    btnExportarCsv.disabled = false;
+                    btnExportarCsv.innerText = 'Exportar Planilha (Excel/CSV)';
+                }
+            });
+
+            // REDIRECIONAMENTO COM PARÂMETRO PARA DISPARO AUTOMÁTICO DO PDF
+            btnIrParaPdf.addEventListener('click', function() {
+                const mes = mesExport.value;
+                const equipe = encodeURIComponent(equipeExport.value);
+                window.location.href = `relatorios.html?mes=2026-${mes}&equipe=${equipe}&imprimir=true`;
+            });
+        });
+    </script>
+</body>
+</html>
