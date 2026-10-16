@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Bônus - Importar e Exportar</title>
+    <!-- Bibliotecas: Supabase e Leitor de Excel/XLSX (SheetJS) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
         .painel-duplo {
@@ -125,7 +127,7 @@
             font-size: 12px;
             line-height: 1.5;
             color: #334155;
-            height: 110px;
+            height: 165px;
             overflow-y: auto;
             white-space: pre-wrap;
             font-family: monospace;
@@ -159,24 +161,24 @@
                 <div class="links-paginas">
                     <a href="index.html" class="link-nav">Agendamentos</a>
                     <a href="relatorios.html" class="link-nav">Relatórios & Gráficos</a>
-                    <a href="importar.html" class="link-nav ativo">Importar / Exportar</a>
+                    <a href="importar.html" id="link-menu-importar" class="link-nav ativo">Importar / Exportar</a>
                 </div>
             </nav>
         </header>
 
         <main>
             <div class="painel-duplo">
-                <!-- Caixa 1: Importar Planilha -->
+                <!-- Caixa 1: Importar Planilha do Dealer -->
                 <div class="import-wrapper">
                     <div>
                         <div class="import-header">
-                            <h2>Importar Planilha CSV</h2>
+                            <h2>Importar Planilha do Dealer</h2>
                             <p>Envie novos agendamentos da planilha para o banco de dados.</p>
                         </div>
 
                         <div class="grupo-campo">
-                            <label for="arquivoCsv">Arquivo CSV do Mês</label>
-                            <input type="file" id="arquivoCsv" class="custom-file-input" accept=".csv, .txt">
+                            <label for="arquivoPlanilha">Arquivo do Mês (.xlsx ou .csv)</label>
+                            <input type="file" id="arquivoPlanilha" class="custom-file-input" accept=".xlsx, .xls, .csv, .txt">
                         </div>
 
                         <div class="grupo-campo">
@@ -200,7 +202,13 @@
                         <div class="grupo-campo">
                             <label for="consultorDestino">Atribuir agendamentos a:</label>
                             <select id="consultorDestino" class="custom-select">
-                                <option value="auto">Automático</option>
+                                <option value="auto">Automático (Filtra Equipe Toyota)</option>
+                                <option value="70b40aa8-8b9c-4219-acd1-3f16647558fa">Alany Benato</option>
+                                <option value="58267673-516d-4b01-9d27-c60a8a6c39b6">Allana Thaina</option>
+                                <option value="61218e37-acdb-4e75-bc86-8a71e183bf17">Ana Lucia</option>
+                                <option value="45ac2ad5-cce7-4d0a-9cf8-58c2a5690777">Cristiane da Silva</option>
+                                <option value="b3bc63cd-c783-482d-a2d8-c978bbd32703">Lorena Mendes</option>
+                                <option value="b5167b50-fe5e-429f-b2fe-7bf861190f30">Nicoly Moreira</option>
                             </select>
                         </div>
                     </div>
@@ -297,7 +305,7 @@
                 return;
             }
 
-            const input = document.getElementById('arquivoCsv');
+            const input = document.getElementById('arquivoPlanilha');
             const mesSelect = document.getElementById('mesRef');
             const consultorDestinoSelect = document.getElementById('consultorDestino');
             const btn = document.getElementById('btnEnviar');
@@ -319,94 +327,133 @@
                 else return 10.00; 
             }
 
-            let consultorasMap = [];
-            async function carregarConsultorasCadastradas() {
-                try {
-                    const { data } = await supabaseClient.from('perfis').select('id, nome, role').order('nome', { ascending: true });
-                    consultorasMap = (data || []).map(p => ({
-                        id: p.id,
-                        nome: (p.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase().trim(),
-                        nomeOriginal: p.nome || 'Sem Nome',
-                        role: p.role
-                    }));
-
-                    consultorDestinoSelect.innerHTML = '<option value="auto">Automático</option>';
-                    consultorasMap.forEach(c => {
-                        const opt = document.createElement('option');
-                        opt.value = c.id;
-                        opt.textContent = `${c.nomeOriginal} ${c.role === 'admin' ? '(Admin)' : ''}`;
-                        consultorDestinoSelect.appendChild(opt);
-                    });
-                } catch (e) {
-                    console.warn('Erro ao carregar usuários:', e);
+            // MAPEAMENTO COM OS UIDS EXATOS DAS 6 INTEGRANTES
+            const EQUIPE_TOYOTA = [
+                {
+                    id: '45ac2ad5-cce7-4d0a-9cf8-58c2a5690777',
+                    nome: 'Cristiane da Silva',
+                    match: (txt) => txt.includes('CRISTIANE') || txt.includes('CRISTIAN')
+                },
+                {
+                    id: 'b5167b50-fe5e-429f-b2fe-7bf861190f30',
+                    nome: 'Nicoly Moreira',
+                    match: (txt) => txt.includes('NICOLY') || txt.includes('SANGA')
+                },
+                {
+                    id: '61218e37-acdb-4e75-bc86-8a71e183bf17',
+                    nome: 'Ana Lucia',
+                    match: (txt) => txt.includes('ANA LUCIA') || txt.includes('BUGALA')
+                },
+                {
+                    id: 'b3bc63cd-c783-482d-a2d8-c978bbd32703',
+                    nome: 'Lorena Mendes',
+                    match: (txt) => txt.includes('LORENA') || txt.includes('AZOLIN')
+                },
+                {
+                    id: '70b40aa8-8b9c-4219-acd1-3f16647558fa',
+                    nome: 'Alany Benato',
+                    match: (txt) => txt.includes('ALANY') || txt.includes('BENATO') || txt.includes('WEIGERT')
+                },
+                {
+                    id: '58267673-516d-4b01-9d27-c60a8a6c39b6',
+                    nome: 'Allana Thaina',
+                    match: (txt) => txt.includes('ALLANA') || txt.includes('THAINA') || txt.includes('VAZ')
                 }
-            }
+            ];
 
-            function identificarDonoAgendamento(textoLinha) {
-                if (!textoLinha) return USER_ID;
-                const txt = textoLinha.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase();
+            function obterConsultoraPorAgendador(nomeAgendador) {
+                if (!nomeAgendador) return null;
+                const txt = String(nomeAgendador).normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
 
-                const regrasEquipe = [
-                    { regex: /NICOL/i,      idFiltro: c => c.nome.includes('NICOL') },
-                    { regex: /ALLANA/i,     idFiltro: c => c.nome.includes('ALLANA') },
-                    { regex: /ALAN/i,       idFiltro: c => (c.nome.includes('ALAN') && !c.nome.includes('ALLANA')) }, 
-                    { regex: /CRISTIAN/i,   idFiltro: c => c.nome.includes('CRISTIAN') || c.nome.includes('CHRISTIAN') },
-                    { regex: /\bANA\b/i,    idFiltro: c => c.nome.includes('ANA') && !c.nome.includes('ALLANA') && !c.nome.includes('ALAN') },
-                    { regex: /LORENA/i,     idFiltro: c => c.nome.includes('LORENA') }
-                ];
-
-                for (const regra of regrasEquipe) {
-                    if (regra.regex.test(txt)) {
-                        const perfilEncontrado = consultorasMap.find(regra.idFiltro);
-                        if (perfilEncontrado) return perfilEncontrado.id;
+                for (const consultora of EQUIPE_TOYOTA) {
+                    if (consultora.match(txt)) {
+                        return { id: consultora.id, nome: consultora.nome };
                     }
                 }
-                return USER_ID; 
+                return null;
             }
 
-            function formatarData(dataStr, anoPadrao) {
-                if (!dataStr) return null;
-                const partes = dataStr.trim().split('/');
-                if (partes.length < 2) return null;
+            function formatarDataSemHorario(valorData, anoPadrao) {
+                if (!valorData) return null;
 
-                let dia = parseInt(partes[0], 10);
-                let mes = parseInt(partes[1], 10);
-                let ano = partes.length >= 3 ? parseInt(partes[2], 10) : anoPadrao;
+                if (valorData instanceof Date) {
+                    const y = valorData.getFullYear();
+                    const m = String(valorData.getMonth() + 1).padStart(2, '0');
+                    const d = String(valorData.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${d}`;
+                }
 
-                if (isNaN(dia) || isNaN(mes)) return null;
-                if (isNaN(ano)) ano = anoPadrao;
-                if (ano < 100) ano += 2000;
+                if (typeof valorData === 'number') {
+                    const dateObj = new Date(Math.round((valorData - 25569) * 86400 * 1000));
+                    const y = dateObj.getUTCFullYear();
+                    const m = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+                    const d = String(dateObj.getUTCDate()).padStart(2, '0');
+                    return `${y}-${m}-${d}`;
+                }
 
-                const diasPorMes = [31, (ano % 4 === 0 ? 29 : 28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-                const maxDia = diasPorMes[mes - 1] || 31;
-                if (dia > maxDia) dia = maxDia;
-                if (dia < 1) dia = 1;
+                const str = String(valorData).trim();
+                const matchData = str.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/);
+                if (matchData) {
+                    let d = parseInt(matchData[1], 10);
+                    let m = parseInt(matchData[2], 10);
+                    let y = parseInt(matchData[3], 10);
+                    if (y < 100) y += 2000;
+                    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                }
 
-                return `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+                return null;
             }
 
-            function extrairNumeroRevisao(textoLinha) {
-                const matchRevisao = textoLinha.match(/\b(\d{1,2})\s*(?:ª|º)?\s*REV/i);
-                if (matchRevisao) return parseInt(matchRevisao[1], 10);
+            // FUNÇÃO: IDENTIFICA TODAS AS REVISÕES E IGNORA APENAS FACILITADA E AVULSOS
+            function extrairNumeroRevisaoTMO(tmoTexto) {
+                if (!tmoTexto) return null;
+                
+                const txt = String(tmoTexto).normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
 
-                if (textoLinha.includes('10000') || textoLinha.includes('10.000')) return 1;
-                if (textoLinha.includes('20000') || textoLinha.includes('20.000')) return 2;
-                if (textoLinha.includes('30000') || textoLinha.includes('30.000')) return 3;
-                if (textoLinha.includes('40000') || textoLinha.includes('40.000')) return 4;
-                if (textoLinha.includes('50000') || textoLinha.includes('50.000')) return 5;
-                if (textoLinha.includes('60000') || textoLinha.includes('60.000')) return 6;
-                if (textoLinha.includes('70000') || textoLinha.includes('70.000')) return 7;
-                if (textoLinha.includes('80000') || textoLinha.includes('80.000')) return 8;
+                const ignorados = [
+                    'FACILITADA', 'FACILITADO',
+                    'T-SERVICE', 'TSERVICE', 
+                    'BAL', 'GEO', 'LAVAGEM', 'PECA', 
+                    'FUNILARIA', 'PINTURA', 'ACESSORIO'
+                ];
+                for (const ign of ignorados) {
+                    if (txt.includes(ign)) return null;
+                }
+
+                if (!txt.includes('REVIS') && !txt.includes('CSP')) {
+                    return null;
+                }
+
+                const porExtenso = {
+                    'PRIMEIR': 1, 'SEGUND': 2, 'TERCEIR': 3, 'QUART': 4,
+                    'QUINT': 5, 'SEXT': 6, 'SETIM': 7, 'OITAV': 8,
+                    'NON': 9, 'DECIM': 10, 'VIGESIM': 20
+                };
+                for (const [chave, num] of Object.entries(porExtenso)) {
+                    if (txt.includes(chave)) return num;
+                }
+
+                const matchesNumeros = txt.match(/\b0*(\d{1,2})\b/g);
+                if (matchesNumeros) {
+                    for (const numStr of matchesNumeros) {
+                        const n = parseInt(numStr, 10);
+                        if (n >= 1 && n <= 50) return n;
+                    }
+                }
+
+                const matchKm = txt.match(/(\d{1,3})\.?000\s*KM/i);
+                if (matchKm) {
+                    const milhar = parseInt(matchKm[1], 10);
+                    return Math.max(1, Math.round(milhar / 10));
+                }
 
                 return 1;
             }
 
-            await carregarConsultorasCadastradas();
-
             btn.addEventListener('click', async function() {
                 try {
                     if (!input.files || input.files.length === 0) {
-                        alert('Selecione o arquivo CSV primeiro!');
+                        alert('Selecione a planilha Excel ou CSV primeiro!');
                         return;
                     }
 
@@ -417,106 +464,167 @@
                     btn.disabled = true;
                     btn.innerText = 'Processando...';
 
-                    log(`Limpando base de dados para o mês ${mesPadrao}/2026...`);
+                    // DATA DE HOJE NO FORMATO YYYY-MM-DD PARA COMPARAÇÃO INTELIGENTE DE STATUS
+                    const agora = new Date();
+                    const hojeAno = agora.getFullYear();
+                    const hojeMes = String(agora.getMonth() + 1).padStart(2, '0');
+                    const hojeDia = String(agora.getDate()).padStart(2, '0');
+                    const dataHojeISO = `${hojeAno}-${hojeMes}-${hojeDia}`;
+
+                    log(`Limpando agendamentos antigos para o mês ${mesPadrao}/2026...`);
                     await supabaseClient.from('agendamentos')
                         .delete()
                         .gte('data_revisao', `2026-${mesPadrao}-01`)
                         .lte('data_revisao', `2026-${mesPadrao}-31`);
 
-                    log(`Lendo arquivo ${file.name}...`);
+                    log(`Lendo arquivo: ${file.name}...`);
+                    log(`Data base de apuração: ${hojeDia}/${hojeMes}/${hojeAno}`);
 
                     const reader = new FileReader();
+
                     reader.onload = async function(e) {
                         try {
-                            const texto = e.target.result;
-                            const linhas = texto.split(/\r?\n/);
+                            const data = new Uint8Array(e.target.result);
+                            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                            
+                            const firstSheetName = workbook.SheetNames[0];
+                            const worksheet = workbook.Sheets[firstSheetName];
+
+                            const linhasMatriz = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+
+                            if (linhasMatriz.length < 2) {
+                                log('❌ Planilha vazia ou sem linhas de dados.');
+                                return;
+                            }
+
+                            // Índices padrão
+                            let colDataRevisao = 1; // Coluna B
+                            let colDataContato = 2; // Coluna C
+                            let colPlaca = 8;       // Coluna I (índice 8)
+                            let colChassi = 9;      // Coluna J (índice 9)
+                            let colTMO = 12;        // Coluna M (índice 12)
+                            let colAgendador = 15;  // Coluna P (índice 15)
+                            let colOS = 18;         // Coluna S (índice 18)
+
+                            const cabecalho = (linhasMatriz[0] || []).map(c => String(c).toUpperCase().trim());
+                            cabecalho.forEach((colNome, idx) => {
+                                if (colNome.includes('AGENDADOR')) colAgendador = idx;
+                                if (colNome.includes('TMO') || colNome.includes('SERVICO') || colNome.includes('SERVIÇO')) colTMO = idx;
+                                if (colNome.includes('PLACA')) colPlaca = idx;
+                                if (colNome.includes('CHASSI')) colChassi = idx;
+                                if (colNome === 'OS' || colNome.includes('ORDEM') || colNome.includes('O.S.')) colOS = idx;
+                            });
 
                             const registros = [];
-                            let contCompareceu = 0;
-                            let contFaltou = 0;
-                            let contPendente = 0;
+                            let totalCompareceu = 0;
+                            let totalNoShow = 0;
+                            let totalPendente = 0;
+                            let ignoradosOutrosNomes = 0;
+                            let ignoradosNaoRevisao = 0;
+                            const resumoPorConsultor = {};
 
-                            for (let i = 0; i < linhas.length; i++) {
-                                const linha = linhas[i].trim();
-                                if (!linha) continue;
+                            for (let i = 1; i < linhasMatriz.length; i++) {
+                                const row = linhasMatriz[i];
+                                if (!row || row.length === 0) continue;
 
-                                const placaMatch = linha.match(/\b([A-Z]{3}[0-9][A-Z0-9][0-9]{2}|[A-Z]{3}-?[0-9]{4})\b/i);
-                                if (!placaMatch) continue;
+                                // 1. Filtragem da Coluna Agendador (Apenas as 6 consultoras)
+                                const nomeAgendadorPlanilha = row[colAgendador] || '';
+                                let consultorAlvo = null;
 
-                                const placa = placaMatch[0].replace('-', '').toUpperCase();
-                                const datasEncontradas = [...linha.matchAll(/\b(\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)\b/g)].map(m => m[1]);
-
-                                let dataContato = null;
-                                let dataRevisao = null;
-
-                                if (datasEncontradas.length >= 2) {
-                                    dataContato = formatarData(datasEncontradas[0], 2026);
-                                    dataRevisao = formatarData(datasEncontradas[1], 2026);
-                                } else if (datasEncontradas.length === 1) {
-                                    dataRevisao = formatarData(datasEncontradas[0], 2026);
-                                    dataContato = dataRevisao;
-                                } else {
-                                    dataRevisao = `2026-${mesPadrao}-01`;
-                                    dataContato = dataRevisao;
-                                }
-
-                                let status = 'pendente';
-                                const linhaUpper = linha.toUpperCase();
-
-                                if (linhaUpper.includes('NÃO COMPARECEU') || 
-                                    linhaUpper.includes('NAO COMPARECEU') || 
-                                    linhaUpper.includes('N COMPARECEU') || 
-                                    linhaUpper.includes('FALTOU') || 
-                                    linhaUpper.includes('CANCEL') ||
-                                    linhaUpper.match(/\bN[^\w\s]?O\s+COMPARECEU/i)) {
-                                    status = 'faltou';
-                                    contFaltou++;
-                                } else if (linhaUpper.includes('COMPARECEU')) {
-                                    status = 'compareceu';
-                                    contCompareceu++;
-                                } else {
-                                    contPendente++;
-                                }
-
-                                const numerosLongos = [...linha.matchAll(/\b(\d{6,8})\b/g)].map(m => m[1]);
-                                let evento = 'SEM-EVENTO';
-                                let os = 'SEM-OS';
-
-                                if (numerosLongos.length >= 2) {
-                                    evento = numerosLongos[0];
-                                    os = numerosLongos[1];
-                                } else if (numerosLongos.length === 1) {
-                                    os = numerosLongos[0];
-                                }
-
-                                let consultorId = USER_ID;
                                 if (destinoEscolhido !== 'auto') {
-                                    consultorId = destinoEscolhido;
+                                    const cEncontrada = EQUIPE_TOYOTA.find(u => u.id === destinoEscolhido);
+                                    consultorAlvo = { id: destinoEscolhido, nome: cEncontrada ? cEncontrada.nome : 'Manual' };
                                 } else {
-                                    consultorId = identificarDonoAgendamento(linha);
+                                    consultorAlvo = obterConsultoraPorAgendador(nomeAgendadorPlanilha);
                                 }
 
-                                const numRevisao = extrairNumeroRevisao(linha);
+                                if (!consultorAlvo) {
+                                    ignoradosOutrosNomes++;
+                                    continue;
+                                }
+
+                                // 2. Filtragem do TMO / Serviço
+                                const textoTMO = row[colTMO] || '';
+                                const numRevisao = extrairNumeroRevisaoTMO(textoTMO);
+                                if (!numRevisao) {
+                                    ignoradosNaoRevisao++;
+                                    continue;
+                                }
+
+                                // 3. Datas (Sem horário)
+                                const dataRevisaoFormatada = formatarDataSemHorario(row[colDataRevisao], 2026) || `2026-${mesPadrao}-01`;
+                                const dataContatoFormatada = formatarDataSemHorario(row[colDataContato], 2026) || dataRevisaoFormatada;
+
+                                // 4. Placa (Preserva os 12 veículos sem placa como SEM-PLACA)
+                                let placaBruta = String(row[colPlaca] || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+                                if (!placaBruta || placaBruta.length < 3) {
+                                    const chassi = String(row[colChassi] || '').toUpperCase().trim();
+                                    placaBruta = chassi.length >= 6 ? chassi.slice(-6) : 'SEM-PLACA';
+                                }
+
+                                // 5. REGRA DE STATUS INTELIGENTE COM DATA ATUAL:
+                                const valorOSLinha = String(row[colOS] || '').trim();
+                                const temOS = (valorOSLinha !== '' && valorOSLinha !== '-' && valorOSLinha !== '0' && valorOSLinha.toUpperCase() !== 'NAN');
+                                
+                                let status = 'pendente';
+                                let osSalva = 'SEM-OS';
+
+                                if (temOS) {
+                                    // 🟢 Tem O.S. -> Compareceu
+                                    status = 'compareceu';
+                                    osSalva = valorOSLinha;
+                                    totalCompareceu++;
+                                } else if (dataRevisaoFormatada < dataHojeISO) {
+                                    // 🔴 Data da revisão é anterior a hoje e NÃO tem O.S. -> No-Show (Faltou)
+                                    status = 'faltou';
+                                    totalNoShow++;
+                                } else {
+                                    // 🟡 Data da revisão é hoje ou futura sem O.S. -> Pendente (Aguardando cliente)
+                                    status = 'pendente';
+                                    totalPendente++;
+                                }
+
                                 const valorUnitario = calcularValorPorRevisao(numRevisao);
 
+                                if (!resumoPorConsultor[consultorAlvo.nome]) {
+                                    resumoPorConsultor[consultorAlvo.nome] = { total: 0, compareceu: 0, noshow: 0, pendente: 0 };
+                                }
+                                resumoPorConsultor[consultorAlvo.nome].total++;
+                                if (status === 'compareceu') {
+                                    resumoPorConsultor[consultorAlvo.nome].compareceu++;
+                                } else if (status === 'faltou') {
+                                    resumoPorConsultor[consultorAlvo.nome].noshow++;
+                                } else {
+                                    resumoPorConsultor[consultorAlvo.nome].pendente++;
+                                }
+
                                 registros.push({
-                                    user_id: consultorId,
-                                    data_contato: dataContato,
-                                    data_revisao: dataRevisao,
+                                    user_id: consultorAlvo.id,
+                                    data_contato: dataContatoFormatada,
+                                    data_revisao: dataRevisaoFormatada,
                                     status: status,
-                                    placa: placa,
-                                    evento: evento,
-                                    os: os,
+                                    placa: placaBruta,
+                                    evento: 'SEM-EVENTO',
+                                    os: osSalva,
                                     revisao: numRevisao,
                                     valor_unitario: valorUnitario
                                 });
                             }
 
                             log(`-----------------------------------`);
-                            log(`Total lido: ${registros.length} agendamentos reais.`);
-                            log(`Compareceram: ${contCompareceu}`);
-                            log(`Não Compareceram: ${contFaltou}`);
-                            log(`Pendentes: ${contPendente}`);
+                            log(`Revisões válidas importadas: ${registros.length}`);
+                            log(`• Compareceram (com O.S.): ${totalCompareceu}`);
+                            log(`• No-Show / Faltaram (passou data e sem O.S.): ${totalNoShow}`);
+                            log(`• Pendentes (datas futuras aguardando): ${totalPendente}`);
+                            log(`Descartados de outros consultores: ${ignoradosOutrosNomes}`);
+                            log(`Descartados outros serviços: ${ignoradosNaoRevisao}`);
+                            log(`--- Total por Consultora ---`);
+                            
+                            Object.keys(resumoPorConsultor).forEach(nome => {
+                                const c = resumoPorConsultor[nome];
+                                log(`• ${nome}: ${c.total} agendamentos (${c.compareceu} comp. | ${c.noshow} no-show | ${c.pendente} pend.)`);
+                            });
+
                             log(`-----------------------------------`);
                             log(`Salvando no banco de dados...`);
 
@@ -524,12 +632,12 @@
                                 const lote = registros.slice(k, k + 100);
                                 const { error: errInsert } = await supabaseClient.from('agendamentos').insert(lote);
                                 if (errInsert) {
-                                    log(`❌ Erro: ${errInsert.message}`);
+                                    log(`❌ Erro ao salvar: ${errInsert.message}`);
                                     return;
                                 }
                             }
 
-                            log(`✅ SUCESSO! Todos os agendamentos foram importados com perfeição!`);
+                            log(`✅ SUCESSO! Todas as ${registros.length} revisões foram salvas com status atualizado!`);
 
                         } catch (err) {
                             log(`❌ Erro no processamento: ${err.message}`);
@@ -539,7 +647,7 @@
                         }
                     };
 
-                    reader.readAsText(file, 'UTF-8');
+                    reader.readAsArrayBuffer(file);
                 } catch (e) {
                     log(`❌ Erro: ${e.message}`);
                     btn.disabled = false;

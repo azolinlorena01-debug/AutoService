@@ -15,9 +15,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     const META_PADRAO = 900;
     const META_GLOBAL = 6000;
 
-    // 2. CAPTURA DE ELEMENTOS HTML (DOM)
+    // 2. ELEMENTOS HTML
     const secaoFiltrosAdmin = document.getElementById('secao-filtros-admin');
-    const metricasResumoAdmin = document.getElementById('metricas-resumo-admin');
     const filtroMesAdmin = document.getElementById('filtro-mes-admin');
     const filtroEquipeAdmin = document.getElementById('filtro-equipe-admin');
 
@@ -36,13 +35,27 @@ document.addEventListener('DOMContentLoaded', async function() {
     const textoRestanteMeta = document.getElementById('texto-restante-meta');
     const barraProgressoMeta = document.getElementById('barra-progresso-meta');
 
+    // Botões de navegação
+    const btnAbaVisaoGeral = document.getElementById('btn-aba-visao-geral');
+    const btnAbaCategorias = document.getElementById('btn-aba-categorias');
+    const btnAbaEquipe = document.getElementById('btn-aba-equipe');
+
+    // Containers de Gráficos
     const gradeGraficos = document.getElementById('grade-graficos');
     const cardGraficoBonusMensal = document.getElementById('card-grafico-bonus-mensal');
-    const cardGraficoEquipe = document.getElementById('card-grafico-equipe');
+    const cardGraficoEquipeAdmin = document.getElementById('card-grafico-equipe-admin');
+    const secaoGraficoRevisoesTipo = document.getElementById('secao-grafico-revisoes-tipo');
+    const secaoVolumeEquipeConsultor = document.getElementById('secao-volume-equipe-consultor');
+
     const tituloGraficoVolume = document.getElementById('titulo-grafico-volume');
     const subtituloGraficoVolume = document.getElementById('subtitulo-grafico-volume');
-    const tituloGraficoEquipe = document.getElementById('titulo-grafico-equipe');
-    const subtituloGraficoEquipe = document.getElementById('subtitulo-grafico-equipe');
+    const tituloGraficoEquipeAdmin = document.getElementById('titulo-grafico-equipe-admin');
+    const subtituloGraficoEquipeAdmin = document.getElementById('subtitulo-grafico-equipe-admin');
+    const tituloGraficoEquipeConsultor = document.getElementById('titulo-grafico-equipe-consultor');
+    const subtituloGraficoEquipeConsultor = document.getElementById('subtitulo-grafico-equipe-consultor');
+
+    const tituloGraficoRevisoesTipo = document.getElementById('titulo-grafico-revisoes-tipo');
+    const subtituloGraficoRevisoesTipo = document.getElementById('subtitulo-grafico-revisoes-tipo');
 
     const secaoAdminRanking = document.getElementById('secao-admin-ranking');
     const tituloTabelaAdmin = document.getElementById('titulo-tabela-admin');
@@ -51,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const tabelaCorpoAdmin = document.getElementById('tabela-corpo-admin');
     const btnVoltarAdmin = document.getElementById('btn-voltar-admin');
 
-    // 3. SEGURANÇA E AUTHENTICATION GUARD
+    // 3. SEGURANÇA E AUTH GUARD
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session || !session.user) {
         window.location.href = 'login.html';
@@ -79,7 +92,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.warn('Erro ao carregar permissões:', e);
     }
 
-    // TRAVA DE SEGURANÇA DEFINITIVA: Garante que sua conta NUNCA perca o perfil Admin
     if (usuarioAtual.email === 'usuariotestesite01@gmail.com' || usuarioAtual.email?.includes('admin')) {
         isAdmin = true;
     }
@@ -88,20 +100,27 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (isAdmin) {
         if (linkMenuImportar) linkMenuImportar.classList.remove('oculto');
         if (secaoFiltrosAdmin) secaoFiltrosAdmin.classList.remove('oculto');
-        // Oculta os cards de contagem simples no relatório do admin (fica só na tela de agendamentos)
-        if (metricasResumoAdmin) metricasResumoAdmin.classList.add('oculto');
         if (secaoMetricasConsultor) secaoMetricasConsultor.classList.add('oculto');
-        // Deixa a barra de Meta em destaque no topo antes dos gráficos
         if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
+        if (btnAbaEquipe) btnAbaEquipe.classList.add('oculto');
+        if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.add('oculto');
+        
+        // Ajusta o texto do primeiro botão para o Administrador
+        if (btnAbaVisaoGeral) btnAbaVisaoGeral.textContent = 'Efetividade';
     } else {
         if (linkMenuImportar) linkMenuImportar.classList.add('oculto');
         if (secaoFiltrosAdmin) secaoFiltrosAdmin.classList.add('oculto');
-        if (metricasResumoAdmin) metricasResumoAdmin.classList.add('oculto');
         if (secaoMetricasConsultor) secaoMetricasConsultor.classList.remove('oculto');
         if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
+        if (btnAbaEquipe) btnAbaEquipe.classList.remove('oculto');
+        if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.remove('oculto');
+        if (cardGraficoEquipeAdmin) cardGraficoEquipeAdmin.classList.add('oculto');
+
+        // Mantém o texto para o Consultor
+        if (btnAbaVisaoGeral) btnAbaVisaoGeral.textContent = 'Efetividade & Bônus';
     }
 
-    // 5. CABEÇALHO DO USUÁRIO LOGADO (Exibindo Nome e Sobrenome completos)
+    // 5. CABEÇALHO DO USUÁRIO
     const areaAuth = document.getElementById('area-autenticacao');
     if (areaAuth && usuarioAtual) {
         let nomeExibicao = 'Usuário';
@@ -138,9 +157,64 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     let graficoVolumeInstance = null;
     let graficoBonusMensalInstance = null;
-    let graficoEquipeInstance = null;
+    let graficoEquipeAdminInstance = null;
+    let graficoEquipeConsultorInstance = null;
+    let graficoRevisoesTipoInstance = null;
+
     let todosAgendamentosHistorico = [];
     let agendamentosMesAtual = [];
+
+    // =========================================================================
+    // NAVEGAÇÃO ENTRE OS GRÁFICOS (EXCLUSIVA E EXPANSÍVEL)
+    // =========================================================================
+    let abaGraficoAtual = 'visao-geral';
+
+    function aplicarVisibilidadeAbas() {
+        btnAbaVisaoGeral.classList.toggle('ativo', abaGraficoAtual === 'visao-geral');
+        btnAbaCategorias.classList.toggle('ativo', abaGraficoAtual === 'categorias');
+        if (btnAbaEquipe) btnAbaEquipe.classList.toggle('ativo', abaGraficoAtual === 'equipe');
+
+        if (abaGraficoAtual === 'visao-geral') {
+            gradeGraficos.classList.remove('oculto');
+            secaoGraficoRevisoesTipo.classList.add('oculto');
+            if (secaoVolumeEquipeConsultor) secaoVolumeEquipeConsultor.classList.add('oculto');
+
+            if (isAdmin) {
+                const equipeFiltro = filtroEquipeAdmin ? filtroEquipeAdmin.value : 'todas';
+                if (equipeFiltro === 'todas') {
+                    // Quando for todas as equipes, expande para 1 coluna cheia
+                    gradeGraficos.classList.add('coluna-unica');
+                    if (cardGraficoEquipeAdmin) cardGraficoEquipeAdmin.classList.add('oculto');
+                } else {
+                    // Quando filtrar equipe, divide em 2 colunas
+                    gradeGraficos.classList.remove('coluna-unica');
+                    if (cardGraficoEquipeAdmin) cardGraficoEquipeAdmin.classList.remove('oculto');
+                }
+            } else {
+                gradeGraficos.classList.remove('coluna-unica');
+            }
+
+        } else if (abaGraficoAtual === 'categorias') {
+            gradeGraficos.classList.add('oculto');
+            secaoGraficoRevisoesTipo.classList.remove('oculto');
+            if (secaoVolumeEquipeConsultor) secaoVolumeEquipeConsultor.classList.add('oculto');
+
+        } else if (abaGraficoAtual === 'equipe') {
+            gradeGraficos.classList.add('oculto');
+            secaoGraficoRevisoesTipo.classList.add('oculto');
+            if (secaoVolumeEquipeConsultor) secaoVolumeEquipeConsultor.classList.remove('oculto');
+        }
+    }
+
+    function trocarAbaGrafico(abaDestino) {
+        abaGraficoAtual = abaDestino;
+        aplicarVisibilidadeAbas();
+        renderizarGraficosAtivos();
+    }
+
+    btnAbaVisaoGeral.addEventListener('click', () => trocarAbaGrafico('visao-geral'));
+    btnAbaCategorias.addEventListener('click', () => trocarAbaGrafico('categorias'));
+    if (btnAbaEquipe) btnAbaEquipe.addEventListener('click', () => trocarAbaGrafico('equipe'));
 
     async function carregarOpcoesEquipes() {
         if (!isAdmin || !filtroEquipeAdmin) return;
@@ -201,38 +275,18 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     function aplicarVisaoRelatorio() {
         if (!isAdmin) {
-            // ==========================================
-            // LÓGICA DO CONSULTOR
-            // ==========================================
             if (secaoAdminRanking) secaoAdminRanking.classList.add('oculto');
             if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
-
-            if (gradeGraficos) {
-                gradeGraficos.classList.add('grid-duas-colunas');
-                gradeGraficos.classList.remove('grid-coluna-unica');
-            }
             if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.remove('oculto');
-            if (cardGraficoEquipe) {
-                cardGraficoEquipe.classList.remove('oculto');
-                cardGraficoEquipe.classList.add('card-grafico-expansivel');
-            }
+            if (cardGraficoEquipeAdmin) cardGraficoEquipeAdmin.classList.add('oculto');
 
             let notaMonitoria = inputMonitoria ? parseFloat(inputMonitoria.value) : 100;
             if (isNaN(notaMonitoria)) notaMonitoria = 100;
 
-            let fatorMonitoria = 1.0;
-            if (notaMonitoria >= 80) {
-                fatorMonitoria = 1.10;
-                if (badgeAjusteMonitoria) {
-                    badgeAjusteMonitoria.textContent = '+10% Bônus';
-                    badgeAjusteMonitoria.className = 'badge-ajuste-monitoria';
-                }
-            } else {
-                fatorMonitoria = 0.90;
-                if (badgeAjusteMonitoria) {
-                    badgeAjusteMonitoria.textContent = '-10% Redução';
-                    badgeAjusteMonitoria.className = 'badge-ajuste-monitoria-reducao';
-                }
+            let fatorMonitoria = (notaMonitoria >= 80) ? 1.10 : 0.90;
+            if (badgeAjusteMonitoria) {
+                badgeAjusteMonitoria.textContent = notaMonitoria >= 80 ? '+10% Bônus' : '-10% Redução';
+                badgeAjusteMonitoria.className = notaMonitoria >= 80 ? 'badge-ajuste-monitoria' : 'badge-ajuste-monitoria-reducao';
             }
 
             const meusAgendamentosMes = agendamentosMesAtual.filter(item => item.user_id === usuarioAtual.id);
@@ -280,23 +334,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                 textoRestanteMeta.className = 'meta-badge-restante';
             }
 
-            if (tituloGraficoVolume) tituloGraficoVolume.textContent = 'Minha Efetividade';
-            if (subtituloGraficoVolume) subtituloGraficoVolume.textContent = 'Taxa de presença';
-            renderizarGraficoVolume(totalCompareceu, totalPendente, totalFaltou);
-
-            const meusAgendamentosHistorico = todosAgendamentosHistorico.filter(item => item.user_id === usuarioAtual.id);
-            renderizarGraficoBonusMensal(meusAgendamentosHistorico);
-
-            if (tituloGraficoEquipe) tituloGraficoEquipe.textContent = `Volume da Equipe: ${equipeUsuario}`;
-            if (subtituloGraficoEquipe) subtituloGraficoEquipe.textContent = 'Volume por operador desta equipe';
-            renderizarGraficoBarrasHorizontaisOperadores(agendamentosMesAtual);
-
         } else {
-            // ==========================================
-            // LÓGICA DO ADMINISTRADOR
-            // ==========================================
             if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
             if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.add('oculto');
+            if (secaoVolumeEquipeConsultor) secaoVolumeEquipeConsultor.classList.add('oculto');
             if (secaoAdminRanking) secaoAdminRanking.classList.remove('oculto');
 
             const equipeFiltro = filtroEquipeAdmin ? filtroEquipeAdmin.value : 'todas';
@@ -305,15 +346,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 dadosFiltrados = agendamentosMesAtual.filter(item => (item.autor_equipe || 'Geral') === equipeFiltro);
             }
 
-            let totalCompareceu = 0, totalPendente = 0, totalFaltou = 0;
-            dadosFiltrados.forEach(item => {
-                const status = item.status || 'pendente';
-                if (status === 'compareceu') totalCompareceu++;
-                else if (status === 'pendente') totalPendente++;
-                else if (status === 'faltou') totalFaltou++;
-            });
-
-            // 🎯 DESTAQUE: META GLOBAL DA CONCESSIONÁRIA (6.000 AGENDAMENTOS)
             const totalGeralDoMes = agendamentosMesAtual.length;
             const percentualMetaAdmin = Math.min(100, Math.round((totalGeralDoMes / META_GLOBAL) * 100));
             const restanteMetaAdmin = Math.max(0, META_GLOBAL - totalGeralDoMes);
@@ -323,55 +355,84 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (barraProgressoMeta) barraProgressoMeta.style.width = `${percentualMetaAdmin}%`;
 
             if (textoRestanteMeta) {
-                if (restanteMetaAdmin === 0) {
-                    textoRestanteMeta.textContent = 'Parabéns! Meta global atingida!';
-                    textoRestanteMeta.className = 'meta-badge-sucesso';
-                } else {
-                    textoRestanteMeta.textContent = `Faltam ${restanteMetaAdmin} agendamentos no total`;
-                    textoRestanteMeta.className = 'meta-badge-restante';
-                }
+                textoRestanteMeta.textContent = restanteMetaAdmin === 0 
+                    ? 'Parabéns! Meta global atingida!' 
+                    : `Faltam ${restanteMetaAdmin} agendamentos no total`;
+                textoRestanteMeta.className = restanteMetaAdmin === 0 ? 'meta-badge-sucesso' : 'meta-badge-restante';
             }
 
-            renderizarGraficoVolume(totalCompareceu, totalPendente, totalFaltou);
-
             if (equipeFiltro === 'todas') {
-                if (gradeGraficos) {
-                    gradeGraficos.classList.add('grid-coluna-unica');
-                    gradeGraficos.classList.remove('grid-duas-colunas');
-                }
-                if (cardGraficoEquipe) cardGraficoEquipe.classList.add('oculto');
                 if (btnVoltarAdmin) btnVoltarAdmin.classList.add('oculto');
-
-                if (tituloGraficoVolume) tituloGraficoVolume.textContent = 'Efetividade Geral';
-                if (subtituloGraficoVolume) subtituloGraficoVolume.textContent = 'Taxa de presença de todas as equipes';
-
                 renderizarTabelaEquipes(agendamentosMesAtual);
-
             } else {
-                if (gradeGraficos) {
-                    gradeGraficos.classList.add('grid-duas-colunas');
-                    gradeGraficos.classList.remove('grid-coluna-unica');
-                }
-                if (cardGraficoEquipe) {
-                    cardGraficoEquipe.classList.remove('oculto');
-                    cardGraficoEquipe.classList.remove('card-grafico-expansivel');
-                }
                 if (btnVoltarAdmin) btnVoltarAdmin.classList.remove('oculto');
-
-                if (tituloGraficoVolume) tituloGraficoVolume.textContent = `Efetividade: ${equipeFiltro}`;
-                if (subtituloGraficoVolume) subtituloGraficoVolume.textContent = 'Taxa de presença desta equipe';
-                
-                if (tituloGraficoEquipe) tituloGraficoEquipe.textContent = `Operadores de ${equipeFiltro}`;
-                if (subtituloGraficoEquipe) subtituloGraficoEquipe.textContent = 'Volume por operador desta equipe';
-
-                renderizarGraficoBarrasHorizontaisOperadores(dadosFiltrados);
                 renderizarTabelaOperadores(dadosFiltrados, equipeFiltro);
             }
         }
+
+        aplicarVisibilidadeAbas();
+        renderizarGraficosAtivos();
     }
 
-    // 9. FUNÇÕES DE CRIAÇÃO DOS GRÁFICOS COM CHART.JS
+    function renderizarGraficosAtivos() {
+        const equipeFiltro = isAdmin ? (filtroEquipeAdmin ? filtroEquipeAdmin.value : 'todas') : equipeUsuario;
+        let dadosFiltrados = agendamentosMesAtual;
+        if (isAdmin && equipeFiltro !== 'todas') {
+            dadosFiltrados = agendamentosMesAtual.filter(item => (item.autor_equipe || 'Geral') === equipeFiltro);
+        }
+        const meusAgendamentosMes = agendamentosMesAtual.filter(item => item.user_id === usuarioAtual.id);
 
+        if (abaGraficoAtual === 'visao-geral') {
+            let totalCompareceu = 0, totalPendente = 0, totalFaltou = 0;
+            const listaPresenca = isAdmin ? dadosFiltrados : meusAgendamentosMes;
+
+            listaPresenca.forEach(item => {
+                const status = item.status || 'pendente';
+                if (status === 'compareceu') totalCompareceu++;
+                else if (status === 'pendente') totalPendente++;
+                else if (status === 'faltou') totalFaltou++;
+            });
+
+            if (!isAdmin) {
+                if (tituloGraficoVolume) tituloGraficoVolume.textContent = 'Minha Efetividade';
+                if (subtituloGraficoVolume) subtituloGraficoVolume.textContent = 'Taxa de presença';
+                renderizarGraficoVolume(totalCompareceu, totalPendente, totalFaltou);
+
+                const meusAgendamentosHistorico = todosAgendamentosHistorico.filter(item => item.user_id === usuarioAtual.id);
+                renderizarGraficoBonusMensal(meusAgendamentosHistorico);
+            } else {
+                if (tituloGraficoVolume) {
+                    tituloGraficoVolume.textContent = equipeFiltro === 'todas' ? 'Efetividade Geral' : `Efetividade: ${equipeFiltro}`;
+                }
+                if (subtituloGraficoVolume) {
+                    subtituloGraficoVolume.textContent = equipeFiltro === 'todas' ? 'Taxa de presença de todas as equipes' : 'Taxa de presença desta equipe';
+                }
+                renderizarGraficoVolume(totalCompareceu, totalPendente, totalFaltou);
+
+                if (equipeFiltro !== 'todas') {
+                    if (tituloGraficoEquipeAdmin) tituloGraficoEquipeAdmin.textContent = `Operadores de ${equipeFiltro}`;
+                    if (subtituloGraficoEquipeAdmin) subtituloGraficoEquipeAdmin.textContent = 'Volume por operador desta equipe';
+                    renderizarGraficoBarrasHorizontais('graficoEquipeAdmin', dadosFiltrados);
+                }
+            }
+
+        } else if (abaGraficoAtual === 'categorias') {
+            const listaCategorias = isAdmin ? dadosFiltrados : meusAgendamentosMes;
+            if (tituloGraficoRevisoesTipo) {
+                tituloGraficoRevisoesTipo.textContent = !isAdmin 
+                    ? 'Minhas Revisões por Categoria' 
+                    : (equipeFiltro === 'todas' ? 'Revisões por Categoria (Todas as Equipes)' : `Revisões por Categoria: Equipe ${equipeFiltro}`);
+            }
+            renderizarGraficoRevisoesPorTipo(listaCategorias);
+
+        } else if (abaGraficoAtual === 'equipe') {
+            if (tituloGraficoEquipeConsultor) tituloGraficoEquipeConsultor.textContent = `Volume da Equipe: ${equipeUsuario}`;
+            if (subtituloGraficoEquipeConsultor) subtituloGraficoEquipeConsultor.textContent = 'Volume por operador desta equipe';
+            renderizarGraficoBarrasHorizontais('graficoEquipeConsultor', agendamentosMesAtual);
+        }
+    }
+
+    // 9. FUNÇÕES DE CRIAÇÃO DOS GRÁFICOS (CHART.JS)
     function renderizarGraficoVolume(compareceu, pendente, faltou) {
         const ctx = document.getElementById('graficoVolume')?.getContext('2d');
         if (!ctx) return;
@@ -388,7 +449,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 labels: [
                     `Compareceu (${pComp}%)`,
                     `Pendente (${pPend}%)`,
-                    `Faltou (${pFalt}%)`
+                    `No-Show (${pFalt}%)`
                 ],
                 datasets: [{
                     data: [compareceu, pendente, faltou],
@@ -457,10 +518,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    function renderizarGraficoBarrasHorizontaisOperadores(agendamentos) {
-        const ctx = document.getElementById('graficoEquipe')?.getContext('2d');
+    function renderizarGraficoBarrasHorizontais(canvasId, agendamentos) {
+        const ctx = document.getElementById(canvasId)?.getContext('2d');
         if (!ctx) return;
-        if (graficoEquipeInstance) graficoEquipeInstance.destroy();
+
+        if (canvasId === 'graficoEquipeAdmin' && graficoEquipeAdminInstance) graficoEquipeAdminInstance.destroy();
+        if (canvasId === 'graficoEquipeConsultor' && graficoEquipeConsultorInstance) graficoEquipeConsultorInstance.destroy();
 
         const operadores = {};
         agendamentos.forEach(item => {
@@ -477,7 +540,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const dataTotal = labels.map(l => operadores[l].total);
         const dataComp = labels.map(l => operadores[l].compareceu);
 
-        graficoEquipeInstance = new Chart(ctx, {
+        const novaInstancia = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: labels.length > 0 ? labels : ['Sem operadores'],
@@ -512,9 +575,80 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
             }
         });
+
+        if (canvasId === 'graficoEquipeAdmin') graficoEquipeAdminInstance = novaInstancia;
+        if (canvasId === 'graficoEquipeConsultor') graficoEquipeConsultorInstance = novaInstancia;
     }
 
-    // 10. TABELAS DINÂMICAS DO ADMINISTRADOR
+    function renderizarGraficoRevisoesPorTipo(agendamentos) {
+        const ctx = document.getElementById('graficoRevisoesTipo')?.getContext('2d');
+        if (!ctx) return;
+        if (graficoRevisoesTipoInstance) graficoRevisoesTipoInstance.destroy();
+
+        const contagem = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 };
+
+        agendamentos.forEach(item => {
+            const rev = parseInt(item.revisao, 10) || 1;
+            if (rev >= 8) contagem[8]++;
+            else if (rev >= 1 && rev <= 7) contagem[rev]++;
+        });
+
+        const labels = [
+            '1ª Revisão', '2ª Revisão', '3ª Revisão', '4ª Revisão',
+            '5ª Revisão', '6ª Revisão', '7ª Revisão', '8ª+ Revisão'
+        ];
+
+        const dados = [
+            contagem[1], contagem[2], contagem[3], contagem[4],
+            contagem[5], contagem[6], contagem[7], contagem[8]
+        ];
+
+        const cores = [
+            '#3b82f6', '#3b82f6', '#3b82f6', '#3b82f6',
+            '#8b5cf6', '#8b5cf6', '#8b5cf6',
+            '#10b981'
+        ];
+
+        graficoRevisoesTipoInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Quantidade',
+                    data: dados,
+                    backgroundColor: cores,
+                    borderRadius: 6,
+                    maxBarThickness: 34
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const revIdx = context.dataIndex + 1;
+                                let valorBonus = 'R$ 2,00';
+                                if (revIdx >= 5 && revIdx <= 7) valorBonus = 'R$ 6,00';
+                                if (revIdx >= 8) valorBonus = 'R$ 10,00';
+                                return ` ${context.raw} agendamento(s) [Faixa: ${valorBonus}]`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 }
+                    }
+                }
+            }
+        });
+    }
+
+    // 10. TABELAS ADMINISTRATIVAS
     function renderizarTabelaEquipes(agendamentos) {
         tituloTabelaAdmin.textContent = 'Desempenho por Equipe';
         subtituloTabelaAdmin.textContent = 'Acompanhe por equipe ou filtre individualmente';
@@ -523,7 +657,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <th>EQUIPE</th>
                 <th class="col-centro">TOTAL AGENDADOS</th>
                 <th class="col-centro">COMPARECIDOS</th>
-                <th class="col-centro">FALTAS</th>
+                <th class="col-centro">NO-SHOW</th>
                 <th class="col-centro">TAXA DE PRESENÇA</th>
                 <th class="col-centro">AÇÃO</th>
             </tr>
@@ -578,17 +712,17 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    // Tabela de Operadores (SEM O E-MAIL, EXIBINDO NOME E SOBRENOME)
     function renderizarTabelaOperadores(agendamentos, nomeEquipe) {
         tituloTabelaAdmin.textContent = `Operadores da Equipe: ${nomeEquipe}`;
-        subtituloTabelaAdmin.textContent = `Métricas individuais dos consultores da equipe ${nomeEquipe}`;
+        subtituloTabelaAdmin.textContent = `Métricas individuais e distribuição de revisões dos consultores`;
         tabelaCabecalhoAdmin.innerHTML = `
             <tr>
                 <th>OPERADOR</th>
                 <th class="col-centro">TOTAL AGENDADOS</th>
                 <th class="col-centro">COMPARECIDOS</th>
                 <th class="col-centro">PENDENTES</th>
-                <th class="col-centro">FALTAS</th>
+                <th class="col-centro">NO-SHOW</th>
+                <th class="col-centro">DISTRIBUIÇÃO POR REVISÃO</th>
                 <th class="col-centro">TAXA DE PRESENÇA</th>
             </tr>
         `;
@@ -602,26 +736,36 @@ document.addEventListener('DOMContentLoaded', async function() {
                     total: 0,
                     compareceu: 0,
                     pendente: 0,
-                    faltou: 0
+                    faltou: 0,
+                    revisoes: {}
                 };
             }
             operadores[chave].total++;
             if (item.status === 'compareceu') operadores[chave].compareceu++;
             else if (item.status === 'pendente') operadores[chave].pendente++;
             else if (item.status === 'faltou') operadores[chave].faltou++;
+
+            const rev = parseInt(item.revisao, 10) || 1;
+            operadores[chave].revisoes[rev] = (operadores[chave].revisoes[rev] || 0) + 1;
         });
 
         const lista = Object.values(operadores).sort((a, b) => b.total - a.total);
         tabelaCorpoAdmin.innerHTML = '';
 
         if (lista.length === 0) {
-            tabelaCorpoAdmin.innerHTML = '<tr><td colspan="6" class="celula-vazia-mensagem">Nenhum agendamento para esta equipe.</td></tr>';
+            tabelaCorpoAdmin.innerHTML = '<tr><td colspan="7" class="celula-vazia-mensagem">Nenhum agendamento para esta equipe.</td></tr>';
             return;
         }
 
         lista.forEach(op => {
             const taxa = op.total > 0 ? Math.round((op.compareceu / op.total) * 100) : 0;
             const badgeClasse = taxa >= 70 ? 'badge-taxa-alta' : 'badge-taxa-normal';
+            
+            const badgesRevisoes = Object.keys(op.revisoes)
+                .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+                .map(r => `<span class="chip-revisao-tabela"><strong>${r}ª:</strong> ${op.revisoes[r]}</span>`)
+                .join('');
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
@@ -631,6 +775,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <td class="col-centro admin-val-sucesso"><strong>${op.compareceu}</strong></td>
                 <td class="col-centro admin-val-alerta">${op.pendente}</td>
                 <td class="col-centro admin-val-perigo">${op.faltou}</td>
+                <td class="col-centro">${badgesRevisoes || '-'}</td>
                 <td class="col-centro">
                     <span class="badge-taxa-tabela ${badgeClasse}">
                         ${taxa}%
@@ -654,7 +799,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    // 12. PARÂMETROS DE URL E DISPARO DE IMPRESSÃO (PDF)
+    // 12. PARÂMETROS DE URL E PDF
     const urlParams = new URLSearchParams(window.location.search);
     const parametroMes = urlParams.get('mes');
     const parametroEquipe = urlParams.get('equipe');

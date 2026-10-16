@@ -3,15 +3,286 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Bônus - Relatórios</title>
-    <!-- Bibliotecas externas: Supabase e Chart.js para os gráficos interativos -->
+    <title>Painel de Bônus - Relatórios & Gráficos</title>
+    <!-- Bibliotecas essenciais: Supabase e Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .oculto { display: none !important; }
+
+        /* Estilização e blindagem dos inputs superiores dos cards do consultor */
+        .card .input-mes-card {
+            width: 100%;
+            height: 38px;
+            padding: 0 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background-color: #f8fafc;
+            color: #1e293b;
+            font-size: 13px;
+            font-weight: 500;
+            outline: none;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+            box-sizing: border-box;
+            margin-top: 6px;
+        }
+        .card .input-mes-card:focus {
+            border-color: #2563eb;
+            background-color: #ffffff;
+        }
+
+        .grupo-input-monitoria {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .grupo-input-monitoria input[type="number"] {
+            width: 70px;
+            height: 36px;
+            padding: 0 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background-color: #f8fafc;
+            color: #1e293b;
+            font-size: 14px;
+            font-weight: 600;
+            outline: none;
+            text-align: center;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+        }
+        .grupo-input-monitoria input[type="number"]:focus {
+            border-color: #2563eb;
+            background-color: #ffffff;
+        }
+        .grupo-input-monitoria .sufixo-porcentagem {
+            font-weight: 600;
+            color: #475569;
+            font-size: 14px;
+        }
+        .grupo-input-monitoria .badge-ajuste-monitoria {
+            background-color: #dcfce7;
+            color: #15803d;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+        .grupo-input-monitoria .badge-ajuste-monitoria-reducao {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        /* Barra de metas */
+        .card-meta-equipe {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            box-sizing: border-box;
+        }
+        .meta-equipe-cabecalho {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .meta-equipe-cabecalho h3 {
+            margin: 4px 0 0 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .meta-badge-restante {
+            background-color: #eff6ff;
+            color: #2563eb;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid #bfdbfe;
+        }
+        .meta-badge-sucesso {
+            background-color: #dcfce7;
+            color: #166534;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid #bbf7d0;
+        }
+        .barra-progresso-container {
+            width: 100%;
+            height: 10px;
+            background-color: #e2e8f0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .barra-progresso-preenchimento {
+            height: 100%;
+            background-color: #2563eb;
+            border-radius: 5px;
+            transition: width 0.4s ease;
+        }
+
+        /* Botões de navegação de gráficos limpos */
+        .barra-filtros-graficos {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            align-items: center;
+        }
+        .btn-filtro-grafico {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-filtro-grafico:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+            color: #1e293b;
+        }
+        .btn-filtro-grafico.ativo {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+        }
+
+        /* Grade responsiva dos gráficos */
+        .grade-graficos-lado-a-lado {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 24px;
+        }
+        /* Quando expandir para 1 coluna cheia (Todas as Equipes no Admin) */
+        .grade-graficos-lado-a-lado.coluna-unica {
+            grid-template-columns: 1fr !important;
+        }
+
+        .chip-revisao-tabela {
+            display: inline-block;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 11px;
+            margin: 2px;
+            color: #1e293b;
+            white-space: nowrap;
+        }
+
+        /* Visão Administrador */
+        .card-filtro-admin {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            box-sizing: border-box;
+        }
+        .card-filtro-admin .filtro-admin-conteudo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .card-filtro-admin h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 4px 0;
+        }
+        .card-filtro-admin p {
+            font-size: 13px;
+            color: #64748b;
+            margin: 0;
+        }
+        .filtros-admin-controles {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .filtros-admin-controles .controle-filtro {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .filtros-admin-controles label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .filtros-admin-controles input,
+        .filtros-admin-controles select {
+            height: 38px;
+            padding: 0 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            font-size: 13px;
+            color: #1e293b;
+            outline: none;
+            min-width: 170px;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+        }
+        .filtros-admin-controles input:focus,
+        .filtros-admin-controles select:focus {
+            border-color: #2563eb;
+            background-color: #ffffff;
+        }
+
+        #btn-voltar-admin,
+        .btn-secundario-tabela {
+            background: #ffffff;
+            color: #1e293b;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        #btn-voltar-admin:hover,
+        .btn-secundario-tabela:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+            color: #0f172a;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <!-- Cabeçalho Principal -->
+        <!-- CABEÇALHO PRINCIPAL -->
         <header class="cabecalho-principal">
             <div class="logo-area">
                 <h1>Painel de Bônus</h1>
@@ -28,59 +299,33 @@
         </header>
 
         <main>
-            <!-- ==========================================================================
-                 1. PAINEL DO ADMINISTRADOR (Filtros amplos e sem ponto final)
-                 ========================================================================== -->
-            <section id="secao-filtros-admin" class="painel-filtros-admin oculto">
-                <div class="info-titulos">
-                    <h2>Visão Administrador</h2>
-                    <p>Filtre o período e equipe</p>
-                </div>
-                <div class="controles-filtros-admin">
+            <!-- 1. FILTROS ADMINISTRATIVOS -->
+            <section id="secao-filtros-admin" class="card-filtro-admin oculto">
+                <div class="filtro-admin-conteudo">
                     <div>
-                        <label class="filtro-item-label">Mês de Referência</label>
-                        <input type="month" id="filtro-mes-admin" class="input-mes-estilizado filtro-admin-mes-select">
+                        <h2>Visão Administrador</h2>
+                        <p>Filtre o período e equipe</p>
                     </div>
-                    <div>
-                        <label class="filtro-item-label">Filtrar Equipe</label>
-                        <select id="filtro-equipe-admin" class="input-mes-estilizado filtro-admin-equipe-select">
-                            <option value="todas">Todas as Equipes</option>
-                        </select>
+                    <div class="filtros-admin-controles">
+                        <div class="controle-filtro">
+                            <label for="filtro-mes-admin">MÊS DE REFERÊNCIA</label>
+                            <input type="month" id="filtro-mes-admin" class="input-mes-padrao">
+                        </div>
+                        <div class="controle-filtro">
+                            <label for="filtro-equipe-admin">FILTRAR EQUIPE</label>
+                            <select id="filtro-equipe-admin" class="select-padrao">
+                                <option value="todas">Todas as Equipes</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Cards Operacionais do Administrador (Volume, Presenças, Aguardando e Faltas) -->
-            <section id="metricas-resumo-admin" class="metricas-gerenciais-admin oculto">
+            <!-- 2. RESUMO DO CONSULTOR -->
+            <section id="secao-metricas-consultor" class="barra-metricas-topo oculto">
                 <div class="card">
-                    <span class="card-titulo">TOTAL AGENDAMENTOS</span>
-                    <h2 id="admin-total-agendados" class="admin-val-neutro">0</h2>
-                    <span class="card-detalhe">Registros na base no mês</span>
-                </div>
-                <div class="card">
-                    <span class="card-titulo">COMPARECIDOS</span>
-                    <h2 id="admin-total-compareceu" class="admin-val-sucesso">0</h2>
-                    <span class="card-detalhe" id="admin-taxa-presenca">0% de presença</span>
-                </div>
-                <div class="card">
-                    <span class="card-titulo">PENDENTES</span>
-                    <h2 id="admin-total-pendente" class="admin-val-alerta">0</h2>
-                    <span class="card-detalhe">Aguardando</span>
-                </div>
-                <div class="card">
-                    <span class="card-titulo">FALTAS</span>
-                    <h2 id="admin-total-faltas" class="admin-val-perigo">0</h2>
-                    <span class="card-detalhe">Não compareceram</span>
-                </div>
-            </section>
-
-            <!-- ==========================================================================
-                 2. PAINEL DO CONSULTOR (Bônus Financeiro e Nota de Auditoria)
-                 ========================================================================== -->
-            <section id="secao-metricas-consultor" class="barra-metricas-consultor oculto">
-                <div class="card card-filtro-mes">
                     <span class="card-titulo">MÊS DE REFERÊNCIA</span>
-                    <input type="month" id="filtro-mes-consultor" class="input-mes-estilizado">
+                    <input type="month" id="filtro-mes-consultor" class="input-mes-card">
                     <span class="card-detalhe">Filtre o período de apuração</span>
                 </div>
                 <div class="card">
@@ -93,92 +338,118 @@
                     <h2 class="bonus-previsto">R$ 0,00</h2>
                     <span class="card-detalhe">Se todos os agendados comparecerem</span>
                 </div>
-                <div class="card card-monitoria">
+                <div class="card">
                     <span class="card-titulo">NOTA DE MONITORIA</span>
-                    <div class="card-monitoria-conteudo">
-                        <input type="number" id="input-monitoria" class="input-monitoria-campo" value="100" min="0" max="100">
-                        <span class="texto-simbolo-porcento">%</span>
+                    <div class="grupo-input-monitoria">
+                        <input type="number" id="input-monitoria" value="100" min="0" max="100">
+                        <span class="sufixo-porcentagem">%</span>
                         <span id="badge-ajuste-monitoria" class="badge-ajuste-monitoria">+10% Bônus</span>
                     </div>
                     <span class="card-detalhe">≥80% (+10%) | &lt;80% (-10%)</span>
                 </div>
             </section>
 
-            <!-- Barra de Progresso da Meta da Equipe (Exclusiva do Consultor) -->
-            <section id="secao-meta-equipe" class="card card-meta-equipe oculto">
-                <div class="meta-equipe-topo">
+            <!-- 3. BARRA DE META -->
+            <section id="secao-meta-equipe" class="card-meta-equipe">
+                <div class="meta-equipe-cabecalho">
                     <div>
-                        <span class="card-titulo" id="titulo-meta-equipe">META DA EQUIPE</span>
-                        <h3 id="texto-progresso-meta" class="meta-progresso-texto">0 / 100 agendamentos (0%)</h3>
+                        <span id="titulo-meta-equipe" class="card-titulo" style="font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">META DA EQUIPE (TOYOTA)</span>
+                        <h3 id="texto-progresso-meta">0 / 900 agendamentos (0%)</h3>
                     </div>
-                    <span id="texto-restante-meta" class="meta-badge-restante">
-                        Faltam 100 agendamentos para bater a meta
-                    </span>
+                    <span id="texto-restante-meta" class="meta-badge-restante">Carregando meta...</span>
                 </div>
-                <div class="meta-barra-trilho">
-                    <div id="barra-progresso-meta" class="meta-barra-preenchimento"></div>
+                <div class="barra-progresso-container">
+                    <div id="barra-progresso-meta" class="barra-progresso-preenchimento" style="width: 0%;"></div>
                 </div>
             </section>
 
-            <!-- ==========================================================================
-                 3. SEÇÃO DE GRÁFICOS (Chart.js)
-                 ========================================================================== -->
-            <section class="grade-graficos" id="grade-graficos">
-                <!-- Gráfico de Rosca: Efetividade / Taxa de presença -->
-                <div class="card-grafico" id="card-grafico-volume">
-                    <h3 id="titulo-grafico-volume">Efetividade Geral</h3>
-                    <p id="subtitulo-grafico-volume">Taxa de presença</p>
-                    <div class="grafico-container">
+            <!-- 4. BOTÕES DE NAVEGAÇÃO ENTRE OS GRÁFICOS -->
+            <div class="barra-filtros-graficos">
+                <button type="button" id="btn-aba-visao-geral" class="btn-filtro-grafico ativo">
+                    Efetividade & Bônus
+                </button>
+                <button type="button" id="btn-aba-categorias" class="btn-filtro-grafico">
+                    Detalhes por Categoria de Revisão
+                </button>
+                <button type="button" id="btn-aba-equipe" class="btn-filtro-grafico oculto">
+                    Volume da Equipe
+                </button>
+            </div>
+
+            <!-- 5. GRADE DE GRÁFICOS -->
+            <section id="grade-graficos" class="grade-graficos-lado-a-lado">
+                <div class="card-grafico" id="card-grafico-volume-wrapper">
+                    <div class="grafico-cabecalho">
+                        <h3 id="titulo-grafico-volume">Minha Efetividade</h3>
+                        <p id="subtitulo-grafico-volume">Taxa de presença</p>
+                    </div>
+                    <div class="grafico-container" style="height: 270px;">
                         <canvas id="graficoVolume"></canvas>
                     </div>
                 </div>
 
-                <!-- Gráfico de Barras Verticais: Histórico de Bônus (Consultor) -->
-                <div class="card-grafico oculto" id="card-grafico-bonus-mensal">
-                    <h3 id="titulo-grafico-bonus-mensal">Comparativo de Bônus Mensal</h3>
-                    <p id="subtitulo-grafico-bonus-mensal">Evolução dos valores confirmados por mês</p>
-                    <div class="grafico-container">
+                <div id="card-grafico-bonus-mensal" class="card-grafico">
+                    <div class="grafico-cabecalho">
+                        <h3>Comparativo de Bônus Mensal</h3>
+                        <p>Evolução dos valores confirmados por mês</p>
+                    </div>
+                    <div class="grafico-container" style="height: 270px;">
                         <canvas id="graficoBonusMensal"></canvas>
                     </div>
                 </div>
 
-                <!-- Gráfico de Barras Horizontais: Produção por Consultor da Equipe -->
-                <div class="card-grafico oculto" id="card-grafico-equipe">
-                    <h3 id="titulo-grafico-equipe">Volume por Operador</h3>
-                    <p id="subtitulo-grafico-equipe">Volume por operador desta equipe</p>
-                    <div class="grafico-container">
-                        <canvas id="graficoEquipe"></canvas>
+                <div id="card-grafico-equipe-admin" class="card-grafico oculto">
+                    <div class="grafico-cabecalho">
+                        <h3 id="titulo-grafico-equipe-admin">Operadores da Equipe</h3>
+                        <p id="subtitulo-grafico-equipe-admin">Volume por operador desta equipe</p>
+                    </div>
+                    <div class="grafico-container" style="height: 270px;">
+                        <canvas id="graficoEquipeAdmin"></canvas>
                     </div>
                 </div>
             </section>
 
-            <!-- ==========================================================================
-                 4. TABELA DE RANKING / EQUIPES (Exclusiva do Administrador)
-                 ========================================================================== -->
-            <section id="secao-admin-ranking" class="secao-tabela-admin oculto">
-                <div class="tabela-topo">
-                    <div>
-                        <h2 id="titulo-tabela-admin">Desempenho por Equipe</h2>
-                        <span id="subtitulo-tabela-admin" class="subtitulo-contador">Acompanhe por equipe ou filtre individualmente</span>
-                    </div>
-                    <button id="btn-voltar-admin" class="btn-voltar-admin oculto">
-                        ← Voltar para Todas as Equipes
-                    </button>
+            <!-- 6. GRÁFICO REVISÕES POR CATEGORIA -->
+            <section id="secao-grafico-revisoes-tipo" class="card-grafico oculto" style="margin-bottom: 24px;">
+                <div class="grafico-cabecalho">
+                    <h3 id="titulo-grafico-revisoes-tipo">Distribuição por Categoria de Revisão</h3>
+                    <p id="subtitulo-grafico-revisoes-tipo">Quantidade de agendamentos por faixa de revisão</p>
                 </div>
+                <div class="grafico-container" style="height: 300px;">
+                    <canvas id="graficoRevisoesTipo"></canvas>
+                </div>
+            </section>
 
+            <!-- 7. GRÁFICO VOLUME DA EQUIPE -->
+            <section id="secao-volume-equipe-consultor" class="card-grafico oculto" style="margin-bottom: 24px;">
+                <div class="grafico-cabecalho">
+                    <h3 id="titulo-grafico-equipe-consultor">Volume da Equipe: Toyota</h3>
+                    <p id="subtitulo-grafico-equipe-consultor">Volume por operador desta equipe</p>
+                </div>
+                <div class="grafico-container" style="height: 300px;">
+                    <canvas id="graficoEquipeConsultor"></canvas>
+                </div>
+            </section>
+
+            <!-- 8. TABELAS ADMINISTRATIVAS -->
+            <section id="secao-admin-ranking" class="card-tabela-gerencial oculto" style="margin-top: 24px;">
+                <div class="tabela-cabecalho-acoes">
+                    <div>
+                        <h2 id="titulo-tabela-admin">Desempenho da Equipe</h2>
+                        <span id="subtitulo-tabela-admin" class="subtitulo-contador">Detalhamento dos agendamentos</span>
+                    </div>
+                    <button id="btn-voltar-admin" class="btn-secundario-tabela oculto">← Voltar para Todas as Equipes</button>
+                </div>
                 <div class="tabela-container">
                     <table>
                         <thead id="tabela-cabecalho-admin"></thead>
-                        <tbody id="tabela-corpo-admin">
-                            <tr><td colspan="6" class="celula-vazia-mensagem">Carregando dados...</td></tr>
-                        </tbody>
+                        <tbody id="tabela-corpo-admin"></tbody>
                     </table>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- Script de inteligência de relatórios e gráficos -->
     <script src="relatorios.js"></script>
 </body>
 </html>
