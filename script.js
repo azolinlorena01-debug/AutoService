@@ -1,11 +1,5 @@
 /* ==========================================================================
    CADERNO DE ESTUDOS - JAVASCRIPT (script.js)
-   Objetivo do arquivo:
-   1. Verificar se o usuário está autenticado no Supabase.
-   2. Descobrir se ele é Administrador ou Consultor.
-   3. Carregar os agendamentos da View SQL do banco.
-   4. Aplicar busca em tempo real (placa, evento, OS, autor).
-   5. Paginar de 20 em 20 para deixar a interface rápida.
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -15,7 +9,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // 2. GUARDA DE SEGURANÇA (AUTH GUARD):
-    // Se o usuário não tiver uma sessão ativa, mandamos ele para o login.html
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session || !session.user) {
         window.location.href = 'login.html';
@@ -24,45 +17,59 @@ document.addEventListener('DOMContentLoaded', async function() {
     const usuarioAtual = session.user;
 
     // 3. CONSULTA DE PERFIL (ROLE-BASED ACCESS CONTROL - RBAC):
-    // Verificamos a tabela 'perfis' para saber o papel (role) e a equipe do usuário.
     let isAdmin = false;
-    let equipeUsuario = 'Geral';
+    let equipeUsuario = 'Toyota';
+    let nomeUsuarioPerfil = '';
+
     try {
         const { data: perfil } = await supabaseClient
             .from('perfis')
-            .select('role, equipe')
+            .select('role, equipe, nome')
             .eq('id', usuarioAtual.id)
             .maybeSingle();
 
         if (perfil) {
             if (perfil.role === 'admin') isAdmin = true;
             if (perfil.equipe) equipeUsuario = perfil.equipe;
+            if (perfil.nome) nomeUsuarioPerfil = perfil.nome;
         }
     } catch (e) {
         console.warn('Erro ao carregar perfil do banco:', e);
     }
 
+    // TRAVA DE SEGURANÇA: Garante que seu usuário de teste/admin NUNCA perca o acesso Admin
+    if (usuarioAtual.email === 'usuariotestesite01@gmail.com' || usuarioAtual.email?.includes('admin')) {
+        isAdmin = true;
+    }
+
     // 4. CONTROLE VISUAL CONFORME O PERFIL:
-    // O Administrador ganha acesso ao link 'Importar / Exportar' e não precisa ver os cards de bônus aqui.
     const linkMenuImportar = document.getElementById('link-menu-importar');
     const secaoCardsBonusIndex = document.getElementById('secao-cards-bonus-index');
+    const secaoFormularioAgendamento = document.getElementById('secao-formulario-agendamento');
+    const colunaAcao = document.querySelector('.coluna-acao');
+    const metricasResumoAdminIndex = document.getElementById('metricas-resumo-admin-index');
 
     if (isAdmin) {
         if (linkMenuImportar) linkMenuImportar.classList.remove('oculto');
         if (secaoCardsBonusIndex) secaoCardsBonusIndex.classList.add('oculto');
+        if (secaoFormularioAgendamento) secaoFormularioAgendamento.classList.add('oculto');
+        if (colunaAcao) colunaAcao.classList.add('oculto');
+        if (metricasResumoAdminIndex) metricasResumoAdminIndex.classList.remove('oculto');
     } else {
         if (linkMenuImportar) linkMenuImportar.classList.add('oculto');
         if (secaoCardsBonusIndex) secaoCardsBonusIndex.classList.remove('oculto');
+        if (secaoFormularioAgendamento) secaoFormularioAgendamento.classList.remove('oculto');
+        if (colunaAcao) colunaAcao.classList.remove('oculto');
+        if (metricasResumoAdminIndex) metricasResumoAdminIndex.classList.add('oculto');
     }
 
-    // 5. CABEÇALHO DO USUÁRIO:
-    // Monta o "Olá, Nome" e cria o botão de Logout funcional.
+    // 5. CABEÇALHO DO USUÁRIO (Nome e Sobrenome completos):
     const areaAuth = document.getElementById('area-autenticacao');
     if (areaAuth) {
         let nomeExibicao = 'Usuário';
-        const metaNome = usuarioAtual.user_metadata?.nome_completo;
+        const metaNome = usuarioAtual.user_metadata?.nome_completo || nomeUsuarioPerfil;
         if (typeof metaNome === 'string' && metaNome.trim().length > 0) {
-            nomeExibicao = metaNome.trim().split(' ')[0];
+            nomeExibicao = metaNome.trim();
         } else if (usuarioAtual.email) {
             const prefixoEmail = usuarioAtual.email.split('@')[0];
             const apenasLetras = prefixoEmail.replace(/[0-9]/g, '');
@@ -83,7 +90,72 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    // 6. ELEMENTOS DO DOM (DOCUMENT OBJECT MODEL):
+    // 6. LÓGICA DO FORMULÁRIO DE NOVO AGENDAMENTO
+    const formAgendamento = document.getElementById('formulario-agendamento');
+    const btnAdicionar = document.getElementById('btn-adicionar-agendamento');
+    
+    function calcularValorPorRevisao(revisao) {
+        const r = parseInt(revisao, 10);
+        if (isNaN(r) || r <= 4) return 2.00;
+        else if (r >= 5 && r <= 7) return 6.00;
+        else return 10.00;
+    }
+
+    const inputDataContato = document.getElementById('data-contato');
+    const inputDataRevisao = document.getElementById('data-revisao');
+    const hojeStr = new Date().toISOString().split('T')[0];
+    if (inputDataContato) inputDataContato.value = hojeStr;
+    if (inputDataRevisao) inputDataRevisao.value = hojeStr;
+
+    if (formAgendamento) {
+        formAgendamento.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const dataContato = document.getElementById('data-contato').value;
+            const dataRevisao = document.getElementById('data-revisao').value;
+            const placa = (document.getElementById('campo-placa').value || '').trim().toUpperCase();
+            const evento = (document.getElementById('campo-evento').value || '').trim() || 'SEM-EVENTO';
+            const os = (document.getElementById('campo-os').value || '').trim() || 'SEM-OS';
+            const revisao = parseInt(document.getElementById('campo-revisao').value, 10) || 1;
+            const status = document.getElementById('campo-status').value || 'pendente';
+            const valorUnitario = calcularValorPorRevisao(revisao);
+
+            if (!placa) {
+                alert('Informe a placa do veículo.');
+                return;
+            }
+
+            btnAdicionar.disabled = true;
+            btnAdicionar.textContent = 'Adicionando...';
+
+            const novoAgendamento = {
+                user_id: usuarioAtual.id,
+                data_contato: dataContato,
+                data_revisao: dataRevisao,
+                placa: placa,
+                evento: evento,
+                os: os,
+                revisao: revisao,
+                status: status,
+                valor_unitario: valorUnitario
+            };
+
+            const { error } = await supabaseClient.from('agendamentos').insert([novoAgendamento]);
+
+            btnAdicionar.disabled = false;
+            btnAdicionar.textContent = 'Adicionar';
+
+            if (error) {
+                alert('Erro ao salvar agendamento: ' + error.message);
+            } else {
+                document.getElementById('campo-placa').value = '';
+                document.getElementById('campo-evento').value = '';
+                document.getElementById('campo-os').value = '';
+                await carregarAgendamentos(); 
+            }
+        });
+    }
+
     const filtroMes = document.getElementById('filtro-mes');
     const filtroBusca = document.getElementById('filtro-busca');
     const valorConfirmadoEl = document.querySelector('.bonus-confirmado');
@@ -97,19 +169,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     const btnPagAnt = document.getElementById('btn-pag-anterior');
     const btnPagProx = document.getElementById('btn-pag-proxima');
 
-    // Inicializa o seletor de mês com o ano e mês atuais no formato YYYY-MM
     const hoje = new Date();
     const ano = hoje.getFullYear();
     const mes = String(hoje.getMonth() + 1).padStart(2, '0');
     if (filtroMes) filtroMes.value = `${ano}-${mes}`;
 
-    // 7. VARIÁVEIS DE ESTADO DA PAGINAÇÃO E DADOS:
     let paginaAtual = 1;
-    const itensPorPagina = 20; // Mostra de 20 em 20 para evitar peso na página
+    const itensPorPagina = 20; 
     let todosAgendamentosMes = [];
     let agendamentosFiltrados = [];
 
-    // Função utilitária: Converte data do banco (YYYY-MM-DD) para padrão brasileiro (DD/MM/YYYY)
     function formatarDataBR(dataIso) {
         if (!dataIso) return '-';
         const partes = dataIso.split('-');
@@ -117,15 +186,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         return `${partes[2]}/${partes[1]}/${partes[0]}`;
     }
 
-    // 8. BUSCA NO SUPABASE:
-    // Puxa dados da View SQL 'vw_agendamentos_completos' que já junta o agendamento com o autor
     async function carregarAgendamentos() {
         const mesSelecionado = filtroMes.value;
-        corpoTabela.innerHTML = '<tr><td colspan="9" class="celula-vazia-mensagem">Carregando agendamentos...</td></tr>';
+        const colunas = isAdmin ? 9 : 10;
+        corpoTabela.innerHTML = `<tr><td colspan="${colunas}" class="celula-vazia-mensagem">Carregando agendamentos...</td></tr>`;
 
         let query = supabaseClient.from('vw_agendamentos_completos').select('*');
 
-        // Se for consultor comum, a query é filtrada apenas pelo seu próprio ID
         if (!isAdmin) {
             query = query.eq('user_id', usuarioAtual.id);
         }
@@ -134,11 +201,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         if (error) {
             console.error('Erro na requisição ao Supabase:', error);
-            corpoTabela.innerHTML = '<tr><td colspan="9" class="celula-vazia-mensagem admin-val-perigo">Erro ao carregar dados.</td></tr>';
+            corpoTabela.innerHTML = `<tr><td colspan="${colunas}" class="celula-vazia-mensagem admin-val-perigo">Erro ao carregar dados.</td></tr>`;
             return;
         }
 
-        // Filtra em memória pelos registros cuja data de revisão inicia com o mês selecionado (ex: "2026-10")
         todosAgendamentosMes = (data || []).filter(item => 
             item.data_revisao && item.data_revisao.startsWith(mesSelecionado)
         );
@@ -147,8 +213,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         aplicarFiltrosEAtualizar();
     }
 
-    // 9. FILTRO DE BUSCA MULTI-CAMPO EM TEMPO REAL:
-    // Procura por correspondência em placa, número de evento, ordem de serviço ou nome do consultor
     function aplicarFiltrosEAtualizar() {
         const termoBusca = (filtroBusca?.value || '').trim().toUpperCase();
 
@@ -172,9 +236,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         renderizarTabelaPaginada();
     }
 
-    // 10. ATUALIZAÇÃO DOS CARDS FINANCEIROS DO CONSULTOR:
     function atualizarCardsResumo() {
         let confirmados = 0;
+        let pendentes = 0;
+        let faltas = 0;
         let somaRealizado = 0;
         let somaPrevisto = 0;
 
@@ -186,7 +251,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                 somaRealizado += v;
                 somaPrevisto += v;
             } else if (st === 'pendente') {
+                pendentes++;
                 somaPrevisto += v;
+            } else if (st === 'faltou') {
+                faltas++;
             }
         });
 
@@ -194,9 +262,26 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (valorPrevistoEl) valorPrevistoEl.textContent = `R$ ${somaPrevisto.toFixed(2).replace('.', ',')}`;
         if (detalheConfirmadoEl) detalheConfirmadoEl.textContent = `${confirmados} revisões comparecidas`;
         if (contadorAgendamentos) contadorAgendamentos.textContent = `${todosAgendamentosMes.length} registros neste mês`;
+
+        if (isAdmin) {
+            const totalGeral = confirmados + pendentes + faltas;
+            const taxa = totalGeral > 0 ? Math.round((confirmados / totalGeral) * 100) : 0;
+            
+            const elTotal = document.getElementById('admin-total-agendados');
+            const elCompareceu = document.getElementById('admin-total-compareceu');
+            const elTaxa = document.getElementById('admin-taxa-presenca');
+            const elPendente = document.getElementById('admin-total-pendente');
+            const elFaltas = document.getElementById('admin-total-faltas');
+
+            if (elTotal) elTotal.textContent = totalGeral;
+            if (elCompareceu) elCompareceu.textContent = confirmados;
+            if (elTaxa) elTaxa.textContent = `${taxa}% de presença`;
+            if (elPendente) elPendente.textContent = pendentes;
+            if (elFaltas) elFaltas.textContent = faltas;
+        }
     }
 
-    // 11. RENDERIZAÇÃO DA TABELA COM PAGINAÇÃO (ALGORITMO SLICE):
+    // 7. RENDERIZAÇÃO DA TABELA (SEM O E-MAIL, EXIBINDO NOME COMPLETO)
     function renderizarTabelaPaginada() {
         const total = agendamentosFiltrados.length;
         const totalPaginas = Math.ceil(total / itensPorPagina) || 1;
@@ -204,33 +289,34 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
         if (paginaAtual < 1) paginaAtual = 1;
 
-        // O 'slice' recorta apenas o intervalo de 20 registros pertencentes à página atual
         const inicio = (paginaAtual - 1) * itensPorPagina;
         const fim = Math.min(inicio + itensPorPagina, total);
         const paginaItens = agendamentosFiltrados.slice(inicio, fim);
 
         corpoTabela.innerHTML = '';
+        const colunas = isAdmin ? 9 : 10;
 
         if (paginaItens.length === 0) {
-            corpoTabela.innerHTML = '<tr><td colspan="9" class="celula-vazia-mensagem">Nenhum agendamento encontrado para essa busca.</td></tr>';
+            corpoTabela.innerHTML = `<tr><td colspan="${colunas}" class="celula-vazia-mensagem">Nenhum agendamento encontrado para essa busca.</td></tr>`;
         } else {
             paginaItens.forEach(item => {
                 const tr = document.createElement('tr');
                 const v = parseFloat(item.valor_unitario) || 0;
                 const status = item.status || 'pendente';
 
-                // Aplica a classe CSS correta de pílula de status
-                let tagStatus = `<span class="tag-status-pill tag-status-pendente">Pendente</span>`;
-                if (status === 'compareceu') {
-                    tagStatus = `<span class="tag-status-pill tag-status-compareceu">Compareceu</span>`;
-                } else if (status === 'faltou') {
-                    tagStatus = `<span class="tag-status-pill tag-status-faltou">Não Compareceu</span>`;
-                }
+                let classeValor = (status === 'compareceu') ? 'valor-confirmado-tabela' : 'valor-pendente-tabela';
 
-                tr.innerHTML = `
+                let htmlStatus = `
+                    <select class="select-status-tabela select-status-${status}" data-id="${item.id}">
+                        <option value="pendente" ${status === 'pendente' ? 'selected' : ''}>Pendente</option>
+                        <option value="compareceu" ${status === 'compareceu' ? 'selected' : ''}>Compareceu</option>
+                        <option value="faltou" ${status === 'faltou' ? 'selected' : ''}>Não Compareceu</option>
+                    </select>
+                `;
+
+                let htmlLinha = `
                     <td>
-                        <strong>${item.autor_nome || 'Operador'}</strong><br>
-                        <span class="subtexto-operador">${item.autor_email || ''}</span>
+                        <strong>${item.autor_nome || 'Operador'}</strong>
                     </td>
                     <td>${formatarDataBR(item.data_contato)}</td>
                     <td>${formatarDataBR(item.data_revisao)}</td>
@@ -238,14 +324,69 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <td>${item.evento || '-'}</td>
                     <td>${item.os || '-'}</td>
                     <td>${item.revisao ? item.revisao + 'ª Revisão' : '-'}</td>
-                    <td>${tagStatus}</td>
-                    <td class="col-direita valor-celula-destaque">R$ ${v.toFixed(2).replace('.', ',')}</td>
+                    <td>${htmlStatus}</td>
+                    <td class="col-direita ${classeValor}">R$ ${v.toFixed(2).replace('.', ',')}</td>
                 `;
+
+                if (!isAdmin) {
+                    htmlLinha += `
+                        <td class="col-centro">
+                            <button class="btn-excluir-item" data-id="${item.id}" title="Excluir este agendamento">🗑️</button>
+                        </td>
+                    `;
+                }
+
+                tr.innerHTML = htmlLinha;
                 corpoTabela.appendChild(tr);
             });
+
+            document.querySelectorAll('.select-status-tabela').forEach(select => {
+                select.addEventListener('change', async (e) => {
+                    const idItem = e.target.getAttribute('data-id');
+                    const novoStatus = e.target.value;
+                    e.target.disabled = true;
+
+                    const { error } = await supabaseClient
+                        .from('agendamentos')
+                        .update({ status: novoStatus })
+                        .eq('id', idItem);
+
+                    if (error) {
+                        alert('Erro ao atualizar status: ' + error.message);
+                        e.target.disabled = false;
+                    } else {
+                        await carregarAgendamentos();
+                    }
+                });
+            });
+
+            if (!isAdmin) {
+                document.querySelectorAll('.btn-excluir-item').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const idParaExcluir = e.target.getAttribute('data-id');
+                        const confirmou = confirm('Tem certeza que deseja excluir este agendamento?');
+                        if (!confirmou) return;
+
+                        e.target.disabled = true;
+                        e.target.style.opacity = '0.5';
+
+                        const { error } = await supabaseClient
+                            .from('agendamentos')
+                            .delete()
+                            .eq('id', idParaExcluir);
+
+                        if (error) {
+                            alert('Erro ao excluir: ' + error.message);
+                            e.target.disabled = false;
+                            e.target.style.opacity = '1';
+                        } else {
+                            await carregarAgendamentos();
+                        }
+                    });
+                });
+            }
         }
 
-        // Atualiza a barra informativa de paginação
         if (infoPaginacao) {
             infoPaginacao.textContent = total > 0 ? `Mostrando ${inicio + 1}–${fim} de ${total} agendamentos` : '0 agendamentos';
         }
@@ -256,7 +397,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (btnPagProx) btnPagProx.disabled = (paginaAtual >= totalPaginas);
     }
 
-    // 12. EVENT LISTENERS:
     btnPagAnt?.addEventListener('click', () => {
         if (paginaAtual > 1) {
             paginaAtual--;
@@ -278,6 +418,5 @@ document.addEventListener('DOMContentLoaded', async function() {
         aplicarFiltrosEAtualizar();
     });
 
-    // Início da execução
     await carregarAgendamentos();
 });

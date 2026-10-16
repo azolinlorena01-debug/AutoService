@@ -32,7 +32,7 @@
 
         <main>
             <!-- ==========================================================================
-                 RESUMO FINANCEIRO (Visível apenas para Consultor; Admin não vê isso aqui)
+                 RESUMO FINANCEIRO (Visível apenas para Consultor)
                  ========================================================================== -->
             <section id="secao-cards-bonus-index" class="barra-metricas-topo">
                 <div class="card">
@@ -48,10 +48,96 @@
             </section>
 
             <!-- ==========================================================================
+                 RESUMO OPERACIONAL DO ADMIN (Visível apenas para o Administrador)
+                 ========================================================================== -->
+            <section id="metricas-resumo-admin-index" class="metricas-gerenciais-admin oculto">
+                <div class="card">
+                    <span class="card-titulo">TOTAL AGENDAMENTOS</span>
+                    <h2 id="admin-total-agendados" class="admin-val-neutro">0</h2>
+                    <span class="card-detalhe">Registros na base no mês</span>
+                </div>
+                <div class="card">
+                    <span class="card-titulo">COMPARECIDOS</span>
+                    <h2 id="admin-total-compareceu" class="admin-val-sucesso">0</h2>
+                    <span class="card-detalhe" id="admin-taxa-presenca">0% de presença</span>
+                </div>
+                <div class="card">
+                    <span class="card-titulo">PENDENTES</span>
+                    <h2 id="admin-total-pendente" class="admin-val-alerta">0</h2>
+                    <span class="card-detalhe">Aguardando</span>
+                </div>
+                <div class="card">
+                    <span class="card-titulo">FALTAS</span>
+                    <h2 id="admin-total-faltas" class="admin-val-perigo">0</h2>
+                    <span class="card-detalhe">Não compareceram</span>
+                </div>
+            </section>
+
+            <!-- ==========================================================================
+                 FORMULÁRIO DE NOVO AGENDAMENTO (Visível apenas para o Consultor)
+                 ========================================================================== -->
+            <section id="secao-formulario-agendamento" class="card-formulario-agendamento">
+                <form id="formulario-agendamento">
+                    <div class="linha-campos-form">
+                        <div class="campo-form">
+                            <label for="data-contato">Data do Contato</label>
+                            <input type="date" id="data-contato" required>
+                        </div>
+                        <div class="campo-form">
+                            <label for="data-revisao">Data da Revisão</label>
+                            <input type="date" id="data-revisao" required>
+                        </div>
+                        <div class="campo-form">
+                            <label for="campo-placa">Placa do Veículo</label>
+                            <input type="text" id="campo-placa" placeholder="Ex: ABC1D23" maxlength="8" required>
+                        </div>
+                        <div class="campo-form">
+                            <label for="campo-evento">Nº do Evento</label>
+                            <input type="text" id="campo-evento" placeholder="Ex: 12345678">
+                        </div>
+                        <div class="campo-form">
+                            <label for="campo-os">Ordem de Serviço</label>
+                            <input type="text" id="campo-os" placeholder="Ex: 123456">
+                        </div>
+                    </div>
+
+                    <div class="linha-inferior-form">
+                        <div class="campo-form" style="flex: 2;">
+                            <label for="campo-revisao">Revisão</label>
+                            <select id="campo-revisao" required>
+                                <option value="1">1ª Revisão</option>
+                                <option value="2">2ª Revisão</option>
+                                <option value="3">3ª Revisão</option>
+                                <option value="4">4ª Revisão</option>
+                                <option value="5">5ª Revisão</option>
+                                <option value="6">6ª Revisão</option>
+                                <option value="7">7ª Revisão</option>
+                                <option value="8">8ª Revisão ou mais</option>
+                            </select>
+                        </div>
+
+                        <div class="campo-form" style="flex: 2;">
+                            <label for="campo-status">Estado do Agendamento</label>
+                            <select id="campo-status">
+                                <option value="pendente" selected>Pendente</option>
+                                <option value="compareceu">Compareceu</option>
+                                <option value="faltou">Não Compareceu</option>
+                            </select>
+                        </div>
+
+                        <div class="campo-btn-adicionar">
+                            <button type="submit" id="btn-adicionar-agendamento" class="btn-adicionar-principal">
+                                Adicionar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </section>
+
+            <!-- ==========================================================================
                  TABELA PRINCIPAL DE AGENDAMENTOS
                  ========================================================================== -->
             <section class="card-tabela-agendamentos">
-                <!-- Cabeçalho com o título e os dois filtros lado a lado na mesma linha -->
                 <div class="tabela-cabecalho-acoes">
                     <div>
                         <h2>Agendamentos Registrados</h2>
@@ -63,7 +149,6 @@
                     </div>
                 </div>
 
-                <!-- Tabela responsiva com rolagem horizontal em telas pequenas -->
                 <div class="tabela-container">
                     <table>
                         <thead>
@@ -77,10 +162,11 @@
                                 <th>REVISÃO</th>
                                 <th>STATUS</th>
                                 <th class="col-direita">PREVISÃO BÔNUS</th>
+                                <th class="col-centro coluna-acao oculto">AÇÃO</th>
                             </tr>
                         </thead>
                         <tbody id="tabela-agendamentos-corpo">
-                            <tr><td colspan="9" class="celula-vazia-mensagem">Carregando agendamentos...</td></tr>
+                            <tr><td colspan="10" class="celula-vazia-mensagem">Carregando agendamentos...</td></tr>
                         </tbody>
                     </table>
 

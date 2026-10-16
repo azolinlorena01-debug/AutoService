@@ -39,14 +39,17 @@
                 <input type="password" id="campo-senha" placeholder="••••••••" required minlength="6">
             </div>
 
-            <!-- Campo de Seleção de Equipe (exibido apenas no cadastro) -->
+            <!-- Campo de Confirmação de Senha (exibido apenas no cadastro) -->
+            <div class="campo-login oculto" id="grupo-senha-confirma">
+                <label for="campo-senha-confirma">Confirmar Senha</label>
+                <input type="password" id="campo-senha-confirma" placeholder="••••••••" minlength="6">
+            </div>
+
+            <!-- Campo de Seleção de Equipe (Agora tem apenas a Toyota) -->
             <div class="campo-login oculto" id="grupo-equipe">
                 <label for="campo-equipe">Equipe de Trabalho</label>
                 <select id="campo-equipe">
-                    <option value="" disabled selected>Selecione sua equipe...</option>
-                    <option value="Pós-Venda">Pós-Venda</option>
-                    <option value="Equipe Alfa">Equipe Alfa</option>
-                    <option value="Equipe Beta">Equipe Beta</option>
+                    <option value="Toyota" selected>Toyota</option>
                 </select>
             </div>
 

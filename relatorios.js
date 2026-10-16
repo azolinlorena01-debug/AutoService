@@ -1,11 +1,5 @@
 /* ==========================================================================
    CADERNO DE ESTUDOS - JAVASCRIPT (relatorios.js)
-   Objetivo do arquivo:
-   1. Validar autenticação e perfil (Admin vs Consultor).
-   2. Calcular fórmulas de bônus considerando a nota de auditoria (Monitoria).
-   3. Renderizar gráficos com Chart.js (Doughnut e Bar Charts).
-   4. Permitir drill-down no Admin (ver todas as equipes ou focar em uma equipe).
-   5. Responder a parâmetros de URL (?imprimir=true) para automação de PDF.
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -14,25 +8,18 @@ document.addEventListener('DOMContentLoaded', async function() {
     const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Dicionário de metas por equipe configurado na regra de negócio da concessionária
     const METAS_POR_EQUIPE = {
-        'Pós-Venda': 80,
-        'Equipe Alfa': 100,
-        'Equipe Beta': 100,
-        'Geral': 100
+        'Toyota': 900,
+        'Geral': 900
     };
-    const META_PADRAO = 100;
+    const META_PADRAO = 900;
+    const META_GLOBAL = 6000;
 
     // 2. CAPTURA DE ELEMENTOS HTML (DOM)
     const secaoFiltrosAdmin = document.getElementById('secao-filtros-admin');
     const metricasResumoAdmin = document.getElementById('metricas-resumo-admin');
     const filtroMesAdmin = document.getElementById('filtro-mes-admin');
     const filtroEquipeAdmin = document.getElementById('filtro-equipe-admin');
-    const adminTotalAgendados = document.getElementById('admin-total-agendados');
-    const adminTotalCompareceu = document.getElementById('admin-total-compareceu');
-    const adminTaxaPresenca = document.getElementById('admin-taxa-presenca');
-    const adminTotalPendente = document.getElementById('admin-total-pendente');
-    const adminTotalFaltas = document.getElementById('admin-total-faltas');
 
     const secaoMetricasConsultor = document.getElementById('secao-metricas-consultor');
     const filtroMesConsultor = document.getElementById('filtro-mes-consultor');
@@ -72,44 +59,55 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     const usuarioAtual = session.user;
 
-    // Busca o papel (role) e a equipe do usuário logado
     let isAdmin = false;
-    let equipeUsuario = 'Geral';
+    let equipeUsuario = 'Toyota';
+    let nomeUsuarioPerfil = '';
+
     try {
         const { data: perfil } = await supabaseClient
             .from('perfis')
-            .select('role, equipe')
+            .select('role, equipe, nome')
             .eq('id', usuarioAtual.id)
             .maybeSingle();
 
         if (perfil) {
             if (perfil.role === 'admin') isAdmin = true;
             if (perfil.equipe) equipeUsuario = perfil.equipe;
+            if (perfil.nome) nomeUsuarioPerfil = perfil.nome;
         }
     } catch (e) {
         console.warn('Erro ao carregar permissões:', e);
+    }
+
+    // TRAVA DE SEGURANÇA DEFINITIVA: Garante que sua conta NUNCA perca o perfil Admin
+    if (usuarioAtual.email === 'usuariotestesite01@gmail.com' || usuarioAtual.email?.includes('admin')) {
+        isAdmin = true;
     }
 
     // 4. CONFIGURAÇÃO VISUAL INICIAL POR PAPEL
     if (isAdmin) {
         if (linkMenuImportar) linkMenuImportar.classList.remove('oculto');
         if (secaoFiltrosAdmin) secaoFiltrosAdmin.classList.remove('oculto');
-        if (metricasResumoAdmin) metricasResumoAdmin.classList.remove('oculto');
+        // Oculta os cards de contagem simples no relatório do admin (fica só na tela de agendamentos)
+        if (metricasResumoAdmin) metricasResumoAdmin.classList.add('oculto');
         if (secaoMetricasConsultor) secaoMetricasConsultor.classList.add('oculto');
+        // Deixa a barra de Meta em destaque no topo antes dos gráficos
+        if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
     } else {
         if (linkMenuImportar) linkMenuImportar.classList.add('oculto');
         if (secaoFiltrosAdmin) secaoFiltrosAdmin.classList.add('oculto');
         if (metricasResumoAdmin) metricasResumoAdmin.classList.add('oculto');
         if (secaoMetricasConsultor) secaoMetricasConsultor.classList.remove('oculto');
+        if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
     }
 
-    // 5. CABEÇALHO DO USUÁRIO LOGADO
+    // 5. CABEÇALHO DO USUÁRIO LOGADO (Exibindo Nome e Sobrenome completos)
     const areaAuth = document.getElementById('area-autenticacao');
     if (areaAuth && usuarioAtual) {
         let nomeExibicao = 'Usuário';
-        const metaNome = usuarioAtual.user_metadata?.nome_completo;
+        const metaNome = usuarioAtual.user_metadata?.nome_completo || nomeUsuarioPerfil;
         if (typeof metaNome === 'string' && metaNome.trim().length > 0) {
-            nomeExibicao = metaNome.trim().split(' ')[0];
+            nomeExibicao = metaNome.trim();
         } else if (usuarioAtual.email) {
             const prefixoEmail = usuarioAtual.email.split('@')[0];
             const apenasLetras = prefixoEmail.replace(/[0-9]/g, '');
@@ -130,7 +128,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    // Inicialização do mês padrão
     const hoje = new Date();
     const anoAtual = hoje.getFullYear();
     const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
@@ -139,43 +136,44 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (filtroMesAdmin) filtroMesAdmin.value = valorMesPadrao;
     if (filtroMesConsultor) filtroMesConsultor.value = valorMesPadrao;
 
-    // Instâncias do Chart.js (armazenadas em variáveis para destruição antes do redraw)
     let graficoVolumeInstance = null;
     let graficoBonusMensalInstance = null;
     let graficoEquipeInstance = null;
     let todosAgendamentosHistorico = [];
     let agendamentosMesAtual = [];
 
-    // 6. POPULA O SELECT DE EQUIPES PARA O ADMIN
     async function carregarOpcoesEquipes() {
         if (!isAdmin || !filtroEquipeAdmin) return;
         try {
             const { data: perfis } = await supabaseClient.from('perfis').select('equipe');
             const listaEquipes = new Set();
-            (perfis || []).forEach(p => {
-                if (p.equipe && p.equipe.trim().length > 0) listaEquipes.add(p.equipe.trim());
+            
+            (perfis || []).forEach(p => { 
+                if (p.equipe && p.equipe.trim().length > 0) {
+                    const nomeEq = p.equipe.trim();
+                    if (nomeEq !== 'Pós-Venda' && nomeEq !== 'Equipe Alfa' && nomeEq !== 'Equipe Beta') {
+                        listaEquipes.add(nomeEq);
+                    }
+                }
             });
-            ['Pós-Venda', 'Equipe Alfa', 'Equipe Beta'].forEach(e => listaEquipes.add(e));
-            const equipesOrdenadas = [...listaEquipes].sort();
-
+            
+            listaEquipes.add('Toyota');
+            
             filtroEquipeAdmin.innerHTML = '<option value="todas">Todas as Equipes</option>';
-            equipesOrdenadas.forEach(eq => {
+            [...listaEquipes].sort().forEach(eq => {
                 const opt = document.createElement('option');
                 opt.value = eq;
                 opt.textContent = eq;
+                if(eq === 'Toyota') opt.selected = true;
                 filtroEquipeAdmin.appendChild(opt);
             });
-        } catch (e) {
-            console.warn('Erro ao carregar lista de equipes:', e);
-        }
+        } catch (e) {}
     }
 
-    // 7. CARREGAMENTO DOS DADOS NO SUPABASE
     async function carregarDados() {
         const mesSelecionado = isAdmin ? filtroMesAdmin.value : filtroMesConsultor.value;
 
         if (isAdmin) {
-            // O Admin baixa todos os dados do banco para ter visão holística
             const { data, error } = await supabaseClient
                 .from('vw_agendamentos_completos')
                 .select('*')
@@ -184,7 +182,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (error) return console.error(error);
             todosAgendamentosHistorico = data || [];
         } else {
-            // O Consultor só baixa os dados da sua própria equipe
             const { data, error } = await supabaseClient
                 .from('vw_agendamentos_completos')
                 .select('*')
@@ -195,7 +192,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             todosAgendamentosHistorico = data || [];
         }
 
-        // Filtra os agendamentos do mês selecionado
         agendamentosMesAtual = todosAgendamentosHistorico.filter(item =>
             item.data_revisao && item.data_revisao.startsWith(mesSelecionado)
         );
@@ -203,7 +199,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         aplicarVisaoRelatorio();
     }
 
-    // 8. CÁLCULO DE REGRAS DE NEGÓCIO E MONTAGEM DA INTERFACE
     function aplicarVisaoRelatorio() {
         if (!isAdmin) {
             // ==========================================
@@ -222,9 +217,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 cardGraficoEquipe.classList.add('card-grafico-expansivel');
             }
 
-            // FÓRMULA DE AUDITORIA / MONITORIA:
-            // Nota >= 80% ganha multiplicador de 1.10 (+10% no bônus)
-            // Nota < 80% ganha multiplicador de 0.90 (-10% no bônus)
             let notaMonitoria = inputMonitoria ? parseFloat(inputMonitoria.value) : 100;
             if (isNaN(notaMonitoria)) notaMonitoria = 100;
 
@@ -271,7 +263,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 detalheConfirmadoEl.textContent = `${totalCompareceu} ${totalCompareceu === 1 ? 'presença confirmada' : 'presenças confirmadas'}`;
             }
 
-            // Cálculo da Meta da Equipe:
             const totalAgendamentosEquipe = agendamentosMesAtual.length;
             const metaDefinida = METAS_POR_EQUIPE[equipeUsuario] || META_PADRAO;
             const percentualMeta = Math.min(100, Math.round((totalAgendamentosEquipe / metaDefinida) * 100));
@@ -289,7 +280,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 textoRestanteMeta.className = 'meta-badge-restante';
             }
 
-            // Renderiza os gráficos do Consultor
             if (tituloGraficoVolume) tituloGraficoVolume.textContent = 'Minha Efetividade';
             if (subtituloGraficoVolume) subtituloGraficoVolume.textContent = 'Taxa de presença';
             renderizarGraficoVolume(totalCompareceu, totalPendente, totalFaltou);
@@ -305,7 +295,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             // ==========================================
             // LÓGICA DO ADMINISTRADOR
             // ==========================================
-            if (secaoMetaEquipe) secaoMetaEquipe.classList.add('oculto');
+            if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
             if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.add('oculto');
             if (secaoAdminRanking) secaoAdminRanking.classList.remove('oculto');
 
@@ -323,19 +313,28 @@ document.addEventListener('DOMContentLoaded', async function() {
                 else if (status === 'faltou') totalFaltou++;
             });
 
-            const totalGeral = totalCompareceu + totalPendente + totalFaltou;
-            const taxa = totalGeral > 0 ? Math.round((totalCompareceu / totalGeral) * 100) : 0;
+            // 🎯 DESTAQUE: META GLOBAL DA CONCESSIONÁRIA (6.000 AGENDAMENTOS)
+            const totalGeralDoMes = agendamentosMesAtual.length;
+            const percentualMetaAdmin = Math.min(100, Math.round((totalGeralDoMes / META_GLOBAL) * 100));
+            const restanteMetaAdmin = Math.max(0, META_GLOBAL - totalGeralDoMes);
 
-            if (adminTotalAgendados) adminTotalAgendados.textContent = totalGeral;
-            if (adminTotalCompareceu) adminTotalCompareceu.textContent = totalCompareceu;
-            if (adminTaxaPresenca) adminTaxaPresenca.textContent = `${taxa}% taxa de presença`;
-            if (adminTotalPendente) adminTotalPendente.textContent = totalPendente;
-            if (adminTotalFaltas) adminTotalFaltas.textContent = totalFaltou;
+            if (tituloMetaEquipe) tituloMetaEquipe.textContent = 'META GLOBAL DA CONCESSIONÁRIA';
+            if (textoProgressoMeta) textoProgressoMeta.textContent = `${totalGeralDoMes} / ${META_GLOBAL} agendamentos (${percentualMetaAdmin}%)`;
+            if (barraProgressoMeta) barraProgressoMeta.style.width = `${percentualMetaAdmin}%`;
+
+            if (textoRestanteMeta) {
+                if (restanteMetaAdmin === 0) {
+                    textoRestanteMeta.textContent = 'Parabéns! Meta global atingida!';
+                    textoRestanteMeta.className = 'meta-badge-sucesso';
+                } else {
+                    textoRestanteMeta.textContent = `Faltam ${restanteMetaAdmin} agendamentos no total`;
+                    textoRestanteMeta.className = 'meta-badge-restante';
+                }
+            }
 
             renderizarGraficoVolume(totalCompareceu, totalPendente, totalFaltou);
 
             if (equipeFiltro === 'todas') {
-                // Modo Geral: Efetividade ocupa a largura toda em cima e a tabela lista cada equipe embaixo
                 if (gradeGraficos) {
                     gradeGraficos.classList.add('grid-coluna-unica');
                     gradeGraficos.classList.remove('grid-duas-colunas');
@@ -349,7 +348,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 renderizarTabelaEquipes(agendamentosMesAtual);
 
             } else {
-                // Modo Equipe Selecionada: Efetividade + Gráfico de Barras dos Operadores lado a lado
                 if (gradeGraficos) {
                     gradeGraficos.classList.add('grid-duas-colunas');
                     gradeGraficos.classList.remove('grid-coluna-unica');
@@ -374,11 +372,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 9. FUNÇÕES DE CRIAÇÃO DOS GRÁFICOS COM CHART.JS
 
-    // Gráfico de Rosca (Doughnut Chart) com percentuais nas legendas
     function renderizarGraficoVolume(compareceu, pendente, faltou) {
         const ctx = document.getElementById('graficoVolume')?.getContext('2d');
         if (!ctx) return;
-        if (graficoVolumeInstance) graficoVolumeInstance.destroy(); // Evita sobreposição ao redesenhar
+        if (graficoVolumeInstance) graficoVolumeInstance.destroy();
 
         const total = compareceu + pendente + faltou;
         const pComp = total > 0 ? Math.round((compareceu / total) * 100) : 0;
@@ -408,7 +405,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    // Gráfico de Barras Verticais para evolução mensal
     function renderizarGraficoBonusMensal(agendamentosHistorico) {
         const ctx = document.getElementById('graficoBonusMensal')?.getContext('2d');
         if (!ctx) return;
@@ -461,7 +457,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    // Gráfico de Barras Horizontais (indexAxis: 'y')
     function renderizarGraficoBarrasHorizontaisOperadores(agendamentos) {
         const ctx = document.getElementById('graficoEquipe')?.getContext('2d');
         if (!ctx) return;
@@ -469,10 +464,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const operadores = {};
         agendamentos.forEach(item => {
-            const nome = (item.autor_nome || 'Operador').split(' ')[0];
-            if (!operadores[nome]) operadores[nome] = { total: 0, compareceu: 0 };
-            operadores[nome].total++;
-            if (item.status === 'compareceu') operadores[nome].compareceu++;
+            const nomeCompleto = (item.autor_nome || 'Operador').trim();
+            const partes = nomeCompleto.split(/\s+/);
+            const nomeCurto = partes.length >= 2 ? `${partes[0]} ${partes[1]}` : partes[0];
+
+            if (!operadores[nomeCurto]) operadores[nomeCurto] = { total: 0, compareceu: 0 };
+            operadores[nomeCurto].total++;
+            if (item.status === 'compareceu') operadores[nomeCurto].compareceu++;
         });
 
         const labels = Object.keys(operadores);
@@ -571,7 +569,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             tabelaCorpoAdmin.appendChild(tr);
         });
 
-        // Botão que permite entrar no drill-down da equipe selecionada
         document.querySelectorAll('.btn-ver-equipe').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const equipe = e.currentTarget.dataset.equipe;
@@ -581,6 +578,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
+    // Tabela de Operadores (SEM O E-MAIL, EXIBINDO NOME E SOBRENOME)
     function renderizarTabelaOperadores(agendamentos, nomeEquipe) {
         tituloTabelaAdmin.textContent = `Operadores da Equipe: ${nomeEquipe}`;
         subtituloTabelaAdmin.textContent = `Métricas individuais dos consultores da equipe ${nomeEquipe}`;
@@ -601,7 +599,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (!operadores[chave]) {
                 operadores[chave] = {
                     nome: item.autor_nome || 'Operador',
-                    email: item.autor_email || '-',
                     total: 0,
                     compareceu: 0,
                     pendente: 0,
@@ -628,8 +625,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
-                    <strong>${op.nome}</strong><br>
-                    <span class="subtexto-operador">${op.email}</span>
+                    <strong>${op.nome}</strong>
                 </td>
                 <td class="col-centro"><strong>${op.total}</strong></td>
                 <td class="col-centro admin-val-sucesso"><strong>${op.compareceu}</strong></td>
@@ -659,7 +655,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     // 12. PARÂMETROS DE URL E DISPARO DE IMPRESSÃO (PDF)
-    // Permite que a tela de importar.html chame esta página já filtrada e abrindo a janela de impressão
     const urlParams = new URLSearchParams(window.location.search);
     const parametroMes = urlParams.get('mes');
     const parametroEquipe = urlParams.get('equipe');
@@ -678,7 +673,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     await carregarDados();
 
-    // Aguarda o Chart.js desenhar os canvas na tela antes de abrir o print
     if (dispararImpressao) {
         setTimeout(() => {
             window.print();

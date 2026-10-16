@@ -3,8 +3,9 @@
    Objetivo do arquivo:
    1. Gerenciar o fluxo de Login.
    2. Gerenciar o fluxo de Cadastro gravando metadados no Auth.
-   3. Criar ou sincronizar o registro na tabela pública 'perfis'.
-   4. Redirecionar usuários logados direto para a aplicação.
+   3. Exigir Nome e Sobrenome obrigatórios no cadastro.
+   4. Criar ou sincronizar o registro na tabela pública 'perfis'.
+   5. Redirecionar usuários logados direto para a aplicação.
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -13,8 +14,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Se o usuário já tiver uma sessão válida gravada no LocalStorage do navegador,
-    // não faz sentido mostrar a tela de login. Redirecionamos para a tela principal
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session && session.user) {
         window.location.href = 'index.html';
@@ -29,16 +28,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     const campoNome = document.getElementById('campo-nome');
     const campoEmail = document.getElementById('campo-email');
     const campoSenha = document.getElementById('campo-senha');
+    const grupoSenhaConfirma = document.getElementById('grupo-senha-confirma');
+    const campoSenhaConfirma = document.getElementById('campo-senha-confirma');
     const campoEquipe = document.getElementById('campo-equipe');
     const btnSubmit = document.getElementById('btn-submit-auth');
     const subtituloLogin = document.getElementById('subtitulo-login');
     const mensagemStatus = document.getElementById('mensagem-status');
     const form = document.getElementById('formulario-autenticacao');
 
-    // Variável que armazena em qual modo estamos: 'entrar' ou 'cadastrar'
     let modoAtual = 'entrar';
 
-    // Função utilitária para exibir alertas de erro ou sucesso
     function exibirMensagem(texto, tipo = 'erro') {
         mensagemStatus.textContent = texto;
         if (tipo === 'sucesso') {
@@ -55,6 +54,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         abaCadastrar.classList.remove('ativa');
         grupoNome.classList.add('oculto');
         grupoEquipe.classList.add('oculto');
+        
+        grupoSenhaConfirma.classList.add('oculto');
+        campoSenhaConfirma.removeAttribute('required');
+        
         btnSubmit.textContent = 'Acessar Painel';
         subtituloLogin.textContent = 'Acesse sua conta para continuar';
         mensagemStatus.textContent = '';
@@ -66,6 +69,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         abaEntrar.classList.remove('ativa');
         grupoNome.classList.remove('oculto');
         grupoEquipe.classList.remove('oculto');
+        
+        grupoSenhaConfirma.classList.remove('oculto');
+        campoSenhaConfirma.setAttribute('required', 'required');
+        
         btnSubmit.textContent = 'Cadastrar Conta';
         subtituloLogin.textContent = 'Crie seu perfil profissional no sistema';
         mensagemStatus.textContent = '';
@@ -73,7 +80,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 4. SUBMISSÃO DO FORMULÁRIO (LOGIN OU CADASTRO)
     form.addEventListener('submit', async function(e) {
-        e.preventDefault(); // Impede o recarregamento tradicional da página
+        e.preventDefault();
 
         const email = campoEmail.value.trim();
         const senha = campoSenha.value;
@@ -84,7 +91,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         try {
             if (modoAtual === 'entrar') {
-                // FLUXO DE LOGIN:
                 const { data, error } = await supabaseClient.auth.signInWithPassword({
                     email: email,
                     password: senha
@@ -98,12 +104,21 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }, 800);
 
             } else {
-                // FLUXO DE CADASTRO:
                 const nomeCompleto = campoNome.value.trim();
                 const equipeSelecionada = campoEquipe.value;
+                const senhaConfirma = campoSenhaConfirma.value;
 
-                if (!nomeCompleto) {
-                    exibirMensagem('Por favor, informe seu nome completo.');
+                // Validação de Nome e Sobrenome obrigatórios
+                const partesNome = nomeCompleto.split(/\s+/).filter(p => p.length >= 2);
+                if (partesNome.length < 2) {
+                    exibirMensagem('Por favor, informe seu nome e sobrenome completos.');
+                    btnSubmit.disabled = false;
+                    btnSubmit.textContent = 'Cadastrar Conta';
+                    return;
+                }
+                
+                if (senha !== senhaConfirma) {
+                    exibirMensagem('As senhas não coincidem. Digite novamente.');
                     btnSubmit.disabled = false;
                     btnSubmit.textContent = 'Cadastrar Conta';
                     return;
@@ -116,7 +131,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                     return;
                 }
 
-                // Cria o usuário no Supabase Auth salvando os metadados
                 const { data, error } = await supabaseClient.auth.signUp({
                     email: email,
                     password: senha,
@@ -130,14 +144,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                 if (error) throw error;
 
-                // Cria ou atualiza o perfil do operador na tabela pública 'perfis'
+                // Salva na tabela perfis apenas os campos existentes: id, nome, equipe e role
                 if (data.user) {
                     await supabaseClient.from('perfis').upsert({
                         id: data.user.id,
-                        email: email,
                         nome: nomeCompleto,
                         equipe: equipeSelecionada,
-                        role: 'consultor' // Padrão seguro: novos cadastros nascem como consultores
+                        role: 'consultor'
                     });
                 }
 
