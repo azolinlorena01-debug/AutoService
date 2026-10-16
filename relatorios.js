@@ -104,8 +104,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
         if (btnAbaEquipe) btnAbaEquipe.classList.add('oculto');
         if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.add('oculto');
-        
-        // Ajusta o texto do primeiro botão para o Administrador
         if (btnAbaVisaoGeral) btnAbaVisaoGeral.textContent = 'Efetividade';
     } else {
         if (linkMenuImportar) linkMenuImportar.classList.add('oculto');
@@ -115,8 +113,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (btnAbaEquipe) btnAbaEquipe.classList.remove('oculto');
         if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.remove('oculto');
         if (cardGraficoEquipeAdmin) cardGraficoEquipeAdmin.classList.add('oculto');
-
-        // Mantém o texto para o Consultor
         if (btnAbaVisaoGeral) btnAbaVisaoGeral.textContent = 'Efetividade & Bônus';
     }
 
@@ -182,11 +178,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (isAdmin) {
                 const equipeFiltro = filtroEquipeAdmin ? filtroEquipeAdmin.value : 'todas';
                 if (equipeFiltro === 'todas') {
-                    // Quando for todas as equipes, expande para 1 coluna cheia
                     gradeGraficos.classList.add('coluna-unica');
                     if (cardGraficoEquipeAdmin) cardGraficoEquipeAdmin.classList.add('oculto');
                 } else {
-                    // Quando filtrar equipe, divide em 2 colunas
                     gradeGraficos.classList.remove('coluna-unica');
                     if (cardGraficoEquipeAdmin) cardGraficoEquipeAdmin.classList.remove('oculto');
                 }
@@ -275,6 +269,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     function aplicarVisaoRelatorio() {
         if (!isAdmin) {
+            // ==========================================
+            // VISÃO DO CONSULTOR
+            // ==========================================
             if (secaoAdminRanking) secaoAdminRanking.classList.add('oculto');
             if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
             if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.remove('oculto');
@@ -317,13 +314,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                 detalheConfirmadoEl.textContent = `${totalCompareceu} ${totalCompareceu === 1 ? 'presença confirmada' : 'presenças confirmadas'}`;
             }
 
-            const totalAgendamentosEquipe = agendamentosMesAtual.length;
+            // REGRA DA META: Puxa APENAS quem compareceu
+            const comparecidosEquipe = agendamentosMesAtual.filter(item => item.status === 'compareceu').length;
             const metaDefinida = METAS_POR_EQUIPE[equipeUsuario] || META_PADRAO;
-            const percentualMeta = Math.min(100, Math.round((totalAgendamentosEquipe / metaDefinida) * 100));
-            const restanteMeta = Math.max(0, metaDefinida - totalAgendamentosEquipe);
+            const percentualMeta = Math.min(100, Math.round((comparecidosEquipe / metaDefinida) * 100));
+            const restanteMeta = Math.max(0, metaDefinida - comparecidosEquipe);
 
             tituloMetaEquipe.textContent = `META DA EQUIPE (${equipeUsuario.toUpperCase()})`;
-            textoProgressoMeta.textContent = `${totalAgendamentosEquipe} / ${metaDefinida} agendamentos (${percentualMeta}%)`;
+            textoProgressoMeta.textContent = `${comparecidosEquipe} / ${metaDefinida} agendamentos (${percentualMeta}%)`;
             barraProgressoMeta.style.width = `${percentualMeta}%`;
 
             if (restanteMeta === 0) {
@@ -335,6 +333,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
 
         } else {
+            // ==========================================
+            // VISÃO DO ADMINISTRADOR
+            // ==========================================
             if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
             if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.add('oculto');
             if (secaoVolumeEquipeConsultor) secaoVolumeEquipeConsultor.classList.add('oculto');
@@ -346,13 +347,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                 dadosFiltrados = agendamentosMesAtual.filter(item => (item.autor_equipe || 'Geral') === equipeFiltro);
             }
 
-            const totalGeralDoMes = agendamentosMesAtual.length;
-            const percentualMetaAdmin = Math.min(100, Math.round((totalGeralDoMes / META_GLOBAL) * 100));
-            const restanteMetaAdmin = Math.max(0, META_GLOBAL - totalGeralDoMes);
+            // REGRA DA META GLOBAL: Puxa APENAS quem compareceu
+            const comparecidosGeral = agendamentosMesAtual.filter(item => item.status === 'compareceu').length;
+            const percentualMetaAdmin = Math.min(100, Math.round((comparecidosGeral / META_GLOBAL) * 100));
+            const restanteMetaAdmin = Math.max(0, META_GLOBAL - comparecidosGeral);
 
             if (tituloMetaEquipe) tituloMetaEquipe.textContent = 'META GLOBAL DA CONCESSIONÁRIA';
-            if (textoProgressoMeta) textoProgressoMeta.textContent = `${totalGeralDoMes} / ${META_GLOBAL} agendamentos (${percentualMetaAdmin}%)`;
-            if (barraProgressoMeta) barraProgressoMeta.style.width = `${percentualMetaAdmin}%`;
+            textoProgressoMeta.textContent = `${comparecidosGeral} / ${META_GLOBAL} agendamentos (${percentualMetaAdmin}%)`;
+            barraProgressoMeta.style.width = `${percentualMetaAdmin}%`;
 
             if (textoRestanteMeta) {
                 textoRestanteMeta.textContent = restanteMetaAdmin === 0 
