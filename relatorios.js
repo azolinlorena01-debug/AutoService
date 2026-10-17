@@ -38,13 +38,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Botões de navegação
     const btnAbaVisaoGeral = document.getElementById('btn-aba-visao-geral');
     const btnAbaCategorias = document.getElementById('btn-aba-categorias');
+    const btnAbaRanking = document.getElementById('btn-aba-ranking');
     const btnAbaEquipe = document.getElementById('btn-aba-equipe');
 
-    // Containers de Gráficos
+    // Containers de Gráficos e Ranking
     const gradeGraficos = document.getElementById('grade-graficos');
     const cardGraficoBonusMensal = document.getElementById('card-grafico-bonus-mensal');
     const cardGraficoEquipeAdmin = document.getElementById('card-grafico-equipe-admin');
     const secaoGraficoRevisoesTipo = document.getElementById('secao-grafico-revisoes-tipo');
+    const secaoRankingOperadores = document.getElementById('secao-ranking-operadores');
+    const containerRankingLista = document.getElementById('container-ranking-lista');
     const secaoVolumeEquipeConsultor = document.getElementById('secao-volume-equipe-consultor');
 
     const tituloGraficoVolume = document.getElementById('titulo-grafico-volume');
@@ -63,6 +66,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     const tabelaCabecalhoAdmin = document.getElementById('tabela-cabecalho-admin');
     const tabelaCorpoAdmin = document.getElementById('tabela-corpo-admin');
     const btnVoltarAdmin = document.getElementById('btn-voltar-admin');
+
+    if (btnVoltarAdmin) {
+        btnVoltarAdmin.classList.add('oculto');
+        btnVoltarAdmin.style.setProperty('display', 'none', 'important');
+    }
 
     // 3. SEGURANÇA E AUTH GUARD
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -161,42 +169,53 @@ document.addEventListener('DOMContentLoaded', async function() {
     let agendamentosMesAtual = [];
 
     // =========================================================================
-    // NAVEGAÇÃO ENTRE OS GRÁFICOS (EXCLUSIVA E EXPANSÍVEL)
+    // NAVEGAÇÃO ENTRE OS GRÁFICOS
     // =========================================================================
     let abaGraficoAtual = 'visao-geral';
 
     function aplicarVisibilidadeAbas() {
         btnAbaVisaoGeral.classList.toggle('ativo', abaGraficoAtual === 'visao-geral');
         btnAbaCategorias.classList.toggle('ativo', abaGraficoAtual === 'categorias');
+        if (btnAbaRanking) btnAbaRanking.classList.toggle('ativo', abaGraficoAtual === 'ranking');
         if (btnAbaEquipe) btnAbaEquipe.classList.toggle('ativo', abaGraficoAtual === 'equipe');
 
-        if (abaGraficoAtual === 'visao-geral') {
-            gradeGraficos.classList.remove('oculto');
-            secaoGraficoRevisoesTipo.classList.add('oculto');
-            if (secaoVolumeEquipeConsultor) secaoVolumeEquipeConsultor.classList.add('oculto');
+        gradeGraficos.classList.add('oculto');
+        secaoGraficoRevisoesTipo.classList.add('oculto');
+        if (secaoRankingOperadores) secaoRankingOperadores.classList.add('oculto');
+        if (secaoVolumeEquipeConsultor) secaoVolumeEquipeConsultor.classList.add('oculto');
 
-            if (isAdmin) {
-                const equipeFiltro = filtroEquipeAdmin ? filtroEquipeAdmin.value : 'todas';
-                if (equipeFiltro === 'todas') {
-                    gradeGraficos.classList.add('coluna-unica');
-                    if (cardGraficoEquipeAdmin) cardGraficoEquipeAdmin.classList.add('oculto');
-                } else {
-                    gradeGraficos.classList.remove('coluna-unica');
-                    if (cardGraficoEquipeAdmin) cardGraficoEquipeAdmin.classList.remove('oculto');
-                }
-            } else {
-                gradeGraficos.classList.remove('coluna-unica');
+        // Se for a aba de ranking, oculta a tabela de desempenho da equipe para não duplicar visualmente
+        if (abaGraficoAtual === 'ranking') {
+            if (secaoAdminRanking) secaoAdminRanking.classList.add('oculto');
+            if (secaoRankingOperadores) secaoRankingOperadores.classList.remove('oculto');
+        } else {
+            // Nas abas "Efetividade" e "Detalhes", a tabela de desempenho volta a aparecer para administradores
+            if (isAdmin && secaoAdminRanking) {
+                secaoAdminRanking.classList.remove('oculto');
             }
 
-        } else if (abaGraficoAtual === 'categorias') {
-            gradeGraficos.classList.add('oculto');
-            secaoGraficoRevisoesTipo.classList.remove('oculto');
-            if (secaoVolumeEquipeConsultor) secaoVolumeEquipeConsultor.classList.add('oculto');
+            if (abaGraficoAtual === 'visao-geral') {
+                gradeGraficos.classList.remove('oculto');
 
-        } else if (abaGraficoAtual === 'equipe') {
-            gradeGraficos.classList.add('oculto');
-            secaoGraficoRevisoesTipo.classList.add('oculto');
-            if (secaoVolumeEquipeConsultor) secaoVolumeEquipeConsultor.classList.remove('oculto');
+                if (isAdmin) {
+                    const equipeFiltro = filtroEquipeAdmin ? filtroEquipeAdmin.value : 'todas';
+                    if (equipeFiltro === 'todas') {
+                        gradeGraficos.classList.add('coluna-unica');
+                        if (cardGraficoEquipeAdmin) cardGraficoEquipeAdmin.classList.add('oculto');
+                    } else {
+                        gradeGraficos.classList.remove('coluna-unica');
+                        if (cardGraficoEquipeAdmin) cardGraficoEquipeAdmin.classList.remove('oculto');
+                    }
+                } else {
+                    gradeGraficos.classList.remove('coluna-unica');
+                }
+
+            } else if (abaGraficoAtual === 'categorias') {
+                secaoGraficoRevisoesTipo.classList.remove('oculto');
+
+            } else if (abaGraficoAtual === 'equipe') {
+                if (secaoVolumeEquipeConsultor) secaoVolumeEquipeConsultor.classList.remove('oculto');
+            }
         }
     }
 
@@ -208,6 +227,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     btnAbaVisaoGeral.addEventListener('click', () => trocarAbaGrafico('visao-geral'));
     btnAbaCategorias.addEventListener('click', () => trocarAbaGrafico('categorias'));
+    if (btnAbaRanking) btnAbaRanking.addEventListener('click', () => trocarAbaGrafico('ranking'));
     if (btnAbaEquipe) btnAbaEquipe.addEventListener('click', () => trocarAbaGrafico('equipe'));
 
     async function carregarOpcoesEquipes() {
@@ -232,33 +252,23 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const opt = document.createElement('option');
                 opt.value = eq;
                 opt.textContent = eq;
-                if(eq === 'Toyota') opt.selected = true;
                 filtroEquipeAdmin.appendChild(opt);
             });
+
+            filtroEquipeAdmin.value = 'todas';
         } catch (e) {}
     }
 
     async function carregarDados() {
         const mesSelecionado = isAdmin ? filtroMesAdmin.value : filtroMesConsultor.value;
 
-        if (isAdmin) {
-            const { data, error } = await supabaseClient
-                .from('vw_agendamentos_completos')
-                .select('*')
-                .order('data_revisao', { ascending: true });
+        const { data, error } = await supabaseClient
+            .from('vw_agendamentos_completos')
+            .select('*')
+            .order('data_revisao', { ascending: true });
 
-            if (error) return console.error(error);
-            todosAgendamentosHistorico = data || [];
-        } else {
-            const { data, error } = await supabaseClient
-                .from('vw_agendamentos_completos')
-                .select('*')
-                .eq('autor_equipe', equipeUsuario)
-                .order('data_revisao', { ascending: true });
-
-            if (error) return console.error(error);
-            todosAgendamentosHistorico = data || [];
-        }
+        if (error) return console.error(error);
+        todosAgendamentosHistorico = data || [];
 
         agendamentosMesAtual = todosAgendamentosHistorico.filter(item =>
             item.data_revisao && item.data_revisao.startsWith(mesSelecionado)
@@ -269,9 +279,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     function aplicarVisaoRelatorio() {
         if (!isAdmin) {
-            // ==========================================
-            // VISÃO DO CONSULTOR
-            // ==========================================
             if (secaoAdminRanking) secaoAdminRanking.classList.add('oculto');
             if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
             if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.remove('oculto');
@@ -314,8 +321,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 detalheConfirmadoEl.textContent = `${totalCompareceu} ${totalCompareceu === 1 ? 'presença confirmada' : 'presenças confirmadas'}`;
             }
 
-            // REGRA DA META: Puxa APENAS quem compareceu
-            const comparecidosEquipe = agendamentosMesAtual.filter(item => item.status === 'compareceu').length;
+            const agendamentosToyota = agendamentosMesAtual.filter(i => (i.autor_equipe || 'Toyota') === equipeUsuario);
+            const comparecidosEquipe = agendamentosToyota.filter(item => item.status === 'compareceu').length;
             const metaDefinida = METAS_POR_EQUIPE[equipeUsuario] || META_PADRAO;
             const percentualMeta = Math.min(100, Math.round((comparecidosEquipe / metaDefinida) * 100));
             const restanteMeta = Math.max(0, metaDefinida - comparecidosEquipe);
@@ -333,13 +340,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
 
         } else {
-            // ==========================================
-            // VISÃO DO ADMINISTRADOR
-            // ==========================================
             if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
             if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.add('oculto');
             if (secaoVolumeEquipeConsultor) secaoVolumeEquipeConsultor.classList.add('oculto');
-            if (secaoAdminRanking) secaoAdminRanking.classList.remove('oculto');
 
             const equipeFiltro = filtroEquipeAdmin ? filtroEquipeAdmin.value : 'todas';
             let dadosFiltrados = agendamentosMesAtual;
@@ -347,27 +350,33 @@ document.addEventListener('DOMContentLoaded', async function() {
                 dadosFiltrados = agendamentosMesAtual.filter(item => (item.autor_equipe || 'Geral') === equipeFiltro);
             }
 
-            // REGRA DA META GLOBAL: Puxa APENAS quem compareceu
             const comparecidosGeral = agendamentosMesAtual.filter(item => item.status === 'compareceu').length;
             const percentualMetaAdmin = Math.min(100, Math.round((comparecidosGeral / META_GLOBAL) * 100));
             const restanteMetaAdmin = Math.max(0, META_GLOBAL - comparecidosGeral);
 
-            if (tituloMetaEquipe) tituloMetaEquipe.textContent = 'META GLOBAL DA CONCESSIONÁRIA';
+            if (tituloMetaEquipe) tituloMetaEquipe.textContent = 'META TOTAL DA CENTRAL DE AGENDAMENTOS';
             textoProgressoMeta.textContent = `${comparecidosGeral} / ${META_GLOBAL} agendamentos (${percentualMetaAdmin}%)`;
             barraProgressoMeta.style.width = `${percentualMetaAdmin}%`;
 
             if (textoRestanteMeta) {
                 textoRestanteMeta.textContent = restanteMetaAdmin === 0 
-                    ? 'Parabéns! Meta global atingida!' 
+                    ? 'Parabéns! Meta atingida!' 
                     : `Faltam ${restanteMetaAdmin} agendamentos no total`;
                 textoRestanteMeta.className = restanteMetaAdmin === 0 ? 'meta-badge-sucesso' : 'meta-badge-restante';
             }
 
+            // CONTROLE DO BOTÃO VOLTAR E DA TABELA DE DESEMPENHO
             if (equipeFiltro === 'todas') {
-                if (btnVoltarAdmin) btnVoltarAdmin.classList.add('oculto');
+                if (btnVoltarAdmin) {
+                    btnVoltarAdmin.classList.add('oculto');
+                    btnVoltarAdmin.style.setProperty('display', 'none', 'important');
+                }
                 renderizarTabelaEquipes(agendamentosMesAtual);
             } else {
-                if (btnVoltarAdmin) btnVoltarAdmin.classList.remove('oculto');
+                if (btnVoltarAdmin) {
+                    btnVoltarAdmin.classList.remove('oculto');
+                    btnVoltarAdmin.style.setProperty('display', 'inline-flex', 'important');
+                }
                 renderizarTabelaOperadores(dadosFiltrados, equipeFiltro);
             }
         }
@@ -427,6 +436,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             renderizarGraficoRevisoesPorTipo(listaCategorias);
 
+        } else if (abaGraficoAtual === 'ranking') {
+            // Ranking contempla TODAS as equipes sem filtros de equipe aplicados
+            renderizarRankingOperadores(agendamentosMesAtual);
+
         } else if (abaGraficoAtual === 'equipe') {
             if (tituloGraficoEquipeConsultor) tituloGraficoEquipeConsultor.textContent = `Volume da Equipe: ${equipeUsuario}`;
             if (subtituloGraficoEquipeConsultor) subtituloGraficoEquipeConsultor.textContent = 'Volume por operador desta equipe';
@@ -434,7 +447,90 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    // 9. FUNÇÕES DE CRIAÇÃO DOS GRÁFICOS (CHART.JS)
+    // =========================================================================
+    // RANKING GERAL DE TODOS OS OPERADORES
+    // =========================================================================
+    function renderizarRankingOperadores(agendamentos) {
+        if (!containerRankingLista) return;
+        containerRankingLista.innerHTML = '';
+
+        const operadores = {};
+
+        agendamentos.forEach(item => {
+            const id = item.user_id || 'desconhecido';
+            if (!operadores[id]) {
+                operadores[id] = {
+                    id: id,
+                    nome: (item.autor_nome || 'Operador').trim(),
+                    equipe: item.autor_equipe || 'Geral',
+                    total: 0,
+                    compareceu: 0,
+                    faltou: 0
+                };
+            }
+            operadores[id].total++;
+            if (item.status === 'compareceu') operadores[id].compareceu++;
+            else if (item.status === 'faltou') operadores[id].faltou++;
+        });
+
+        const listaRanking = Object.values(operadores).sort((a, b) => b.compareceu - a.compareceu);
+
+        if (listaRanking.length === 0) {
+            containerRankingLista.innerHTML = '<div style="text-align: center; color: #64748b; padding: 24px;">Nenhum comparecimento registrado neste mês.</div>';
+            return;
+        }
+
+        const maxCompareceu = Math.max(1, listaRanking[0].compareceu);
+
+        listaRanking.forEach((op, index) => {
+            const posicao = index + 1;
+            const percentualBarra = Math.round((op.compareceu / maxCompareceu) * 100);
+            const taxaPresenca = op.total > 0 ? Math.round((op.compareceu / op.total) * 100) : 0;
+
+            let classePos = 'pos-padrao';
+            let textoPos = `${posicao}º`;
+            let classeItem = '';
+
+            if (posicao === 1) {
+                classePos = 'pos-1';
+                textoPos = '🥇';
+                classeItem = 'destaque-primeiro';
+            } else if (posicao === 2) {
+                classePos = 'pos-2';
+                textoPos = '🥈';
+            } else if (posicao === 3) {
+                classePos = 'pos-3';
+                textoPos = '🥉';
+            }
+
+            const itemDiv = document.createElement('div');
+            itemDiv.className = `ranking-item ${classeItem}`;
+
+            itemDiv.innerHTML = `
+                <div class="ranking-esquerda">
+                    <div class="posicao-circulo ${classePos}">${textoPos}</div>
+                    <div class="operador-info-bloco">
+                        <strong>${op.nome}</strong>
+                        <span>Equipe ${op.equipe} • ${taxaPresenca}% de presença</span>
+                    </div>
+                    <div class="ranking-barra-area">
+                        <div class="ranking-trilho">
+                            <div class="ranking-preenchimento" style="width: ${percentualBarra}%;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ranking-direita">
+                    <div>
+                        <div class="num-comparecidos">${op.compareceu}</div>
+                        <div class="num-comparecidos-sub">compareceram</div>
+                    </div>
+                </div>
+            `;
+
+            containerRankingLista.appendChild(itemDiv);
+        });
+    }
+
     function renderizarGraficoVolume(compareceu, pendente, faltou) {
         const ctx = document.getElementById('graficoVolume')?.getContext('2d');
         if (!ctx) return;
@@ -763,10 +859,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             const taxa = op.total > 0 ? Math.round((op.compareceu / op.total) * 100) : 0;
             const badgeClasse = taxa >= 70 ? 'badge-taxa-alta' : 'badge-taxa-normal';
             
-            // AGRUPAMENTO EM 3 FAIXAS DE BÔNUS TOYOTA
-            let qtdFaixa1a4 = 0;   // R$ 2,00
-            let qtdFaixa5a7 = 0;   // R$ 6,00
-            let qtdFaixa8Mais = 0;  // R$ 10,00
+            let qtdFaixa1a4 = 0;
+            let qtdFaixa5a7 = 0;
+            let qtdFaixa8Mais = 0;
 
             const revs1a4 = [];
             const revs5a7 = [];
@@ -790,7 +885,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                     }
                 });
 
-            // Quebra em linhas estruturadas para o balão não esticar até a lateral da tela
             const detalheTooltip = [
                 `Faixa R$ 2,00 (1ª a 4ª): ${revs1a4.join(' | ') || '0'}`,
                 `Faixa R$ 6,00 (5ª a 7ª): ${revs5a7.join(' | ') || '0'}`,
@@ -815,9 +909,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>
-                    <strong>${op.nome}</strong>
-                </td>
+                <td><strong>${op.nome}</strong></td>
                 <td class="col-centro"><strong>${op.total}</strong></td>
                 <td class="col-centro admin-val-sucesso"><strong>${op.compareceu}</strong></td>
                 <td class="col-centro admin-val-alerta">${op.pendente}</td>
@@ -842,6 +934,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (btnVoltarAdmin) {
         btnVoltarAdmin.addEventListener('click', () => {
             if (filtroEquipeAdmin) filtroEquipeAdmin.value = 'todas';
+            btnVoltarAdmin.classList.add('oculto');
+            btnVoltarAdmin.style.setProperty('display', 'none', 'important');
             aplicarVisaoRelatorio();
         });
     }

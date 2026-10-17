@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Bônus - Importar e Exportar</title>
+    <link rel="icon" type="image/jpeg" href="imagens/icone.jpeg">
     <!-- Bibliotecas: Supabase e Leitor de Excel/XLSX (SheetJS) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
@@ -14,7 +15,7 @@
             grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
             gap: 28px;
             max-width: 960px;
-            margin: 40px auto;
+            margin: 40px auto 24px auto;
             align-items: stretch;
         }
         .import-wrapper {
@@ -148,6 +149,149 @@
             display: block;
             margin-bottom: 4px;
         }
+
+        /* HISTÓRICO DE IMPORTAÇÕES */
+        .historico-secao {
+            max-width: 960px;
+            margin: 0 auto 50px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            padding: 26px 30px;
+            box-sizing: border-box;
+        }
+        .historico-cabecalho {
+            margin-bottom: 18px;
+        }
+        .historico-cabecalho h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 4px 0;
+        }
+        .historico-cabecalho p {
+            font-size: 13px;
+            color: #64748b;
+            margin: 0;
+        }
+        .historico-tabela-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+        .historico-tabela {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .historico-tabela th {
+            padding: 12px 14px;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .historico-tabela td {
+            padding: 14px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+            color: #334155;
+        }
+        .btn-ver-detalhes-log {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 5px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #2563eb;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-ver-detalhes-log:hover {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+        }
+
+        .btn-excluir-historico {
+            background: none;
+            border: none;
+            color: #ef4444;
+            font-size: 15px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .btn-excluir-historico:hover {
+            background: #fee2e2;
+        }
+
+        /* MODAL FLUTUANTE */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(2px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .modal-card {
+            background: #0f172a;
+            color: #f8fafc;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 580px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155;
+            overflow: hidden;
+        }
+        .modal-topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #1e293b;
+        }
+        .modal-topo h3 {
+            font-size: 15px;
+            font-weight: 700;
+            margin: 0;
+            color: #ffffff;
+        }
+        .btn-fechar-modal {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 20px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .btn-fechar-modal:hover {
+            color: #ffffff;
+        }
+        .modal-corpo {
+            padding: 20px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12.5px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            color: #cbd5e1;
+        }
     </style>
 </head>
 <body>
@@ -270,7 +414,46 @@
                     </div>
                 </div>
             </div>
+
+            <!-- HISTÓRICO DE IMPORTAÇÕES -->
+            <section class="historico-secao">
+                <div class="historico-cabecalho">
+                    <h2>Histórico de Importações</h2>
+                    <p>Últimos arquivos processados.</p>
+                </div>
+                <div class="historico-tabela-container">
+                    <table class="historico-tabela">
+                        <thead>
+                            <tr>
+                                <th>DATA / HORA</th>
+                                <th>ARQUIVO</th>
+                                <th>ENVIADO POR</th>
+                                <th>MÊS REF.</th>
+                                <th>TOTAL VÁLIDO</th>
+                                <th style="text-align: center;">DETALHES</th>
+                                <th style="text-align: center;">AÇÕES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-corpo-historico">
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Carregando histórico...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </main>
+    </div>
+
+    <!-- MODAL POPUP PARA AUDITORIA -->
+    <div id="modalAuditoria" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-topo">
+                <h3 id="modalTituloArquivo">Auditoria da Importação</h3>
+                <button type="button" id="btnFecharModal" class="btn-fechar-modal">&times;</button>
+            </div>
+            <div id="modalConteudoTexto" class="modal-corpo"></div>
+        </div>
     </div>
 
     <script>
@@ -287,16 +470,23 @@
 
             const USER_ID = session.user.id;
             let isAdmin = false;
+            let nomeOperadorLogado = session.user.user_metadata?.nome_completo || 'Admin';
 
             try {
-                const { data: perfil } = await supabaseClient.from('perfis').select('role').eq('id', USER_ID).maybeSingle();
-                if (perfil && perfil.role === 'admin') isAdmin = true;
+                const { data: perfil } = await supabaseClient.from('perfis').select('role, nome').eq('id', USER_ID).maybeSingle();
+                if (perfil) {
+                    if (perfil.role === 'admin') isAdmin = true;
+                    if (perfil.nome && perfil.nome.trim().length > 0) {
+                        nomeOperadorLogado = perfil.nome.trim();
+                    }
+                }
             } catch (e) {
                 console.warn(e);
             }
 
             if (session.user.email === 'usuariotestesite01@gmail.com' || session.user.email?.includes('admin')) {
                 isAdmin = true;
+                if (!nomeOperadorLogado) nomeOperadorLogado = 'Admin';
             }
 
             if (!isAdmin) {
@@ -314,6 +504,17 @@
             const equipeExport = document.getElementById('equipeExport');
             const btnExportarCsv = document.getElementById('btnExportarCsv');
             const btnIrParaPdf = document.getElementById('btnIrParaPdf');
+            const tabelaHistoricoCorpo = document.getElementById('tabela-corpo-historico');
+
+            const modalAuditoria = document.getElementById('modalAuditoria');
+            const modalTituloArquivo = document.getElementById('modalTituloArquivo');
+            const modalConteudoTexto = document.getElementById('modalConteudoTexto');
+            const btnFecharModal = document.getElementById('btnFecharModal');
+
+            btnFecharModal.addEventListener('click', () => modalAuditoria.style.display = 'none');
+            modalAuditoria.addEventListener('click', (e) => {
+                if (e.target === modalAuditoria) modalAuditoria.style.display = 'none';
+            });
 
             function log(msg) {
                 logBox.innerText += '\n' + msg;
@@ -327,70 +528,36 @@
                 else return 10.00; 
             }
 
-            // MAPEAMENTO COM OS UIDS EXATOS DAS 6 INTEGRANTES
             const EQUIPE_TOYOTA = [
-                {
-                    id: '45ac2ad5-cce7-4d0a-9cf8-58c2a5690777',
-                    nome: 'Cristiane da Silva',
-                    match: (txt) => txt.includes('CRISTIANE') || txt.includes('CRISTIAN')
-                },
-                {
-                    id: 'b5167b50-fe5e-429f-b2fe-7bf861190f30',
-                    nome: 'Nicoly Moreira',
-                    match: (txt) => txt.includes('NICOLY') || txt.includes('SANGA')
-                },
-                {
-                    id: '61218e37-acdb-4e75-bc86-8a71e183bf17',
-                    nome: 'Ana Lucia',
-                    match: (txt) => txt.includes('ANA LUCIA') || txt.includes('BUGALA')
-                },
-                {
-                    id: 'b3bc63cd-c783-482d-a2d8-c978bbd32703',
-                    nome: 'Lorena Mendes',
-                    match: (txt) => txt.includes('LORENA') || txt.includes('AZOLIN')
-                },
-                {
-                    id: '70b40aa8-8b9c-4219-acd1-3f16647558fa',
-                    nome: 'Alany Benato',
-                    match: (txt) => txt.includes('ALANY') || txt.includes('BENATO') || txt.includes('WEIGERT')
-                },
-                {
-                    id: '58267673-516d-4b01-9d27-c60a8a6c39b6',
-                    nome: 'Allana Thaina',
-                    match: (txt) => txt.includes('ALLANA') || txt.includes('THAINA') || txt.includes('VAZ')
-                }
+                { id: '45ac2ad5-cce7-4d0a-9cf8-58c2a5690777', nome: 'Cristiane da Silva', match: (txt) => txt.includes('CRISTIANE') || txt.includes('CRISTIAN') },
+                { id: 'b5167b50-fe5e-429f-b2fe-7bf861190f30', nome: 'Nicoly Moreira', match: (txt) => txt.includes('NICOLY') || txt.includes('SANGA') },
+                { id: '61218e37-acdb-4e75-bc86-8a71e183bf17', nome: 'Ana Lucia', match: (txt) => txt.includes('ANA LUCIA') || txt.includes('BUGALA') },
+                { id: 'b3bc63cd-c783-482d-a2d8-c978bbd32703', nome: 'Lorena Mendes', match: (txt) => txt.includes('LORENA') || txt.includes('AZOLIN') },
+                { id: '70b40aa8-8b9c-4219-acd1-3f16647558fa', nome: 'Alany Benato', match: (txt) => txt.includes('ALANY') || txt.includes('BENATO') || txt.includes('WEIGERT') },
+                { id: '58267673-516d-4b01-9d27-c60a8a6c39b6', nome: 'Allana Thaina', match: (txt) => txt.includes('ALLANA') || txt.includes('THAINA') || txt.includes('VAZ') }
             ];
 
             function obterConsultoraPorAgendador(nomeAgendador) {
                 if (!nomeAgendador) return null;
                 const txt = String(nomeAgendador).normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
-
                 for (const consultora of EQUIPE_TOYOTA) {
-                    if (consultora.match(txt)) {
-                        return { id: consultora.id, nome: consultora.nome };
-                    }
+                    if (consultora.match(txt)) return { id: consultora.id, nome: consultora.nome };
                 }
                 return null;
             }
 
             function formatarDataSemHorario(valorData, anoPadrao) {
                 if (!valorData) return null;
-
                 if (valorData instanceof Date) {
                     const y = valorData.getFullYear();
                     const m = String(valorData.getMonth() + 1).padStart(2, '0');
                     const d = String(valorData.getDate()).padStart(2, '0');
                     return `${y}-${m}-${d}`;
                 }
-
                 if (typeof valorData === 'number') {
                     const dateObj = new Date(Math.round((valorData - 25569) * 86400 * 1000));
-                    const y = dateObj.getUTCFullYear();
-                    const m = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
-                    const d = String(dateObj.getUTCDate()).padStart(2, '0');
-                    return `${y}-${m}-${d}`;
+                    return `${dateObj.getUTCFullYear()}-${String(dateObj.getUTCMonth() + 1).padStart(2, '0')}-${String(dateObj.getUTCDate()).padStart(2, '0')}`;
                 }
-
                 const str = String(valorData).trim();
                 const matchData = str.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/);
                 if (matchData) {
@@ -400,38 +567,18 @@
                     if (y < 100) y += 2000;
                     return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                 }
-
                 return null;
             }
 
-            // FUNÇÃO: IDENTIFICA TODAS AS REVISÕES E IGNORA APENAS FACILITADA E AVULSOS
             function extrairNumeroRevisaoTMO(tmoTexto) {
                 if (!tmoTexto) return null;
-                
                 const txt = String(tmoTexto).normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+                const ignorados = ['FACILITADA', 'FACILITADO', 'T-SERVICE', 'TSERVICE', 'BAL', 'GEO', 'LAVAGEM', 'PECA', 'FUNILARIA', 'PINTURA', 'ACESSORIO'];
+                for (const ign of ignorados) if (txt.includes(ign)) return null;
+                if (!txt.includes('REVIS') && !txt.includes('CSP')) return null;
 
-                const ignorados = [
-                    'FACILITADA', 'FACILITADO',
-                    'T-SERVICE', 'TSERVICE', 
-                    'BAL', 'GEO', 'LAVAGEM', 'PECA', 
-                    'FUNILARIA', 'PINTURA', 'ACESSORIO'
-                ];
-                for (const ign of ignorados) {
-                    if (txt.includes(ign)) return null;
-                }
-
-                if (!txt.includes('REVIS') && !txt.includes('CSP')) {
-                    return null;
-                }
-
-                const porExtenso = {
-                    'PRIMEIR': 1, 'SEGUND': 2, 'TERCEIR': 3, 'QUART': 4,
-                    'QUINT': 5, 'SEXT': 6, 'SETIM': 7, 'OITAV': 8,
-                    'NON': 9, 'DECIM': 10, 'VIGESIM': 20
-                };
-                for (const [chave, num] of Object.entries(porExtenso)) {
-                    if (txt.includes(chave)) return num;
-                }
+                const porExtenso = { 'PRIMEIR': 1, 'SEGUND': 2, 'TERCEIR': 3, 'QUART': 4, 'QUINT': 5, 'SEXT': 6, 'SETIM': 7, 'OITAV': 8, 'NON': 9, 'DECIM': 10, 'VIGESIM': 20 };
+                for (const [chave, num] of Object.entries(porExtenso)) if (txt.includes(chave)) return num;
 
                 const matchesNumeros = txt.match(/\b0*(\d{1,2})\b/g);
                 if (matchesNumeros) {
@@ -440,16 +587,78 @@
                         if (n >= 1 && n <= 50) return n;
                     }
                 }
-
                 const matchKm = txt.match(/(\d{1,3})\.?000\s*KM/i);
-                if (matchKm) {
-                    const milhar = parseInt(matchKm[1], 10);
-                    return Math.max(1, Math.round(milhar / 10));
-                }
-
+                if (matchKm) return Math.max(1, Math.round(parseInt(matchKm[1], 10) / 10));
                 return 1;
             }
 
+            let historicoCache = [];
+            async function carregarHistorico() {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('historico_importacoes')
+                        .select('*')
+                        .order('criado_em', { ascending: false })
+                        .limit(20);
+
+                    if (error) throw error;
+                    historicoCache = data || [];
+                    tabelaHistoricoCorpo.innerHTML = '';
+
+                    if (historicoCache.length === 0) {
+                        tabelaHistoricoCorpo.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Nenhuma importação gravada até o momento.</td></tr>';
+                        return;
+                    }
+
+                    historicoCache.forEach(item => {
+                        const dataHoraObj = new Date(item.criado_em);
+                        const dataHoraFormatada = dataHoraObj.toLocaleDateString('pt-BR') + ' às ' + dataHoraObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td><strong>${dataHoraFormatada}</strong></td>
+                            <td>📁 ${item.nome_arquivo}</td>
+                            <td><strong>${item.usuario_nome || 'Admin'}</strong></td>
+                            <td>${item.mes_referencia}/2026</td>
+                            <td><strong style="color: #2563eb; font-size: 14px;">${item.total_revisoes}</strong></td>
+                            <td style="text-align: center;">
+                                <button type="button" class="btn-ver-detalhes-log" data-id="${item.id}">Ver Detalhes</button>
+                            </td>
+                            <td style="text-align: center;">
+                                <button type="button" class="btn-excluir-historico" data-id="${item.id}" title="Excluir este registro">🗑️</button>
+                            </td>
+                        `;
+                        tabelaHistoricoCorpo.appendChild(tr);
+                    });
+
+                    document.querySelectorAll('.btn-ver-detalhes-log').forEach(b => {
+                        b.addEventListener('click', (e) => {
+                            const id = parseInt(e.currentTarget.dataset.id, 10);
+                            const item = historicoCache.find(h => h.id === id);
+                            if (item) {
+                                modalTituloArquivo.textContent = `Auditoria: ${item.nome_arquivo}`;
+                                modalConteudoTexto.textContent = item.detalhes_log || 'Sem detalhes adicionais.';
+                                modalAuditoria.style.display = 'flex';
+                            }
+                        });
+                    });
+
+                    document.querySelectorAll('.btn-excluir-historico').forEach(b => {
+                        b.addEventListener('click', async (e) => {
+                            const id = e.currentTarget.dataset.id;
+                            if (confirm('Tem certeza que deseja remover este registro do histórico?')) {
+                                await supabaseClient.from('historico_importacoes').delete().eq('id', id);
+                                carregarHistorico();
+                            }
+                        });
+                    });
+
+                } catch (e) {
+                    tabelaHistoricoCorpo.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #64748b; padding: 15px;">Pronto para registrar o histórico.</td></tr>`;
+                }
+            }
+
+            // ROTINA INTELIGENTE COM UPSERT (CHAVE = PLACA + REVISAO)
             btn.addEventListener('click', async function() {
                 try {
                     if (!input.files || input.files.length === 0) {
@@ -464,48 +673,41 @@
                     btn.disabled = true;
                     btn.innerText = 'Processando...';
 
-                    // DATA DE HOJE NO FORMATO YYYY-MM-DD PARA COMPARAÇÃO INTELIGENTE DE STATUS
                     const agora = new Date();
                     const hojeAno = agora.getFullYear();
                     const hojeMes = String(agora.getMonth() + 1).padStart(2, '0');
                     const hojeDia = String(agora.getDate()).padStart(2, '0');
                     const dataHojeISO = `${hojeAno}-${hojeMes}-${hojeDia}`;
 
-                    log(`Limpando agendamentos antigos para o mês ${mesPadrao}/2026...`);
-                    await supabaseClient.from('agendamentos')
-                        .delete()
-                        .gte('data_revisao', `2026-${mesPadrao}-01`)
-                        .lte('data_revisao', `2026-${mesPadrao}-31`);
+                    log(`Lendo agendamentos já existentes no banco...`);
+                    const { data: agendamentosExistentesBanco, error: errFetch } = await supabaseClient
+                        .from('agendamentos')
+                        .select('id, placa, revisao, data_revisao, status, os, user_id, observacao');
+
+                    if (errFetch) throw errFetch;
+
+                    const mapaExistentes = new Map();
+                    (agendamentosExistentesBanco || []).forEach(item => {
+                        const chave = `${String(item.placa).toUpperCase().trim()}_${item.revisao}`;
+                        mapaExistentes.set(chave, item);
+                    });
 
                     log(`Lendo arquivo: ${file.name}...`);
-                    log(`Data base de apuração: ${hojeDia}/${hojeMes}/${hojeAno}`);
-
                     const reader = new FileReader();
 
                     reader.onload = async function(e) {
                         try {
                             const data = new Uint8Array(e.target.result);
                             const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-                            
-                            const firstSheetName = workbook.SheetNames[0];
-                            const worksheet = workbook.Sheets[firstSheetName];
-
+                            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                             const linhasMatriz = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
 
                             if (linhasMatriz.length < 2) {
-                                log('❌ Planilha vazia ou sem linhas de dados.');
+                                log('Planilha vazia ou sem linhas de dados.');
                                 return;
                             }
 
-                            // Índices padrão
-                            let colDataRevisao = 1; // Coluna B
-                            let colDataContato = 2; // Coluna C
-                            let colPlaca = 8;       // Coluna I (índice 8)
-                            let colChassi = 9;      // Coluna J (índice 9)
-                            let colTMO = 12;        // Coluna M (índice 12)
-                            let colAgendador = 15;  // Coluna P (índice 15)
-                            let colOS = 18;         // Coluna S (índice 18)
-
+                            let colDataRevisao = 1, colDataContato = 2, colPlaca = 8, colChassi = 9, colTMO = 12, colAgendador = 15, colOS = 18;
                             const cabecalho = (linhasMatriz[0] || []).map(c => String(c).toUpperCase().trim());
                             cabecalho.forEach((colNome, idx) => {
                                 if (colNome.includes('AGENDADOR')) colAgendador = idx;
@@ -515,19 +717,25 @@
                                 if (colNome === 'OS' || colNome.includes('ORDEM') || colNome.includes('O.S.')) colOS = idx;
                             });
 
-                            const registros = [];
+                            const registrosParaInserir = [];
+                            const registrosParaAtualizar = [];
+
+                            let totalNovos = 0;
+                            let totalReagendados = 0;
+                            let totalStatusAtualizados = 0;
                             let totalCompareceu = 0;
                             let totalNoShow = 0;
                             let totalPendente = 0;
                             let ignoradosOutrosNomes = 0;
                             let ignoradosNaoRevisao = 0;
+
+                            // OBJETO PARA CONTABILIZAR DETALHAMENTO POR CONSULTORA
                             const resumoPorConsultor = {};
 
                             for (let i = 1; i < linhasMatriz.length; i++) {
                                 const row = linhasMatriz[i];
                                 if (!row || row.length === 0) continue;
 
-                                // 1. Filtragem da Coluna Agendador (Apenas as 6 consultoras)
                                 const nomeAgendadorPlanilha = row[colAgendador] || '';
                                 let consultorAlvo = null;
 
@@ -543,7 +751,6 @@
                                     continue;
                                 }
 
-                                // 2. Filtragem do TMO / Serviço
                                 const textoTMO = row[colTMO] || '';
                                 const numRevisao = extrairNumeroRevisaoTMO(textoTMO);
                                 if (!numRevisao) {
@@ -551,96 +758,162 @@
                                     continue;
                                 }
 
-                                // 3. Datas (Sem horário)
                                 const dataRevisaoFormatada = formatarDataSemHorario(row[colDataRevisao], 2026) || `2026-${mesPadrao}-01`;
                                 const dataContatoFormatada = formatarDataSemHorario(row[colDataContato], 2026) || dataRevisaoFormatada;
 
-                                // 4. Placa (Preserva os 12 veículos sem placa como SEM-PLACA)
                                 let placaBruta = String(row[colPlaca] || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
                                 if (!placaBruta || placaBruta.length < 3) {
                                     const chassi = String(row[colChassi] || '').toUpperCase().trim();
                                     placaBruta = chassi.length >= 6 ? chassi.slice(-6) : 'SEM-PLACA';
                                 }
 
-                                // 5. REGRA DE STATUS INTELIGENTE COM DATA ATUAL:
                                 const valorOSLinha = String(row[colOS] || '').trim();
                                 const temOS = (valorOSLinha !== '' && valorOSLinha !== '-' && valorOSLinha !== '0' && valorOSLinha.toUpperCase() !== 'NAN');
                                 
-                                let status = 'pendente';
+                                let statusCalculado = 'pendente';
                                 let osSalva = 'SEM-OS';
 
                                 if (temOS) {
-                                    // 🟢 Tem O.S. -> Compareceu
-                                    status = 'compareceu';
+                                    statusCalculado = 'compareceu';
                                     osSalva = valorOSLinha;
                                     totalCompareceu++;
                                 } else if (dataRevisaoFormatada < dataHojeISO) {
-                                    // 🔴 Data da revisão é anterior a hoje e NÃO tem O.S. -> No-Show (Faltou)
-                                    status = 'faltou';
+                                    statusCalculado = 'faltou';
                                     totalNoShow++;
                                 } else {
-                                    // 🟡 Data da revisão é hoje ou futura sem O.S. -> Pendente (Aguardando cliente)
-                                    status = 'pendente';
+                                    statusCalculado = 'pendente';
                                     totalPendente++;
                                 }
 
-                                const valorUnitario = calcularValorPorRevisao(numRevisao);
-
+                                // Contabiliza nos totais da consultora
                                 if (!resumoPorConsultor[consultorAlvo.nome]) {
                                     resumoPorConsultor[consultorAlvo.nome] = { total: 0, compareceu: 0, noshow: 0, pendente: 0 };
                                 }
                                 resumoPorConsultor[consultorAlvo.nome].total++;
-                                if (status === 'compareceu') {
-                                    resumoPorConsultor[consultorAlvo.nome].compareceu++;
-                                } else if (status === 'faltou') {
-                                    resumoPorConsultor[consultorAlvo.nome].noshow++;
-                                } else {
-                                    resumoPorConsultor[consultorAlvo.nome].pendente++;
-                                }
+                                if (statusCalculado === 'compareceu') resumoPorConsultor[consultorAlvo.nome].compareceu++;
+                                else if (statusCalculado === 'faltou') resumoPorConsultor[consultorAlvo.nome].noshow++;
+                                else resumoPorConsultor[consultorAlvo.nome].pendente++;
 
-                                registros.push({
-                                    user_id: consultorAlvo.id,
-                                    data_contato: dataContatoFormatada,
-                                    data_revisao: dataRevisaoFormatada,
-                                    status: status,
-                                    placa: placaBruta,
-                                    evento: 'SEM-EVENTO',
-                                    os: osSalva,
-                                    revisao: numRevisao,
-                                    valor_unitario: valorUnitario
-                                });
+                                const valorUnitario = calcularValorPorRevisao(numRevisao);
+                                const chaveComposta = `${placaBruta}_${numRevisao}`;
+
+                                if (mapaExistentes.has(chaveComposta)) {
+                                    const existente = mapaExistentes.get(chaveComposta);
+                                    let houveMudanca = false;
+                                    let novaObs = existente.observacao || null;
+
+                                    if (existente.data_revisao !== dataRevisaoFormatada) {
+                                        novaObs = 'Reagendado';
+                                        totalReagendados++;
+                                        houveMudanca = true;
+                                    }
+
+                                    if (existente.status !== statusCalculado || existente.os !== osSalva) {
+                                        totalStatusAtualizados++;
+                                        houveMudanca = true;
+                                    }
+
+                                    if (houveMudanca) {
+                                        registrosParaAtualizar.push({
+                                            id: existente.id,
+                                            data_revisao: dataRevisaoFormatada,
+                                            data_contato: dataContatoFormatada,
+                                            status: statusCalculado,
+                                            os: osSalva,
+                                            observacao: novaObs,
+                                            user_id: consultorAlvo.id,
+                                            valor_unitario: valorUnitario
+                                        });
+                                    }
+                                } else {
+                                    totalNovos++;
+                                    registrosParaInserir.push({
+                                        user_id: consultorAlvo.id,
+                                        data_contato: dataContatoFormatada,
+                                        data_revisao: dataRevisaoFormatada,
+                                        status: statusCalculado,
+                                        placa: placaBruta,
+                                        evento: 'SEM-EVENTO',
+                                        os: osSalva,
+                                        revisao: numRevisao,
+                                        valor_unitario: valorUnitario,
+                                        observacao: null
+                                    });
+                                }
                             }
 
+                            // EXIBIÇÃO NO LOG DA TELA (STATUS-BOX)
                             log(`-----------------------------------`);
-                            log(`Revisões válidas importadas: ${registros.length}`);
-                            log(`• Compareceram (com O.S.): ${totalCompareceu}`);
-                            log(`• No-Show / Faltaram (passou data e sem O.S.): ${totalNoShow}`);
-                            log(`• Pendentes (datas futuras aguardando): ${totalPendente}`);
-                            log(`Descartados de outros consultores: ${ignoradosOutrosNomes}`);
-                            log(`Descartados outros serviços: ${ignoradosNaoRevisao}`);
-                            log(`--- Total por Consultora ---`);
+                            log(`Novos agendamentos inseridos: ${totalNovos}`);
+                            log(`Agendamentos reagendados: ${totalReagendados}`);
+                            log(`Status atualizados (novas O.S. / No-Show): ${totalStatusAtualizados}`);
+                            log(`Nenhum agendamento duplicado.`);
+                            log(`--- Detalhamento por Consultora ---`);
                             
+                            let blocoConsultorasTexto = '';
                             Object.keys(resumoPorConsultor).forEach(nome => {
                                 const c = resumoPorConsultor[nome];
-                                log(`• ${nome}: ${c.total} agendamentos (${c.compareceu} comp. | ${c.noshow} no-show | ${c.pendente} pend.)`);
+                                const linha = `• ${nome}: ${c.total} agendamentos (${c.compareceu} comp. | ${c.noshow} no-show | ${c.pendente} pend.)\n`;
+                                log(linha.trim());
+                                blocoConsultorasTexto += linha;
                             });
 
                             log(`-----------------------------------`);
                             log(`Salvando no banco de dados...`);
 
-                            for (let k = 0; k < registros.length; k += 100) {
-                                const lote = registros.slice(k, k + 100);
+                            // 1. Salva os novos agendamentos
+                            for (let k = 0; k < registrosParaInserir.length; k += 100) {
+                                const lote = registrosParaInserir.slice(k, k + 100);
                                 const { error: errInsert } = await supabaseClient.from('agendamentos').insert(lote);
-                                if (errInsert) {
-                                    log(`❌ Erro ao salvar: ${errInsert.message}`);
-                                    return;
-                                }
+                                if (errInsert) throw errInsert;
                             }
 
-                            log(`✅ SUCESSO! Todas as ${registros.length} revisões foram salvas com status atualizado!`);
+                            // 2. Atualiza os existentes
+                            for (const reg of registrosParaAtualizar) {
+                                await supabaseClient
+                                    .from('agendamentos')
+                                    .update({
+                                        data_revisao: reg.data_revisao,
+                                        data_contato: reg.data_contato,
+                                        status: reg.status,
+                                        os: reg.os,
+                                        observacao: reg.observacao,
+                                        user_id: reg.user_id,
+                                        valor_unitario: reg.valor_unitario
+                                    })
+                                    .eq('id', reg.id);
+                            }
+
+                            // REGISTRO DE AUDITORIA COMPLETO PARA O MODAL "VER DETALHES"
+                            let logAuditoria = `Resumo da Importação - ${file.name}\n`;
+                            logAuditoria += `• Novos agendamentos: ${totalNovos}\n`;
+                            logAuditoria += `• Clientes reagendados: ${totalReagendados}\n`;
+                            logAuditoria += `• Status atualizados: ${totalStatusAtualizados}\n\n`;
+                            logAuditoria += `Totais Gerais no Mês:\n`;
+                            logAuditoria += `• Compareceram: ${totalCompareceu}\n`;
+                            logAuditoria += `• No-Show: ${totalNoShow}\n`;
+                            logAuditoria += `• Pendentes: ${totalPendente}\n\n`;
+                            logAuditoria += `Detalhamento por Consultora:\n`;
+                            logAuditoria += blocoConsultorasTexto;
+
+                            const totalGeral = totalNovos + registrosParaAtualizar.length;
+
+                            await supabaseClient.from('historico_importacoes').insert([{
+                                nome_arquivo: file.name,
+                                usuario_nome: nomeOperadorLogado,
+                                mes_referencia: mesPadrao,
+                                total_revisoes: totalGeral,
+                                total_compareceu: totalCompareceu,
+                                total_noshow: totalNoShow,
+                                total_pendente: totalPendente,
+                                detalhes_log: logAuditoria
+                            }]);
+
+                            carregarHistorico();
+                            log(`SUCESSO! Base de agendamentos sincronizada.`);
 
                         } catch (err) {
-                            log(`❌ Erro no processamento: ${err.message}`);
+                            log(`Erro no processamento: ${err.message}`);
                         } finally {
                             btn.disabled = false;
                             btn.innerText = 'Fazer Upload dos Agendamentos';
@@ -649,7 +922,7 @@
 
                     reader.readAsArrayBuffer(file);
                 } catch (e) {
-                    log(`❌ Erro: ${e.message}`);
+                    log(`Erro: ${e.message}`);
                     btn.disabled = false;
                     btn.innerText = 'Fazer Upload dos Agendamentos';
                 }
@@ -671,13 +944,12 @@
                     if (error) throw error;
 
                     const filtrados = (data || []).filter(item => item.data_revisao && item.data_revisao.startsWith(periodoAnoMes));
-
                     if (filtrados.length === 0) {
                         alert(`Nenhum registro encontrado para o mês ${mes}/2026.`);
                         return;
                     }
 
-                    const cabecalho = ['Operador', 'Equipe', 'Data Contato', 'Data Revisao', 'Status', 'Placa', 'Revisao', 'Evento', 'OS', 'Valor Unitario'];
+                    const cabecalho = ['Operador', 'Equipe', 'Data Contato', 'Data Revisao', 'Status', 'Placa', 'Revisao', 'Evento', 'OS', 'Valor Unitario', 'Observacao'];
                     const linhasCsv = [cabecalho.join(';')];
 
                     filtrados.forEach(item => {
@@ -691,13 +963,13 @@
                             item.revisao || '',
                             item.evento || '',
                             item.os || '',
-                            (parseFloat(item.valor_unitario) || 0).toFixed(2).replace('.', ',')
+                            (parseFloat(item.valor_unitario) || 0).toFixed(2).replace('.', ','),
+                            item.observacao || ''
                         ];
                         linhasCsv.push(linha.join(';'));
                     });
 
-                    const conteudoCsv = '\uFEFF' + linhasCsv.join('\r\n');
-                    const blob = new Blob([conteudoCsv], { type: 'text/csv;charset=utf-8;' });
+                    const blob = new Blob(['\uFEFF' + linhasCsv.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(blob);
                     link.setAttribute('download', `Relatorio_Agendamentos_${periodoAnoMes}_${equipe}.csv`);
@@ -718,6 +990,8 @@
                 const equipe = encodeURIComponent(equipeExport.value);
                 window.location.href = `relatorios.html?mes=2026-${mes}&equipe=${equipe}&imprimir=true`;
             });
+
+            carregarHistorico();
         });
     </script>
 </body>

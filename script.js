@@ -1,14 +1,34 @@
 /* ==========================================================================
-   CADERNO DE ESTUDOS - JAVASCRIPT (script.js)
+   CADERNO DE ESTUDOS - JAVASCRIPT (script.js - Agendamentos com Paginação)
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', async function() {
-    // 1. CONFIGURAÇÃO DO CLIENTE SUPABASE
+    // 1. CONEXÃO COM O SUPABASE
     const SUPABASE_URL = 'https://potvtrepcoswvzmkewic.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 2. GUARDA DE SEGURANÇA (AUTH GUARD):
+    // 2. ELEMENTOS DO DOM
+    const linkMenuImportar = document.getElementById('link-menu-importar');
+    const areaAuth = document.getElementById('area-autenticacao');
+    const inputBusca = document.getElementById('input-busca');
+    const filtroStatus = document.getElementById('filtro-status');
+    const filtroMes = document.getElementById('filtro-mes');
+    const contadorRegistros = document.getElementById('contador-registros');
+    const tabelaCorpo = document.getElementById('tabela-corpo-agendamentos');
+
+    const btnPagAnterior = document.getElementById('btn-pag-anterior');
+    const btnPagProxima = document.getElementById('btn-pag-proxima');
+    const indicadorPagina = document.getElementById('indicador-pagina');
+    const textoPaginacaoInfo = document.getElementById('texto-paginacao-info');
+
+    const totalAgendamentosTopo = document.getElementById('total-agendamentos-topo');
+    const totalComparecidosTopo = document.getElementById('total-comparecidos-topo');
+    const percentualPresencaTopo = document.getElementById('percentual-presenca-topo');
+    const totalPendentesTopo = document.getElementById('total-pendentes-topo');
+    const totalNoShowTopo = document.getElementById('total-noshow-topo');
+
+    // 3. AUTH GUARD E PERMISSÕES
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session || !session.user) {
         window.location.href = 'login.html';
@@ -16,7 +36,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     const usuarioAtual = session.user;
 
-    // 3. CONSULTA DE PERFIL (ROLE-BASED ACCESS CONTROL - RBAC):
     let isAdmin = false;
     let equipeUsuario = 'Toyota';
     let nomeUsuarioPerfil = '';
@@ -34,38 +53,19 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (perfil.nome) nomeUsuarioPerfil = perfil.nome;
         }
     } catch (e) {
-        console.warn('Erro ao carregar perfil do banco:', e);
+        console.warn('Erro ao carregar perfil:', e);
     }
 
-    // TRAVA DE SEGURANÇA: Garante que seu usuário de teste/admin NUNCA perca o acesso Admin
     if (usuarioAtual.email === 'usuariotestesite01@gmail.com' || usuarioAtual.email?.includes('admin')) {
         isAdmin = true;
     }
 
-    // 4. CONTROLE VISUAL CONFORME O PERFIL:
-    const linkMenuImportar = document.getElementById('link-menu-importar');
-    const secaoCardsBonusIndex = document.getElementById('secao-cards-bonus-index');
-    const secaoFormularioAgendamento = document.getElementById('secao-formulario-agendamento');
-    const colunaAcao = document.querySelector('.coluna-acao');
-    const metricasResumoAdminIndex = document.getElementById('metricas-resumo-admin-index');
-
-    if (isAdmin) {
-        if (linkMenuImportar) linkMenuImportar.classList.remove('oculto');
-        if (secaoCardsBonusIndex) secaoCardsBonusIndex.classList.add('oculto');
-        if (secaoFormularioAgendamento) secaoFormularioAgendamento.classList.add('oculto');
-        if (colunaAcao) colunaAcao.classList.add('oculto');
-        if (metricasResumoAdminIndex) metricasResumoAdminIndex.classList.remove('oculto');
-    } else {
-        if (linkMenuImportar) linkMenuImportar.classList.add('oculto');
-        if (secaoCardsBonusIndex) secaoCardsBonusIndex.classList.remove('oculto');
-        if (secaoFormularioAgendamento) secaoFormularioAgendamento.classList.remove('oculto');
-        if (colunaAcao) colunaAcao.classList.remove('oculto');
-        if (metricasResumoAdminIndex) metricasResumoAdminIndex.classList.add('oculto');
+    if (isAdmin && linkMenuImportar) {
+        linkMenuImportar.classList.remove('oculto');
     }
 
-    // 5. CABEÇALHO DO USUÁRIO (Nome e Sobrenome completos):
-    const areaAuth = document.getElementById('area-autenticacao');
-    if (areaAuth) {
+    // 4. CABEÇALHO DO USUÁRIO
+    if (areaAuth && usuarioAtual) {
         let nomeExibicao = 'Usuário';
         const metaNome = usuarioAtual.user_metadata?.nome_completo || nomeUsuarioPerfil;
         if (typeof metaNome === 'string' && metaNome.trim().length > 0) {
@@ -90,333 +90,238 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    // 6. LÓGICA DO FORMULÁRIO DE NOVO AGENDAMENTO
-    const formAgendamento = document.getElementById('formulario-agendamento');
-    const btnAdicionar = document.getElementById('btn-adicionar-agendamento');
-    
-    function calcularValorPorRevisao(revisao) {
-        const r = parseInt(revisao, 10);
-        if (isNaN(r) || r <= 4) return 2.00;
-        else if (r >= 5 && r <= 7) return 6.00;
-        else return 10.00;
-    }
-
-    const inputDataContato = document.getElementById('data-contato');
-    const inputDataRevisao = document.getElementById('data-revisao');
-    const hojeStr = new Date().toISOString().split('T')[0];
-    if (inputDataContato) inputDataContato.value = hojeStr;
-    if (inputDataRevisao) inputDataRevisao.value = hojeStr;
-
-    if (formAgendamento) {
-        formAgendamento.addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const dataContato = document.getElementById('data-contato').value;
-            const dataRevisao = document.getElementById('data-revisao').value;
-            const placa = (document.getElementById('campo-placa').value || '').trim().toUpperCase();
-            const evento = (document.getElementById('campo-evento').value || '').trim() || 'SEM-EVENTO';
-            const os = (document.getElementById('campo-os').value || '').trim() || 'SEM-OS';
-            const revisao = parseInt(document.getElementById('campo-revisao').value, 10) || 1;
-            const status = document.getElementById('campo-status').value || 'pendente';
-            const valorUnitario = calcularValorPorRevisao(revisao);
-
-            if (!placa) {
-                alert('Informe a placa do veículo.');
-                return;
-            }
-
-            btnAdicionar.disabled = true;
-            btnAdicionar.textContent = 'Adicionando...';
-
-            const novoAgendamento = {
-                user_id: usuarioAtual.id,
-                data_contato: dataContato,
-                data_revisao: dataRevisao,
-                placa: placa,
-                evento: evento,
-                os: os,
-                revisao: revisao,
-                status: status,
-                valor_unitario: valorUnitario
-            };
-
-            const { error } = await supabaseClient.from('agendamentos').insert([novoAgendamento]);
-
-            btnAdicionar.disabled = false;
-            btnAdicionar.textContent = 'Adicionar';
-
-            if (error) {
-                alert('Erro ao salvar agendamento: ' + error.message);
-            } else {
-                document.getElementById('campo-placa').value = '';
-                document.getElementById('campo-evento').value = '';
-                document.getElementById('campo-os').value = '';
-                await carregarAgendamentos(); 
-            }
-        });
-    }
-
-    const filtroMes = document.getElementById('filtro-mes');
-    const filtroBusca = document.getElementById('filtro-busca');
-    const valorConfirmadoEl = document.querySelector('.bonus-confirmado');
-    const valorPrevistoEl = document.querySelector('.bonus-previsto');
-    const detalheConfirmadoEl = document.querySelector('.bonus-confirmado')?.parentElement.querySelector('.card-detalhe');
-    const contadorAgendamentos = document.getElementById('contador-agendamentos');
-    const corpoTabela = document.getElementById('tabela-agendamentos-corpo');
-
-    const infoPaginacao = document.getElementById('info-paginacao');
-    const numPaginaAtualEl = document.getElementById('numero-pagina-atual');
-    const btnPagAnt = document.getElementById('btn-pag-anterior');
-    const btnPagProx = document.getElementById('btn-pag-proxima');
+    // 5. CONFIGURAÇÃO DE PAGINAÇÃO E MÊS
+    const ITENS_POR_PAGINA = 20;
+    let paginaAtual = 1;
+    let listaFiltradaAtual = [];
+    let todosAgendamentosMes = [];
 
     const hoje = new Date();
-    const ano = hoje.getFullYear();
-    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-    if (filtroMes) filtroMes.value = `${ano}-${mes}`;
+    const anoAtual = hoje.getFullYear();
+    const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
+    const valorMesPadrao = `${anoAtual}-${mesAtual}`;
 
-    let paginaAtual = 1;
-    const itensPorPagina = 20; 
-    let todosAgendamentosMes = [];
-    let agendamentosFiltrados = [];
-
-    function formatarDataBR(dataIso) {
-        if (!dataIso) return '-';
-        const partes = dataIso.split('-');
-        if (partes.length < 3) return dataIso;
-        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    if (filtroMes) {
+        filtroMes.value = valorMesPadrao;
     }
 
-    async function carregarAgendamentos() {
-        const mesSelecionado = filtroMes.value;
-        const colunas = isAdmin ? 9 : 10;
-        corpoTabela.innerHTML = `<tr><td colspan="${colunas}" class="celula-vazia-mensagem">Carregando agendamentos...</td></tr>`;
-
-        let query = supabaseClient.from('vw_agendamentos_completos').select('*');
-
-        if (!isAdmin) {
-            query = query.eq('user_id', usuarioAtual.id);
+    function formatarDataBR(dataString) {
+        if (!dataString) return '-';
+        const partes = dataString.split('-');
+        if (partes.length === 3) {
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
         }
-
-        const { data, error } = await query.order('data_revisao', { ascending: true });
-
-        if (error) {
-            console.error('Erro na requisição ao Supabase:', error);
-            corpoTabela.innerHTML = `<tr><td colspan="${colunas}" class="celula-vazia-mensagem admin-val-perigo">Erro ao carregar dados.</td></tr>`;
-            return;
-        }
-
-        todosAgendamentosMes = (data || []).filter(item => 
-            item.data_revisao && item.data_revisao.startsWith(mesSelecionado)
-        );
-
-        paginaAtual = 1;
-        aplicarFiltrosEAtualizar();
+        return dataString;
     }
 
-    function aplicarFiltrosEAtualizar() {
-        const termoBusca = (filtroBusca?.value || '').trim().toUpperCase();
+    // 6. CARREGAR DADOS DO SUPABASE
+    async function carregarDados() {
+        const mesSelecionado = filtroMes ? filtroMes.value : valorMesPadrao;
 
-        if (termoBusca.length > 0) {
-            agendamentosFiltrados = todosAgendamentosMes.filter(item => {
-                const placa = (item.placa || '').toUpperCase();
-                const evento = String(item.evento || '').toUpperCase();
-                const os = String(item.os || '').toUpperCase();
-                const autor = (item.autor_nome || '').toUpperCase();
+        tabelaCorpo.innerHTML = '<tr><td colspan="10" class="celula-vazia-mensagem">Buscando agendamentos...</td></tr>';
 
-                return placa.includes(termoBusca) || 
-                       evento.includes(termoBusca) || 
-                       os.includes(termoBusca) || 
-                       autor.includes(termoBusca);
-            });
-        } else {
-            agendamentosFiltrados = [...todosAgendamentosMes];
-        }
+        try {
+            let query = supabaseClient
+                .from('vw_agendamentos_completos')
+                .select('*')
+                .order('data_revisao', { ascending: true });
 
-        atualizarCardsResumo();
-        renderizarTabelaPaginada();
-    }
-
-    function atualizarCardsResumo() {
-        let confirmados = 0;
-        let pendentes = 0;
-        let faltas = 0;
-        let somaRealizado = 0;
-        let somaPrevisto = 0;
-
-        todosAgendamentosMes.forEach(item => {
-            const v = parseFloat(item.valor_unitario) || 0;
-            const st = item.status || 'pendente';
-            if (st === 'compareceu') {
-                confirmados++;
-                somaRealizado += v;
-                somaPrevisto += v;
-            } else if (st === 'pendente') {
-                pendentes++;
-                somaPrevisto += v;
-            } else if (st === 'faltou') {
-                faltas++;
+            if (!isAdmin) {
+                query = query.eq('user_id', usuarioAtual.id);
             }
+
+            const { data, error } = await query;
+            if (error) throw error;
+
+            todosAgendamentosMes = (data || []).filter(item =>
+                item.data_revisao && item.data_revisao.startsWith(mesSelecionado)
+            );
+
+            atualizarCardsResumo(todosAgendamentosMes);
+            paginaAtual = 1;
+            aplicarFiltrosTabela();
+
+        } catch (err) {
+            console.error('Erro ao carregar agendamentos:', err);
+            tabelaCorpo.innerHTML = `<tr><td colspan="10" class="celula-vazia-mensagem">Erro ao carregar dados: ${err.message}</td></tr>`;
+        }
+    }
+
+    // 7. ATUALIZAR CARDS SUPERIORES
+    function atualizarCardsResumo(lista) {
+        const total = lista.length;
+        let compareceu = 0;
+        let pendente = 0;
+        let noshow = 0;
+
+        lista.forEach(item => {
+            const st = item.status || 'pendente';
+            if (st === 'compareceu') compareceu++;
+            else if (st === 'faltou') noshow++;
+            else pendente++;
         });
 
-        if (valorConfirmadoEl) valorConfirmadoEl.textContent = `R$ ${somaRealizado.toFixed(2).replace('.', ',')}`;
-        if (valorPrevistoEl) valorPrevistoEl.textContent = `R$ ${somaPrevisto.toFixed(2).replace('.', ',')}`;
-        if (detalheConfirmadoEl) detalheConfirmadoEl.textContent = `${confirmados} revisões comparecidas`;
-        if (contadorAgendamentos) contadorAgendamentos.textContent = `${todosAgendamentosMes.length} registros neste mês`;
+        const percPresenca = total > 0 ? Math.round((compareceu / total) * 100) : 0;
 
-        if (isAdmin) {
-            const totalGeral = confirmados + pendentes + faltas;
-            const taxa = totalGeral > 0 ? Math.round((confirmados / totalGeral) * 100) : 0;
-            
-            const elTotal = document.getElementById('admin-total-agendados');
-            const elCompareceu = document.getElementById('admin-total-compareceu');
-            const elTaxa = document.getElementById('admin-taxa-presenca');
-            const elPendente = document.getElementById('admin-total-pendente');
-            const elFaltas = document.getElementById('admin-total-faltas');
-
-            if (elTotal) elTotal.textContent = totalGeral;
-            if (elCompareceu) elCompareceu.textContent = confirmados;
-            if (elTaxa) elTaxa.textContent = `${taxa}% de presença`;
-            if (elPendente) elPendente.textContent = pendentes;
-            if (elFaltas) elFaltas.textContent = faltas;
-        }
+        if (totalAgendamentosTopo) totalAgendamentosTopo.textContent = total;
+        if (totalComparecidosTopo) totalComparecidosTopo.textContent = compareceu;
+        if (percentualPresencaTopo) percentualPresencaTopo.textContent = `${percPresenca}% de presença`;
+        if (totalPendentesTopo) totalPendentesTopo.textContent = pendente;
+        if (totalNoShowTopo) totalNoShowTopo.textContent = noshow;
     }
 
-    // 7. RENDERIZAÇÃO DA TABELA (SEM O E-MAIL, EXIBINDO NOME COMPLETO)
-    function renderizarTabelaPaginada() {
-        const total = agendamentosFiltrados.length;
-        const totalPaginas = Math.ceil(total / itensPorPagina) || 1;
+    // 8. FILTRAGEM DINÂMICA (BUSCA + STATUS + REAGENDADOS)
+    function aplicarFiltrosTabela() {
+        const termoBusca = (inputBusca?.value || '').trim().toLowerCase();
+        const statusSelecionado = filtroStatus ? filtroStatus.value : 'todos';
+
+        listaFiltradaAtual = todosAgendamentosMes.filter(item => {
+            const placa = (item.placa || '').toLowerCase();
+            const evento = (item.evento || '').toLowerCase();
+            const os = (item.os || '').toLowerCase();
+            const nome = (item.autor_nome || '').toLowerCase();
+
+            const bateBusca = !termoBusca || 
+                placa.includes(termoBusca) || 
+                evento.includes(termoBusca) || 
+                os.includes(termoBusca) || 
+                nome.includes(termoBusca);
+
+            let bateStatus = false;
+            const statusItem = item.status || 'pendente';
+            const obsItem = (item.observacao || '').toLowerCase();
+
+            if (statusSelecionado === 'todos') {
+                bateStatus = true;
+            } else if (statusSelecionado === 'reagendado') {
+                bateStatus = obsItem.includes('reagendado');
+            } else {
+                bateStatus = (statusItem === statusSelecionado);
+            }
+
+            return bateBusca && bateStatus;
+        });
+
+        if (contadorRegistros) {
+            contadorRegistros.textContent = `${listaFiltradaAtual.length} registros encontrados`;
+        }
+
+        renderizarPaginaAtual();
+    }
+
+    // 9. CONTROLE DA PAGINAÇÃO
+    function renderizarPaginaAtual() {
+        const totalItens = listaFiltradaAtual.length;
+        const totalPaginas = Math.max(1, Math.ceil(totalItens / ITENS_POR_PAGINA));
 
         if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
         if (paginaAtual < 1) paginaAtual = 1;
 
-        const inicio = (paginaAtual - 1) * itensPorPagina;
-        const fim = Math.min(inicio + itensPorPagina, total);
-        const paginaItens = agendamentosFiltrados.slice(inicio, fim);
+        const inicio = (paginaAtual - 1) * ITENS_POR_PAGINA;
+        const fim = Math.min(inicio + ITENS_POR_PAGINA, totalItens);
+        const itensDaPagina = listaFiltradaAtual.slice(inicio, fim);
 
-        corpoTabela.innerHTML = '';
-        const colunas = isAdmin ? 9 : 10;
-
-        if (paginaItens.length === 0) {
-            corpoTabela.innerHTML = `<tr><td colspan="${colunas}" class="celula-vazia-mensagem">Nenhum agendamento encontrado para essa busca.</td></tr>`;
-        } else {
-            paginaItens.forEach(item => {
-                const tr = document.createElement('tr');
-                const v = parseFloat(item.valor_unitario) || 0;
-                const status = item.status || 'pendente';
-
-                let classeValor = (status === 'compareceu') ? 'valor-confirmado-tabela' : 'valor-pendente-tabela';
-
-                let htmlStatus = `
-                    <select class="select-status-tabela select-status-${status}" data-id="${item.id}">
-                        <option value="pendente" ${status === 'pendente' ? 'selected' : ''}>Pendente</option>
-                        <option value="compareceu" ${status === 'compareceu' ? 'selected' : ''}>Compareceu</option>
-                        <option value="faltou" ${status === 'faltou' ? 'selected' : ''}>Não Compareceu</option>
-                    </select>
-                `;
-
-                let htmlLinha = `
-                    <td>
-                        <strong>${item.autor_nome || 'Operador'}</strong>
-                    </td>
-                    <td>${formatarDataBR(item.data_contato)}</td>
-                    <td>${formatarDataBR(item.data_revisao)}</td>
-                    <td><span class="chip-placa">${item.placa || 'SEM-PLACA'}</span></td>
-                    <td>${item.evento || '-'}</td>
-                    <td>${item.os || '-'}</td>
-                    <td>${item.revisao ? item.revisao + 'ª Revisão' : '-'}</td>
-                    <td>${htmlStatus}</td>
-                    <td class="col-direita ${classeValor}">R$ ${v.toFixed(2).replace('.', ',')}</td>
-                `;
-
-                if (!isAdmin) {
-                    htmlLinha += `
-                        <td class="col-centro">
-                            <button class="btn-excluir-item" data-id="${item.id}" title="Excluir este agendamento">🗑️</button>
-                        </td>
-                    `;
-                }
-
-                tr.innerHTML = htmlLinha;
-                corpoTabela.appendChild(tr);
-            });
-
-            document.querySelectorAll('.select-status-tabela').forEach(select => {
-                select.addEventListener('change', async (e) => {
-                    const idItem = e.target.getAttribute('data-id');
-                    const novoStatus = e.target.value;
-                    e.target.disabled = true;
-
-                    const { error } = await supabaseClient
-                        .from('agendamentos')
-                        .update({ status: novoStatus })
-                        .eq('id', idItem);
-
-                    if (error) {
-                        alert('Erro ao atualizar status: ' + error.message);
-                        e.target.disabled = false;
-                    } else {
-                        await carregarAgendamentos();
-                    }
-                });
-            });
-
-            if (!isAdmin) {
-                document.querySelectorAll('.btn-excluir-item').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
-                        const idParaExcluir = e.target.getAttribute('data-id');
-                        const confirmou = confirm('Tem certeza que deseja excluir este agendamento?');
-                        if (!confirmou) return;
-
-                        e.target.disabled = true;
-                        e.target.style.opacity = '0.5';
-
-                        const { error } = await supabaseClient
-                            .from('agendamentos')
-                            .delete()
-                            .eq('id', idParaExcluir);
-
-                        if (error) {
-                            alert('Erro ao excluir: ' + error.message);
-                            e.target.disabled = false;
-                            e.target.style.opacity = '1';
-                        } else {
-                            await carregarAgendamentos();
-                        }
-                    });
-                });
-            }
+        if (indicadorPagina) {
+            indicadorPagina.textContent = `${paginaAtual} de ${totalPaginas}`;
+        }
+        if (textoPaginacaoInfo) {
+            textoPaginacaoInfo.textContent = totalItens === 0 
+                ? 'Nenhum agendamento' 
+                : `Mostrando ${inicio + 1}–${fim} de ${totalItens} agendamentos`;
         }
 
-        if (infoPaginacao) {
-            infoPaginacao.textContent = total > 0 ? `Mostrando ${inicio + 1}–${fim} de ${total} agendamentos` : '0 agendamentos';
-        }
-        if (numPaginaAtualEl) {
-            numPaginaAtualEl.textContent = `${paginaAtual} de ${totalPaginas}`;
-        }
-        if (btnPagAnt) btnPagAnt.disabled = (paginaAtual <= 1);
-        if (btnPagProx) btnPagProx.disabled = (paginaAtual >= totalPaginas);
+        if (btnPagAnterior) btnPagAnterior.disabled = (paginaAtual <= 1);
+        if (btnPagProxima) btnPagProxima.disabled = (paginaAtual >= totalPaginas);
+
+        renderizarLinhas(itensDaPagina);
     }
 
-    btnPagAnt?.addEventListener('click', () => {
-        if (paginaAtual > 1) {
-            paginaAtual--;
-            renderizarTabelaPaginada();
+    // 10. RENDERIZAR LINHAS COM A COLUNA OBSERVAÇÃO
+    function renderizarLinhas(lista) {
+        tabelaCorpo.innerHTML = '';
+
+        if (lista.length === 0) {
+            tabelaCorpo.innerHTML = '<tr><td colspan="10" class="celula-vazia-mensagem">Nenhum agendamento encontrado para este filtro.</td></tr>';
+            return;
         }
-    });
 
-    btnPagProx?.addEventListener('click', () => {
-        const totalPaginas = Math.ceil(agendamentosFiltrados.length / itensPorPagina);
-        if (paginaAtual < totalPaginas) {
-            paginaAtual++;
-            renderizarTabelaPaginada();
-        }
-    });
+        lista.forEach(item => {
+            const tr = document.createElement('tr');
 
-    filtroMes?.addEventListener('change', carregarAgendamentos);
-    filtroBusca?.addEventListener('input', () => {
-        paginaAtual = 1;
-        aplicarFiltrosEAtualizar();
-    });
+            const st = item.status || 'pendente';
+            let textoStatus = 'Pendente';
+            let classeStatus = 'tag-status-pendente';
 
-    await carregarAgendamentos();
+            if (st === 'compareceu') {
+                textoStatus = 'Compareceu';
+                classeStatus = 'tag-status-compareceu';
+            } else if (st === 'faltou') {
+                textoStatus = 'Não Compareceu';
+                classeStatus = 'tag-status-faltou';
+            }
+
+            const valorFormatado = (parseFloat(item.valor_unitario) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            // Tag limpa de observação: sem emoji
+            let celulaObservacao = '<span style="color: #94a3b8;">-</span>';
+            if (item.observacao && item.observacao.trim().toLowerCase().includes('reagendado')) {
+                celulaObservacao = '<span class="tag-reagendado">Reagendado</span>';
+            }
+
+            tr.innerHTML = `
+                <td><strong>${item.autor_nome || 'Operador'}</strong></td>
+                <td class="col-centro">${formatarDataBR(item.data_contato)}</td>
+                <td class="col-centro">${formatarDataBR(item.data_revisao)}</td>
+                <td class="col-centro"><span class="chip-placa">${item.placa || 'SEM-PLACA'}</span></td>
+                <td class="col-centro">${item.evento || 'SEM-EVENTO'}</td>
+                <td class="col-centro"><strong>${item.os || 'SEM-OS'}</strong></td>
+                <td class="col-centro">${item.revisao ? item.revisao + 'ª Revisão' : '-'}</td>
+                <td class="col-centro"><span class="tag-status-pill ${classeStatus}">${textoStatus}</span></td>
+                <td class="col-centro">${celulaObservacao}</td>
+                <td class="col-centro valor-celula-destaque">${valorFormatado}</td>
+            `;
+
+            tabelaCorpo.appendChild(tr);
+        });
+    }
+
+    // 11. EVENT LISTENERS
+    if (inputBusca) {
+        inputBusca.addEventListener('input', () => {
+            paginaAtual = 1;
+            aplicarFiltrosTabela();
+        });
+    }
+
+    if (filtroStatus) {
+        filtroStatus.addEventListener('change', () => {
+            paginaAtual = 1;
+            aplicarFiltrosTabela();
+        });
+    }
+
+    if (filtroMes) {
+        filtroMes.addEventListener('change', carregarDados);
+    }
+
+    if (btnPagAnterior) {
+        btnPagAnterior.addEventListener('click', () => {
+            if (paginaAtual > 1) {
+                paginaAtual--;
+                renderizarPaginaAtual();
+            }
+        });
+    }
+
+    if (btnPagProxima) {
+        btnPagProxima.addEventListener('click', () => {
+            const totalPaginas = Math.ceil(listaFiltradaAtual.length / ITENS_POR_PAGINA);
+            if (paginaAtual < totalPaginas) {
+                paginaAtual++;
+                renderizarPaginaAtual();
+            }
+        });
+    }
+
+    await carregarDados();
 });

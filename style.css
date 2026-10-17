@@ -1099,3 +1099,71 @@ table td:nth-child(8) {
     background-color: #94a3b8;
     cursor: not-allowed;
 }
+
+.select-filtro-status {
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background-color: #ffffff;
+    font-size: 13px;
+    color: #1e293b;
+    outline: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.select-filtro-status:focus {
+    border-color: #2563eb;
+}
+
+/* Paginação oficial da tabela */
+.paginacao-original {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    background: #ffffff;
+    border-top: 1px solid #f1f5f9;
+    box-sizing: border-box;
+}
+
+.paginacao-original .info-contagem {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.paginacao-original .acoes-paginas {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.paginacao-original .btn-pag {
+    background: #ffffff;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.paginacao-original .btn-pag:hover:not(:disabled) {
+    border-color: #cbd5e1;
+    color: #1e293b;
+}
+
+.paginacao-original .btn-pag:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.paginacao-original .indicador-num-pagina {
+    font-size: 13px;
+    font-weight: 700;
+    color: #2563eb;
+}

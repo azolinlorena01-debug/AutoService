@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Bônus - Relatórios & Gráficos</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" href="imagens/icone.jpeg">
     <!-- Bibliotecas essenciais: Supabase e Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -141,6 +143,7 @@
             gap: 10px;
             margin: 20px 0;
             align-items: center;
+            flex-wrap: wrap;
         }
         .btn-filtro-grafico {
             background: #ffffff;
@@ -178,9 +181,7 @@
             grid-template-columns: 1fr !important;
         }
 
-        /* ==========================================================================
-           AGRUPAMENTO ELEGANTE DA DISTRIBUIÇÃO POR REVISÃO
-           ========================================================================== */
+        /* Agrupamento da Distribuição por Revisão */
         .faixas-revisao-container {
             display: inline-flex;
             align-items: center;
@@ -225,94 +226,6 @@
             user-select: none;
         }
 
-        /* Visão Administrador */
-        .card-filtro-admin {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 20px 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            box-sizing: border-box;
-        }
-        .card-filtro-admin .filtro-admin-conteudo {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-        .card-filtro-admin h2 {
-            font-size: 18px;
-            font-weight: 700;
-            color: #1e293b;
-            margin: 0 0 4px 0;
-        }
-        .card-filtro-admin p {
-            font-size: 13px;
-            color: #64748b;
-            margin: 0;
-        }
-        .filtros-admin-controles {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        .filtros-admin-controles .controle-filtro {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .filtros-admin-controles label {
-            font-size: 11px;
-            font-weight: 700;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .filtros-admin-controles input,
-        .filtros-admin-controles select {
-            height: 38px;
-            padding: 0 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            background-color: #f8fafc;
-            font-size: 13px;
-            color: #1e293b;
-            outline: none;
-            min-width: 170px;
-            box-sizing: border-box;
-            transition: border-color 0.2s ease, background-color 0.2s ease;
-        }
-        .filtros-admin-controles input:focus,
-        .filtros-admin-controles select:focus {
-            border-color: #2563eb;
-            background-color: #ffffff;
-        }
-
-        #btn-voltar-admin,
-        .btn-secundario-tabela {
-            background: #ffffff;
-            color: #1e293b;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        }
-        #btn-voltar-admin:hover,
-        .btn-secundario-tabela:hover {
-            background: #f8fafc;
-            border-color: #94a3b8;
-            color: #0f172a;
-        }
-
         /* Centraliza a coluna de distribuição por revisão e garante respiro das bordas */
         #tabela-cabecalho-admin th:nth-child(6),
         #tabela-corpo-admin td:nth-child(6) {
@@ -322,17 +235,145 @@
             min-width: 250px;
         }
 
-        /* Espaçamento extra para a última coluna não grudar na borda direita */
+        /* Espaçamento extra para a última coluna */
         #tabela-cabecalho-admin th:last-child,
         #tabela-corpo-admin td:last-child {
             padding-right: 28px !important;
             min-width: 120px;
         }
 
-        /* Garante que a tabela ocupe 100% com distribuição equilibrada */
         .tabela-container table {
             width: 100%;
             table-layout: auto;
+        }
+
+        /* Botão estilizado de voltar */
+        #btn-voltar-admin {
+            background: #ffffff !important;
+            color: #1e293b !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            padding: 8px 16px !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease !important;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+        }
+        #btn-voltar-admin:hover {
+            background: #f8fafc !important;
+            border-color: #94a3b8 !important;
+            color: #0f172a !important;
+        }
+
+        /* ==========================================================================
+           ESTILOS DO RANKING DOS OPERADORES
+           ========================================================================== */
+        .ranking-card-wrapper {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+        .ranking-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 18px;
+        }
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
+        .ranking-item:hover {
+            border-color: #cbd5e1;
+            background: #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+        .ranking-item.destaque-primeiro {
+            background: #fffbeb;
+            border-color: #fde68a;
+        }
+        .ranking-esquerda {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+        }
+        .posicao-circulo {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .pos-1 { background-color: #fef08a; color: #854d0e; border: 2px solid #facc15; }
+        .pos-2 { background-color: #e2e8f0; color: #334155; border: 2px solid #cbd5e1; }
+        .pos-3 { background-color: #fed7aa; color: #9a3412; border: 2px solid #fb923c; }
+        .pos-padrao { background-color: #f1f5f9; color: #64748b; font-size: 13px; font-weight: 700; }
+
+        .operador-info-bloco {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 170px;
+        }
+        .operador-info-bloco strong {
+            font-size: 14px;
+            color: #1e293b;
+        }
+        .operador-info-bloco span {
+            font-size: 12px;
+            color: #64748b;
+        }
+        .ranking-barra-area {
+            flex: 1;
+            max-width: 320px;
+            margin: 0 20px;
+        }
+        .ranking-trilho {
+            width: 100%;
+            height: 8px;
+            background-color: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .ranking-preenchimento {
+            height: 100%;
+            background-color: #22c55e;
+            border-radius: 4px;
+            transition: width 0.4s ease;
+        }
+        .ranking-direita {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            text-align: right;
+        }
+        .num-comparecidos {
+            font-size: 16px;
+            font-weight: 800;
+            color: #15803d;
+        }
+        .num-comparecidos-sub {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 600;
         }
     </style>
 </head>
@@ -356,23 +397,21 @@
 
         <main>
             <!-- 1. FILTROS ADMINISTRATIVOS -->
-            <section id="secao-filtros-admin" class="card-filtro-admin oculto">
-                <div class="filtro-admin-conteudo">
+            <section id="secao-filtros-admin" class="painel-filtros-admin oculto">
+                <div class="info-titulos">
+                    <h2>Visão Administrador</h2>
+                    <p>Filtre o período e equipe</p>
+                </div>
+                <div class="controles-filtros-admin">
                     <div>
-                        <h2>Visão Administrador</h2>
-                        <p>Filtre o período e equipe</p>
+                        <span class="filtro-item-label">MÊS DE REFERÊNCIA</span>
+                        <input type="month" id="filtro-mes-admin" class="input-mes-estilizado filtro-admin-mes-select">
                     </div>
-                    <div class="filtros-admin-controles">
-                        <div class="controle-filtro">
-                            <label for="filtro-mes-admin">MÊS DE REFERÊNCIA</label>
-                            <input type="month" id="filtro-mes-admin" class="input-mes-padrao">
-                        </div>
-                        <div class="controle-filtro">
-                            <label for="filtro-equipe-admin">FILTRAR EQUIPE</label>
-                            <select id="filtro-equipe-admin" class="select-padrao">
-                                <option value="todas">Todas as Equipes</option>
-                            </select>
-                        </div>
+                    <div>
+                        <span class="filtro-item-label">FILTRAR EQUIPE</span>
+                        <select id="filtro-equipe-admin" class="input-mes-estilizado filtro-admin-equipe-select">
+                            <option value="todas">Todas as Equipes</option>
+                        </select>
                     </div>
                 </div>
             </section>
@@ -427,6 +466,9 @@
                 <button type="button" id="btn-aba-categorias" class="btn-filtro-grafico">
                     Detalhes por Categoria de Revisão
                 </button>
+                <button type="button" id="btn-aba-ranking" class="btn-filtro-grafico">
+                    Ranking dos Operadores
+                </button>
                 <button type="button" id="btn-aba-equipe" class="btn-filtro-grafico oculto">
                     Volume da Equipe
                 </button>
@@ -476,7 +518,16 @@
                 </div>
             </section>
 
-            <!-- 7. GRÁFICO VOLUME DA EQUIPE -->
+            <!-- 7. SEÇÃO DE RANKING DOS OPERADORES -->
+            <section id="secao-ranking-operadores" class="ranking-card-wrapper oculto">
+                <div class="grafico-cabecalho">
+                    <h3 style="font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 4px;">🏆 Ranking Geral dos Operadores</h3>
+                    <p style="font-size: 13px; color: #64748b; margin: 0;">Classificação de todos os operadores por agendamentos confirmados.</p>
+                </div>
+                <div id="container-ranking-lista" class="ranking-lista"></div>
+            </section>
+
+            <!-- 8. GRÁFICO VOLUME DA EQUIPE -->
             <section id="secao-volume-equipe-consultor" class="card-grafico oculto" style="margin-bottom: 24px;">
                 <div class="grafico-cabecalho">
                     <h3 id="titulo-grafico-equipe-consultor">Volume da Equipe: Toyota</h3>
@@ -487,8 +538,8 @@
                 </div>
             </section>
 
-            <!-- 8. TABELAS ADMINISTRATIVAS -->
-            <section id="secao-admin-ranking" class="card-tabela-gerencial oculto" style="margin-top: 24px;">
+            <!-- 9. TABELAS ADMINISTRATIVAS -->
+            <section id="secao-admin-ranking" class="card-tabela-agendamentos oculto" style="margin-top: 24px;">
                 <div class="tabela-cabecalho-acoes">
                     <div>
                         <h2 id="titulo-tabela-admin">Desempenho da Equipe</h2>
