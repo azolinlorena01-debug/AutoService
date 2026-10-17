@@ -763,10 +763,55 @@ document.addEventListener('DOMContentLoaded', async function() {
             const taxa = op.total > 0 ? Math.round((op.compareceu / op.total) * 100) : 0;
             const badgeClasse = taxa >= 70 ? 'badge-taxa-alta' : 'badge-taxa-normal';
             
-            const badgesRevisoes = Object.keys(op.revisoes)
+            // AGRUPAMENTO EM 3 FAIXAS DE BÔNUS TOYOTA
+            let qtdFaixa1a4 = 0;   // R$ 2,00
+            let qtdFaixa5a7 = 0;   // R$ 6,00
+            let qtdFaixa8Mais = 0;  // R$ 10,00
+
+            const revs1a4 = [];
+            const revs5a7 = [];
+            const revs8Mais = [];
+
+            Object.keys(op.revisoes)
                 .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
-                .map(r => `<span class="chip-revisao-tabela"><strong>${r}ª:</strong> ${op.revisoes[r]}</span>`)
-                .join('');
+                .forEach(r => {
+                    const num = parseInt(r, 10);
+                    const qtd = op.revisoes[r];
+                    const texto = `${num}ª: ${qtd}`;
+                    if (num <= 4) {
+                        qtdFaixa1a4 += qtd;
+                        revs1a4.push(texto);
+                    } else if (num <= 7) {
+                        qtdFaixa5a7 += qtd;
+                        revs5a7.push(texto);
+                    } else {
+                        qtdFaixa8Mais += qtd;
+                        revs8Mais.push(texto);
+                    }
+                });
+
+            // Quebra em linhas estruturadas para o balão não esticar até a lateral da tela
+            const detalheTooltip = [
+                `Faixa R$ 2,00 (1ª a 4ª): ${revs1a4.join(' | ') || '0'}`,
+                `Faixa R$ 6,00 (5ª a 7ª): ${revs5a7.join(' | ') || '0'}`,
+                `Faixa R$ 10,00 (8ª+): ${revs8Mais.join(' | ') || '0'}`
+            ].join('\n');
+
+            const badgesRevisoes = `
+                <div class="faixas-revisao-container" title="${detalheTooltip}">
+                    <span class="faixa-item faixa-azul">
+                        <span class="faixa-dot"></span> 1ª-4ª: <strong>${qtdFaixa1a4}</strong>
+                    </span>
+                    <span class="faixa-divisor">|</span>
+                    <span class="faixa-item faixa-roxa">
+                        <span class="faixa-dot"></span> 5ª-7ª: <strong>${qtdFaixa5a7}</strong>
+                    </span>
+                    <span class="faixa-divisor">|</span>
+                    <span class="faixa-item faixa-verde">
+                        <span class="faixa-dot"></span> 8ª+: <strong>${qtdFaixa8Mais}</strong>
+                    </span>
+                </div>
+            `;
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -777,7 +822,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <td class="col-centro admin-val-sucesso"><strong>${op.compareceu}</strong></td>
                 <td class="col-centro admin-val-alerta">${op.pendente}</td>
                 <td class="col-centro admin-val-perigo">${op.faltou}</td>
-                <td class="col-centro">${badgesRevisoes || '-'}</td>
+                <td class="col-centro">${badgesRevisoes}</td>
                 <td class="col-centro">
                     <span class="badge-taxa-tabela ${badgeClasse}">
                         ${taxa}%
