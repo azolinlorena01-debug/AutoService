@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function carregarDados() {
         const mesSelecionado = filtroMes ? filtroMes.value : valorMesPadrao;
 
-        tabelaCorpo.innerHTML = '<tr><td colspan="10" class="celula-vazia-mensagem">Buscando agendamentos...</td></tr>';
+        tabelaCorpo.innerHTML = '<tr><td colspan="9" class="celula-vazia-mensagem">Buscando agendamentos...</td></tr>';
 
         try {
             let query = supabaseClient
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         } catch (err) {
             console.error('Erro ao carregar agendamentos:', err);
-            tabelaCorpo.innerHTML = `<tr><td colspan="10" class="celula-vazia-mensagem">Erro ao carregar dados: ${err.message}</td></tr>`;
+            tabelaCorpo.innerHTML = `<tr><td colspan="9" class="celula-vazia-mensagem">Erro ao carregar dados: ${err.message}</td></tr>`;
         }
     }
 
@@ -177,12 +177,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             let bateStatus = false;
             const statusItem = item.status || 'pendente';
-            const obsItem = (item.observacao || '').toLowerCase();
 
             if (statusSelecionado === 'todos') {
                 bateStatus = true;
-            } else if (statusSelecionado === 'reagendado') {
-                bateStatus = obsItem.includes('reagendado');
             } else {
                 bateStatus = (statusItem === statusSelecionado);
             }
@@ -227,31 +224,30 @@ document.addEventListener('DOMContentLoaded', async function() {
         tabelaCorpo.innerHTML = '';
 
         if (lista.length === 0) {
-            tabelaCorpo.innerHTML = '<tr><td colspan="10" class="celula-vazia-mensagem">Nenhum agendamento encontrado para este filtro.</td></tr>';
+            tabelaCorpo.innerHTML = '<tr><td colspan="9" class="celula-vazia-mensagem">Nenhum agendamento encontrado para este filtro.</td></tr>';
             return;
         }
 
         lista.forEach(item => {
             const tr = document.createElement('tr');
-
             const st = item.status || 'pendente';
-            let textoStatus = 'Pendente';
-            let classeStatus = 'tag-status-pendente';
 
-            if (st === 'compareceu') {
-                textoStatus = 'Compareceu';
-                classeStatus = 'tag-status-compareceu';
-            } else if (st === 'faltou') {
-                textoStatus = 'Não Compareceu';
-                classeStatus = 'tag-status-faltou';
-            }
+            let classeCor = 'status-pendente';
+            if (st === 'compareceu') classeCor = 'status-compareceu';
+            else if (st === 'faltou') classeCor = 'status-faltou';
 
             const valorFormatado = (parseFloat(item.valor_unitario) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-            let celulaObservacao = '<span style="color: #94a3b8;">-</span>';
-            if (item.observacao && item.observacao.trim().toLowerCase().includes('reagendado')) {
-                celulaObservacao = '<span class="tag-reagendado">Reagendado</span>';
-            }
+            const seletorStatusHTML = `
+                <select class="select-status-tabela ${classeCor}" data-id="${item.id}">
+                    <option value="pendente" ${st === 'pendente' ? 'selected' : ''}>Pendente</option>
+                    <option value="compareceu" ${st === 'compareceu' ? 'selected' : ''}>Compareceu</option>
+                    <option value="faltou" ${st === 'faltou' ? 'selected' : ''}>No-Show</option>
+                </select>
+            `;
+
+            const classeValor = (st === 'compareceu') ? 'valor-celula-destaque' : '';
+            const estiloValor = (st !== 'compareceu') ? 'color: #94a3b8; font-weight: normal;' : '';
 
             tr.innerHTML = `
                 <td><strong>${item.autor_nome || 'Operador'}</strong></td>
@@ -261,12 +257,57 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <td class="col-centro">${item.evento || 'SEM-EVENTO'}</td>
                 <td class="col-centro"><strong>${item.os || 'SEM-OS'}</strong></td>
                 <td class="col-centro">${item.revisao ? item.revisao + 'ª Revisão' : '-'}</td>
-                <td class="col-centro"><span class="tag-status-pill ${classeStatus}">${textoStatus}</span></td>
-                <td class="col-centro">${celulaObservacao}</td>
-                <td class="col-centro valor-celula-destaque">${valorFormatado}</td>
+                <td class="col-centro">${seletorStatusHTML}</td>
+                <td class="col-centro celula-valor-bonus ${classeValor}" style="${estiloValor}">${valorFormatado}</td>
             `;
 
             tabelaCorpo.appendChild(tr);
+        });
+
+        document.querySelectorAll('.select-status-tabela').forEach(sel => {
+            sel.addEventListener('change', async function() {
+                const idAgendamento = this.dataset.id;
+                const novoStatus = this.value;
+
+                this.classList.remove('status-pendente', 'status-compareceu', 'status-faltou');
+                if (novoStatus === 'compareceu') this.classList.add('status-compareceu');
+                else if (novoStatus === 'faltou') this.classList.add('status-faltou');
+                else this.classList.add('status-pendente');
+
+                const linhaTr = this.closest('tr');
+                const celulaValor = linhaTr?.querySelector('.celula-valor-bonus');
+                if (celulaValor) {
+                    if (novoStatus === 'compareceu') {
+                        celulaValor.classList.add('valor-celula-destaque');
+                        celulaValor.style.color = '';
+                        celulaValor.style.fontWeight = '';
+                    } else {
+                        celulaValor.classList.remove('valor-celula-destaque');
+                        celulaValor.style.color = '#94a3b8';
+                        celulaValor.style.fontWeight = 'normal';
+                    }
+                }
+
+                const agendamentoAlvo = todosAgendamentosMes.find(a => a.id == idAgendamento);
+                if (agendamentoAlvo) {
+                    agendamentoAlvo.status = novoStatus;
+                }
+
+                atualizarCardsResumo(todosAgendamentosMes);
+
+                try {
+                    const { error } = await supabaseClient
+                        .from('agendamentos')
+                        .update({ status: novoStatus })
+                        .eq('id', idAgendamento);
+
+                    if (error) {
+                        alert('Erro ao salvar alteração: ' + error.message);
+                    }
+                } catch (err) {
+                    console.error('Erro de conexão ao atualizar status:', err);
+                }
+            });
         });
     }
 
