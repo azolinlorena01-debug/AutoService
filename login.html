@@ -7,7 +7,6 @@
 
     <link rel="icon" href="imagens/icone-sem-fundo.png" type="image/favicon">
 
-    <!-- SDK oficial do Supabase para gerenciar login e cadastro -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -19,14 +18,12 @@
             <p id="subtitulo-login">Acesse sua conta para continuar</p>
         </div>
 
-        <!-- Abas para alternar entre "Entrar" e "Criar Conta" -->
         <div class="abas-login">
             <button type="button" id="aba-entrar" class="aba-item ativa">Entrar</button>
             <button type="button" id="aba-cadastrar" class="aba-item">Criar Conta</button>
         </div>
 
         <form id="formulario-autenticacao">
-            <!-- Campo de Nome Completo (exibido apenas no cadastro) -->
             <div class="campo-login oculto" id="grupo-nome">
                 <label for="campo-nome">Nome Completo</label>
                 <input type="text" id="campo-nome" placeholder="Digite seu nome">
@@ -42,13 +39,11 @@
                 <input type="password" id="campo-senha" placeholder="••••••••" required minlength="6">
             </div>
 
-            <!-- Campo de Confirmação de Senha (exibido apenas no cadastro) -->
             <div class="campo-login oculto" id="grupo-senha-confirma">
                 <label for="campo-senha-confirma">Confirmar Senha</label>
                 <input type="password" id="campo-senha-confirma" placeholder="••••••••" minlength="6">
             </div>
 
-            <!-- Campo de Seleção de Equipe (Agora tem apenas a Toyota) -->
             <div class="campo-login oculto" id="grupo-equipe">
                 <label for="campo-equipe">Equipe de Trabalho</label>
                 <select id="campo-equipe">
@@ -62,12 +57,10 @@
                 </button>
             </div>
 
-            <!-- Mensagem dinâmica de sucesso ou erro (ex: senha incorreta) -->
             <div id="mensagem-status" class="mensagem-status"></div>
         </form>
     </div>
 
-    <!-- Script de autenticação e criação de usuário -->
     <script src="login.js"></script>
 </body>
 </html>

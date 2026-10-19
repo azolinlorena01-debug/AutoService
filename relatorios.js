@@ -1,9 +1,4 @@
-/* ==========================================================================
-   CADERNO DE ESTUDOS - JAVASCRIPT (relatorios.js)
-   ========================================================================== */
-
 document.addEventListener('DOMContentLoaded', async function() {
-    // 1. CONEXÃO COM O BACKEND
     const SUPABASE_URL = 'https://potvtrepcoswvzmkewic.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -15,7 +10,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     const META_PADRAO = 900;
     const META_GLOBAL = 6000;
 
-    // 2. ELEMENTOS HTML
     const secaoFiltrosAdmin = document.getElementById('secao-filtros-admin');
     const filtroMesAdmin = document.getElementById('filtro-mes-admin');
     const filtroEquipeAdmin = document.getElementById('filtro-equipe-admin');
@@ -35,13 +29,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     const textoRestanteMeta = document.getElementById('texto-restante-meta');
     const barraProgressoMeta = document.getElementById('barra-progresso-meta');
 
-    // Botões de navegação
     const btnAbaVisaoGeral = document.getElementById('btn-aba-visao-geral');
     const btnAbaCategorias = document.getElementById('btn-aba-categorias');
     const btnAbaRanking = document.getElementById('btn-aba-ranking');
     const btnAbaEquipe = document.getElementById('btn-aba-equipe');
 
-    // Containers de Gráficos e Ranking
     const gradeGraficos = document.getElementById('grade-graficos');
     const cardGraficoBonusMensal = document.getElementById('card-grafico-bonus-mensal');
     const cardGraficoEquipeAdmin = document.getElementById('card-grafico-equipe-admin');
@@ -72,7 +64,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         btnVoltarAdmin.style.setProperty('display', 'none', 'important');
     }
 
-    // 3. SEGURANÇA E AUTH GUARD
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session || !session.user) {
         window.location.href = 'login.html';
@@ -104,7 +95,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         isAdmin = true;
     }
 
-    // 4. CONFIGURAÇÃO VISUAL INICIAL POR PAPEL
     if (isAdmin) {
         if (linkMenuImportar) linkMenuImportar.classList.remove('oculto');
         if (secaoFiltrosAdmin) secaoFiltrosAdmin.classList.remove('oculto');
@@ -124,7 +114,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (btnAbaVisaoGeral) btnAbaVisaoGeral.textContent = 'Efetividade & Bônus';
     }
 
-    // 5. CABEÇALHO DO USUÁRIO
     const areaAuth = document.getElementById('area-autenticacao');
     if (areaAuth && usuarioAtual) {
         let nomeExibicao = 'Usuário';
@@ -168,9 +157,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     let todosAgendamentosHistorico = [];
     let agendamentosMesAtual = [];
 
-    // =========================================================================
-    // NAVEGAÇÃO ENTRE OS GRÁFICOS
-    // =========================================================================
     let abaGraficoAtual = 'visao-geral';
 
     function aplicarVisibilidadeAbas() {
@@ -184,12 +170,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (secaoRankingOperadores) secaoRankingOperadores.classList.add('oculto');
         if (secaoVolumeEquipeConsultor) secaoVolumeEquipeConsultor.classList.add('oculto');
 
-        // Se for a aba de ranking, oculta a tabela de desempenho da equipe para não duplicar visualmente
         if (abaGraficoAtual === 'ranking') {
             if (secaoAdminRanking) secaoAdminRanking.classList.add('oculto');
             if (secaoRankingOperadores) secaoRankingOperadores.classList.remove('oculto');
         } else {
-            // Nas abas "Efetividade" e "Detalhes", a tabela de desempenho volta a aparecer para administradores
             if (isAdmin && secaoAdminRanking) {
                 secaoAdminRanking.classList.remove('oculto');
             }
@@ -365,7 +349,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 textoRestanteMeta.className = restanteMetaAdmin === 0 ? 'meta-badge-sucesso' : 'meta-badge-restante';
             }
 
-            // CONTROLE DO BOTÃO VOLTAR E DA TABELA DE DESEMPENHO
             if (equipeFiltro === 'todas') {
                 if (btnVoltarAdmin) {
                     btnVoltarAdmin.classList.add('oculto');
@@ -437,7 +420,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             renderizarGraficoRevisoesPorTipo(listaCategorias);
 
         } else if (abaGraficoAtual === 'ranking') {
-            // Ranking contempla TODAS as equipes sem filtros de equipe aplicados
             renderizarRankingOperadores(agendamentosMesAtual);
 
         } else if (abaGraficoAtual === 'equipe') {
@@ -447,9 +429,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    // =========================================================================
-    // RANKING GERAL DE TODOS OS OPERADORES
-    // =========================================================================
     function renderizarRankingOperadores(agendamentos) {
         if (!containerRankingLista) return;
         containerRankingLista.innerHTML = '';
@@ -746,7 +725,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    // 10. TABELAS ADMINISTRATIVAS
     function renderizarTabelaEquipes(agendamentos) {
         tituloTabelaAdmin.textContent = 'Desempenho por Equipe';
         subtituloTabelaAdmin.textContent = 'Acompanhe por equipe ou filtre individualmente';
@@ -925,7 +903,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    // 11. EVENT LISTENERS
     if (filtroMesAdmin) filtroMesAdmin.addEventListener('change', carregarDados);
     if (filtroEquipeAdmin) filtroEquipeAdmin.addEventListener('change', aplicarVisaoRelatorio);
     if (filtroMesConsultor) filtroMesConsultor.addEventListener('change', carregarDados);
@@ -940,7 +917,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    // 12. PARÂMETROS DE URL E PDF
     const urlParams = new URLSearchParams(window.location.search);
     const parametroMes = urlParams.get('mes');
     const parametroEquipe = urlParams.get('equipe');

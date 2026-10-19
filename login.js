@@ -1,15 +1,4 @@
-/* ==========================================================================
-   CADERNO DE ESTUDOS - JAVASCRIPT
-   Objetivo do arquivo:
-   1. Gerenciar o fluxo de Login.
-   2. Gerenciar o fluxo de Cadastro gravando metadados no Auth.
-   3. Exigir Nome e Sobrenome obrigatórios no cadastro.
-   4. Criar ou sincronizar o registro na tabela pública 'perfis'.
-   5. Redirecionar usuários logados direto para a aplicação.
-   ========================================================================== */
-
 document.addEventListener('DOMContentLoaded', async function() {
-    // 1. INICIALIZAÇÃO DO CLIENTE SUPABASE
     const SUPABASE_URL = 'https://potvtrepcoswvzmkewic.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -20,7 +9,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         return;
     }
 
-    // 2. CAPTURA DOS ELEMENTOS DA TELA
     const abaEntrar = document.getElementById('aba-entrar');
     const abaCadastrar = document.getElementById('aba-cadastrar');
     const grupoNome = document.getElementById('grupo-nome');
@@ -47,7 +35,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    // 3. ALTERNÂNCIA DE ABAS (ENTRAR VS CRIAR CONTA)
     abaEntrar.addEventListener('click', () => {
         modoAtual = 'entrar';
         abaEntrar.classList.add('ativa');
@@ -78,7 +65,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         mensagemStatus.textContent = '';
     });
 
-    // 4. SUBMISSÃO DO FORMULÁRIO (LOGIN OU CADASTRO)
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
@@ -108,7 +94,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const equipeSelecionada = campoEquipe.value;
                 const senhaConfirma = campoSenhaConfirma.value;
 
-                // Validação de Nome e Sobrenome obrigatórios
                 const partesNome = nomeCompleto.split(/\s+/).filter(p => p.length >= 2);
                 if (partesNome.length < 2) {
                     exibirMensagem('Por favor, informe seu nome e sobrenome completos.');
@@ -144,7 +129,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                 if (error) throw error;
 
-                // Salva na tabela perfis apenas os campos existentes: id, nome, equipe e role
                 if (data.user) {
                     await supabaseClient.from('perfis').upsert({
                         id: data.user.id,

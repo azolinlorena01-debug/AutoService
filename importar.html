@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Bônus - Importar e Exportar</title>
     <link rel="icon" type="image/jpeg" href="imagens/icone.jpeg">
-    <!-- Bibliotecas: Supabase e Leitor de Excel/XLSX (SheetJS) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -150,7 +149,6 @@
             margin-bottom: 4px;
         }
 
-        /* HISTÓRICO DE IMPORTAÇÕES */
         .historico-secao {
             max-width: 960px;
             margin: 0 auto 50px auto;
@@ -230,7 +228,6 @@
             background: #fee2e2;
         }
 
-        /* MODAL FLUTUANTE */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -312,7 +309,6 @@
 
         <main>
             <div class="painel-duplo">
-                <!-- Caixa 1: Importar Planilha do Dealer -->
                 <div class="import-wrapper">
                     <div>
                         <div class="import-header">
@@ -365,7 +361,6 @@
                     </div>
                 </div>
 
-                <!-- Caixa 2: Exportar Dados -->
                 <div class="import-wrapper">
                     <div>
                         <div class="import-header">
@@ -415,7 +410,6 @@
                 </div>
             </div>
 
-            <!-- HISTÓRICO DE IMPORTAÇÕES -->
             <section class="historico-secao">
                 <div class="historico-cabecalho">
                     <h2>Histórico de Importações</h2>
@@ -445,7 +439,6 @@
         </main>
     </div>
 
-    <!-- MODAL POPUP PARA AUDITORIA -->
     <div id="modalAuditoria" class="modal-overlay">
         <div class="modal-card">
             <div class="modal-topo">
@@ -658,7 +651,6 @@
                 }
             }
 
-            // ROTINA INTELIGENTE COM UPSERT (CHAVE = PLACA + REVISAO)
             btn.addEventListener('click', async function() {
                 try {
                     if (!input.files || input.files.length === 0) {
@@ -729,7 +721,6 @@
                             let ignoradosOutrosNomes = 0;
                             let ignoradosNaoRevisao = 0;
 
-                            // OBJETO PARA CONTABILIZAR DETALHAMENTO POR CONSULTORA
                             const resumoPorConsultor = {};
 
                             for (let i = 1; i < linhasMatriz.length; i++) {
@@ -785,7 +776,6 @@
                                     totalPendente++;
                                 }
 
-                                // Contabiliza nos totais da consultora
                                 if (!resumoPorConsultor[consultorAlvo.nome]) {
                                     resumoPorConsultor[consultorAlvo.nome] = { total: 0, compareceu: 0, noshow: 0, pendente: 0 };
                                 }
@@ -842,7 +832,6 @@
                                 }
                             }
 
-                            // EXIBIÇÃO NO LOG DA TELA (STATUS-BOX)
                             log(`-----------------------------------`);
                             log(`Novos agendamentos inseridos: ${totalNovos}`);
                             log(`Agendamentos reagendados: ${totalReagendados}`);
@@ -861,14 +850,12 @@
                             log(`-----------------------------------`);
                             log(`Salvando no banco de dados...`);
 
-                            // 1. Salva os novos agendamentos
                             for (let k = 0; k < registrosParaInserir.length; k += 100) {
                                 const lote = registrosParaInserir.slice(k, k + 100);
                                 const { error: errInsert } = await supabaseClient.from('agendamentos').insert(lote);
                                 if (errInsert) throw errInsert;
                             }
 
-                            // 2. Atualiza os existentes
                             for (const reg of registrosParaAtualizar) {
                                 await supabaseClient
                                     .from('agendamentos')
@@ -884,7 +871,6 @@
                                     .eq('id', reg.id);
                             }
 
-                            // REGISTRO DE AUDITORIA COMPLETO PARA O MODAL "VER DETALHES"
                             let logAuditoria = `Resumo da Importação - ${file.name}\n`;
                             logAuditoria += `• Novos agendamentos: ${totalNovos}\n`;
                             logAuditoria += `• Clientes reagendados: ${totalReagendados}\n`;

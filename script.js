@@ -1,14 +1,8 @@
-/* ==========================================================================
-   CADERNO DE ESTUDOS - JAVASCRIPT (script.js - Agendamentos com Paginação)
-   ========================================================================== */
-
 document.addEventListener('DOMContentLoaded', async function() {
-    // 1. CONEXÃO COM O SUPABASE
     const SUPABASE_URL = 'https://potvtrepcoswvzmkewic.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 2. ELEMENTOS DO DOM
     const linkMenuImportar = document.getElementById('link-menu-importar');
     const areaAuth = document.getElementById('area-autenticacao');
     const inputBusca = document.getElementById('input-busca');
@@ -28,7 +22,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     const totalPendentesTopo = document.getElementById('total-pendentes-topo');
     const totalNoShowTopo = document.getElementById('total-noshow-topo');
 
-    // 3. AUTH GUARD E PERMISSÕES
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session || !session.user) {
         window.location.href = 'login.html';
@@ -64,7 +57,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         linkMenuImportar.classList.remove('oculto');
     }
 
-    // 4. CABEÇALHO DO USUÁRIO
     if (areaAuth && usuarioAtual) {
         let nomeExibicao = 'Usuário';
         const metaNome = usuarioAtual.user_metadata?.nome_completo || nomeUsuarioPerfil;
@@ -90,7 +82,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    // 5. CONFIGURAÇÃO DE PAGINAÇÃO E MÊS
     const ITENS_POR_PAGINA = 20;
     let paginaAtual = 1;
     let listaFiltradaAtual = [];
@@ -114,7 +105,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         return dataString;
     }
 
-    // 6. CARREGAR DADOS DO SUPABASE
     async function carregarDados() {
         const mesSelecionado = filtroMes ? filtroMes.value : valorMesPadrao;
 
@@ -147,7 +137,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    // 7. ATUALIZAR CARDS SUPERIORES
     function atualizarCardsResumo(lista) {
         const total = lista.length;
         let compareceu = 0;
@@ -170,7 +159,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (totalNoShowTopo) totalNoShowTopo.textContent = noshow;
     }
 
-    // 8. FILTRAGEM DINÂMICA (BUSCA + STATUS + REAGENDADOS)
     function aplicarFiltrosTabela() {
         const termoBusca = (inputBusca?.value || '').trim().toLowerCase();
         const statusSelecionado = filtroStatus ? filtroStatus.value : 'todos';
@@ -209,7 +197,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         renderizarPaginaAtual();
     }
 
-    // 9. CONTROLE DA PAGINAÇÃO
     function renderizarPaginaAtual() {
         const totalItens = listaFiltradaAtual.length;
         const totalPaginas = Math.max(1, Math.ceil(totalItens / ITENS_POR_PAGINA));
@@ -236,7 +223,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         renderizarLinhas(itensDaPagina);
     }
 
-    // 10. RENDERIZAR LINHAS COM A COLUNA OBSERVAÇÃO
     function renderizarLinhas(lista) {
         tabelaCorpo.innerHTML = '';
 
@@ -262,7 +248,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             const valorFormatado = (parseFloat(item.valor_unitario) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-            // Tag limpa de observação: sem emoji
             let celulaObservacao = '<span style="color: #94a3b8;">-</span>';
             if (item.observacao && item.observacao.trim().toLowerCase().includes('reagendado')) {
                 celulaObservacao = '<span class="tag-reagendado">Reagendado</span>';
@@ -285,7 +270,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    // 11. EVENT LISTENERS
     if (inputBusca) {
         inputBusca.addEventListener('input', () => {
             paginaAtual = 1;

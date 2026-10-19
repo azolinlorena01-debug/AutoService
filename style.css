@@ -1,27 +1,17 @@
 @charset "UTF-8";
 
-/* ==========================================================================
-   CADERNO DE ESTUDOS - CSS (style.css)
-   Conceito: As variáveis (:root) funcionam como "constantes" no CSS.
-   Se precisarmos mudar a cor padrão do sistema amanhã, mudamos apenas aqui!
-   ========================================================================== */
-
 :root {
-    /* Cores de fundo e estrutura */
     --fundo-pagina: #f8fafc;
     --fundo-cartao: #ffffff;
     --cor-borda: #e2e8f0;
     --cor-borda-input: #cbd5e1;
 
-    /* Tipografia e texto */
     --texto-principal: #0f172a;
     --texto-secundario: #64748b;
 
-    /* Cores de ação (Identidade Toyota / AutoService) */
     --cor-destaque: #2563eb;
     --cor-destaque-hover: #1d4ed8;
 
-    /* Cores de status e feedback visual */
     --estado-sucesso: #15803d;
     --estado-pendente: #b45309;
     --estado-insucesso: #b91c1c;
@@ -31,8 +21,6 @@
     --fundo-etiqueta-insucesso: #fee2e2;
 }
 
-/* Reset básico universal:
-   O box-sizing: border-box faz com que paddings e bordas não aumentem a largura total do elemento */
 * {
     margin: 0;
     padding: 0;
@@ -46,16 +34,12 @@ body {
     padding: 24px 32px;
 }
 
-/* Container responsivo centralizado com largura máxima */
 .container {
     max-width: 1200px;
     margin: 0 auto;
     width: 100%;
 }
 
-/* ==========================================================================
-   CABEÇALHO PRINCIPAL E NAVEGAÇÃO
-   ========================================================================== */
 .cabecalho-principal {
     display: flex;
     justify-content: space-between;
@@ -122,7 +106,6 @@ body {
     color: #ffffff;
 }
 
-/* Área de identificação do usuário logado e botão de sair */
 .auth-area {
     display: flex;
     align-items: center;
@@ -190,9 +173,6 @@ body {
     color: #ffffff;
 }
 
-/* ==========================================================================
-   CARDS DE INDICADORES / MÉTRICAS
-   ========================================================================== */
 .barra-metricas-topo {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -268,9 +248,6 @@ body {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
-/* ==========================================================================
-   MONITORIA & METAS DA EQUIPE (CONSULTOR)
-   ========================================================================== */
 .card-monitoria-conteudo {
     display: flex;
     align-items: center;
@@ -370,9 +347,6 @@ body {
     transition: width 0.4s ease;
 }
 
-/* ==========================================================================
-   PAINEL DE VISÃO ADMINISTRADOR (FILTROS LARGOS & RESUMO OPERACIONAL)
-   ========================================================================== */
 .painel-filtros-admin {
     background: #ffffff;
     border: 1px solid var(--cor-borda);
@@ -455,9 +429,6 @@ body {
     margin: 4px 0;
 }
 
-/* ==========================================================================
-   TABELA DE AGENDAMENTOS (INDEX) & PAGINAÇÃO
-   ========================================================================== */
 .card-tabela-agendamentos {
     background-color: var(--fundo-cartao);
     border: 1px solid var(--cor-borda);
@@ -557,7 +528,6 @@ tr:last-child td {
     border-bottom: none;
 }
 
-/* Garante que o status nunca quebre linha */
 table th:nth-child(8),
 table td:nth-child(8) {
     white-space: nowrap !important;
@@ -619,7 +589,6 @@ table td:nth-child(8) {
     padding: 24px;
 }
 
-/* Barra de Paginação */
 .paginacao-area {
     display: flex;
     justify-content: space-between;
@@ -671,9 +640,6 @@ table td:nth-child(8) {
     padding: 0 8px;
 }
 
-/* ==========================================================================
-   GRÁFICOS & TABELA DE RELATÓRIO DO ADMIN
-   ========================================================================== */
 .grade-graficos {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -688,7 +654,7 @@ table td:nth-child(8) {
     border-radius: 10px;
     padding: 24px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    min-width: 0; /* IMPEDE que o card empurre as bordas da tela */
+    min-width: 0;
     overflow: hidden;
 }
 
@@ -787,9 +753,6 @@ table td:nth-child(8) {
     color: #1e293b;
 }
 
-/* ==========================================================================
-   TELA DE AUTENTICAÇÃO (LOGIN)
-   ========================================================================== */
 .corpo-login {
     display: flex;
     justify-content: center;
@@ -934,9 +897,6 @@ table td:nth-child(8) {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* ==========================================================================
-   CLASSES UTILITÁRIAS & IMPRESSÃO EXECUTIVA EM PDF
-   ========================================================================== */
 .oculto {
     display: none !important;
 }
@@ -974,9 +934,6 @@ table td:nth-child(8) {
     }
 }
 
-/* ==========================================================================
-   LIXEIRA E STATUS INTERATIVO NA TABELA
-   ========================================================================== */
 .select-status-tabela {
     padding: 4px 8px;
     border-radius: 12px;
@@ -1010,9 +967,6 @@ table td:nth-child(8) {
     transform: scale(1.3);
 }
 
-/* ==========================================================================
-   FORMULÁRIO DE NOVO AGENDAMENTO (VISÃO DO OPERADOR)
-   ========================================================================== */
 .card-formulario-agendamento {
     background: #ffffff;
     border-radius: 12px;
@@ -1118,7 +1072,6 @@ table td:nth-child(8) {
     border-color: #2563eb;
 }
 
-/* Paginação oficial da tabela */
 .paginacao-original {
     display: flex;
     justify-content: space-between;

@@ -4,16 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Bônus - Relatórios & Gráficos</title>
-    <!-- Favicon -->
     <link rel="icon" type="image/jpeg" href="imagens/icone-sem-fundo.png">
-    <!-- Bibliotecas essenciais: Supabase e Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
         .oculto { display: none !important; }
 
-        /* Estilização e blindagem dos inputs superiores dos cards do consultor */
         .card .input-mes-card {
             width: 100%;
             height: 38px;
@@ -83,7 +80,6 @@
             white-space: nowrap;
         }
 
-        /* Barra de metas */
         .card-meta-equipe {
             background: #ffffff;
             border: 1px solid #e2e8f0;
@@ -137,7 +133,6 @@
             transition: width 0.4s ease;
         }
 
-        /* Botões de navegação de gráficos limpos */
         .barra-filtros-graficos {
             display: flex;
             gap: 10px;
@@ -168,7 +163,6 @@
             box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
         }
 
-        /* Grade responsiva dos gráficos */
         .grade-graficos-lado-a-lado {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -181,7 +175,6 @@
             grid-template-columns: 1fr !important;
         }
 
-        /* Agrupamento da Distribuição por Revisão */
         .faixas-revisao-container {
             display: inline-flex;
             align-items: center;
@@ -226,7 +219,6 @@
             user-select: none;
         }
 
-        /* Centraliza a coluna de distribuição por revisão e garante respiro das bordas */
         #tabela-cabecalho-admin th:nth-child(6),
         #tabela-corpo-admin td:nth-child(6) {
             text-align: center !important;
@@ -235,7 +227,6 @@
             min-width: 250px;
         }
 
-        /* Espaçamento extra para a última coluna */
         #tabela-cabecalho-admin th:last-child,
         #tabela-corpo-admin td:last-child {
             padding-right: 28px !important;
@@ -247,7 +238,6 @@
             table-layout: auto;
         }
 
-        /* Botão estilizado de voltar */
         #btn-voltar-admin {
             background: #ffffff !important;
             color: #1e293b !important;
@@ -268,9 +258,6 @@
             color: #0f172a !important;
         }
 
-        /* ==========================================================================
-           ESTILOS DO RANKING DOS OPERADORES
-           ========================================================================== */
         .ranking-card-wrapper {
             background: #ffffff;
             border: 1px solid #e2e8f0;
@@ -379,7 +366,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- CABEÇALHO PRINCIPAL -->
         <header class="cabecalho-principal">
             <div class="logo-area">
                 <h1>Painel de Bônus</h1>
@@ -396,7 +382,6 @@
         </header>
 
         <main>
-            <!-- 1. FILTROS ADMINISTRATIVOS -->
             <section id="secao-filtros-admin" class="painel-filtros-admin oculto">
                 <div class="info-titulos">
                     <h2>Visão Administrador</h2>
@@ -416,7 +401,6 @@
                 </div>
             </section>
 
-            <!-- 2. RESUMO DO CONSULTOR -->
             <section id="secao-metricas-consultor" class="barra-metricas-topo oculto">
                 <div class="card">
                     <span class="card-titulo">MÊS DE REFERÊNCIA</span>
@@ -444,7 +428,6 @@
                 </div>
             </section>
 
-            <!-- 3. BARRA DE META -->
             <section id="secao-meta-equipe" class="card-meta-equipe">
                 <div class="meta-equipe-cabecalho">
                     <div>
@@ -458,7 +441,6 @@
                 </div>
             </section>
 
-            <!-- 4. BOTÕES DE NAVEGAÇÃO ENTRE OS GRÁFICOS -->
             <div class="barra-filtros-graficos">
                 <button type="button" id="btn-aba-visao-geral" class="btn-filtro-grafico ativo">
                     Efetividade
@@ -474,7 +456,6 @@
                 </button>
             </div>
 
-            <!-- 5. GRADE DE GRÁFICOS -->
             <section id="grade-graficos" class="grade-graficos-lado-a-lado">
                 <div class="card-grafico" id="card-grafico-volume-wrapper">
                     <div class="grafico-cabecalho">
@@ -507,7 +488,6 @@
                 </div>
             </section>
 
-            <!-- 6. GRÁFICO REVISÕES POR CATEGORIA -->
             <section id="secao-grafico-revisoes-tipo" class="card-grafico oculto" style="margin-bottom: 24px;">
                 <div class="grafico-cabecalho">
                     <h3 id="titulo-grafico-revisoes-tipo">Distribuição por Categoria de Revisão</h3>
@@ -518,7 +498,6 @@
                 </div>
             </section>
 
-            <!-- 7. SEÇÃO DE RANKING DOS OPERADORES -->
             <section id="secao-ranking-operadores" class="ranking-card-wrapper oculto">
                 <div class="grafico-cabecalho">
                     <h3 style="font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 4px;">🏆 Ranking Geral dos Operadores</h3>
@@ -527,7 +506,6 @@
                 <div id="container-ranking-lista" class="ranking-lista"></div>
             </section>
 
-            <!-- 8. GRÁFICO VOLUME DA EQUIPE -->
             <section id="secao-volume-equipe-consultor" class="card-grafico oculto" style="margin-bottom: 24px;">
                 <div class="grafico-cabecalho">
                     <h3 id="titulo-grafico-equipe-consultor">Volume da Equipe: Toyota</h3>
@@ -538,7 +516,6 @@
                 </div>
             </section>
 
-            <!-- 9. TABELAS ADMINISTRATIVAS -->
             <section id="secao-admin-ranking" class="card-tabela-agendamentos oculto" style="margin-top: 24px;">
                 <div class="tabela-cabecalho-acoes">
                     <div>
