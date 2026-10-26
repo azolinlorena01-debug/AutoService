@@ -1,8 +1,14 @@
+/* ==========================================================================
+   CADERNO DE ESTUDOS - JAVASCRIPT (script.js - Sem Coluna Evento)
+   ========================================================================== */
+
 document.addEventListener('DOMContentLoaded', async function() {
+    // 1. CONEXÃO COM O SUPABASE
     const SUPABASE_URL = 'https://potvtrepcoswvzmkewic.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // 2. ELEMENTOS DO DOM
     const linkMenuImportar = document.getElementById('link-menu-importar');
     const areaAuth = document.getElementById('area-autenticacao');
     const inputBusca = document.getElementById('input-busca');
@@ -22,6 +28,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const totalPendentesTopo = document.getElementById('total-pendentes-topo');
     const totalNoShowTopo = document.getElementById('total-noshow-topo');
 
+    // 3. AUTH GUARD E PERMISSÕES
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session || !session.user) {
         window.location.href = 'login.html';
@@ -57,6 +64,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         linkMenuImportar.classList.remove('oculto');
     }
 
+    // 4. CABEÇALHO DO USUÁRIO
     if (areaAuth && usuarioAtual) {
         let nomeExibicao = 'Usuário';
         const metaNome = usuarioAtual.user_metadata?.nome_completo || nomeUsuarioPerfil;
@@ -82,6 +90,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
+    // 5. CONFIGURAÇÃO DE PAGINAÇÃO E MÊS
     const ITENS_POR_PAGINA = 20;
     let paginaAtual = 1;
     let listaFiltradaAtual = [];
@@ -105,6 +114,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         return dataString;
     }
 
+    // 6. CARREGAR DADOS DO SUPABASE
     async function carregarDados() {
         const mesSelecionado = filtroMes ? filtroMes.value : valorMesPadrao;
 
@@ -137,6 +147,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
+    // 7. ATUALIZAR CARDS SUPERIORES
     function atualizarCardsResumo(lista) {
         const total = lista.length;
         let compareceu = 0;
@@ -159,27 +170,34 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (totalNoShowTopo) totalNoShowTopo.textContent = noshow;
     }
 
+    // 8. FILTRAGEM DINÂMICA
     function aplicarFiltrosTabela() {
         const termoBusca = (inputBusca?.value || '').trim().toLowerCase();
         const statusSelecionado = filtroStatus ? filtroStatus.value : 'todos';
 
         listaFiltradaAtual = todosAgendamentosMes.filter(item => {
             const placa = (item.placa || '').toLowerCase();
-            const evento = (item.evento || '').toLowerCase();
             const os = (item.os || '').toLowerCase();
             const nome = (item.autor_nome || '').toLowerCase();
+            const revStr = String(item.revisao || '').toLowerCase();
+            const obsStr = String(item.observacao || '').toLowerCase();
 
             const bateBusca = !termoBusca || 
                 placa.includes(termoBusca) || 
-                evento.includes(termoBusca) || 
                 os.includes(termoBusca) || 
-                nome.includes(termoBusca);
+                nome.includes(termoBusca) ||
+                revStr.includes(termoBusca) ||
+                obsStr.includes(termoBusca);
 
             let bateStatus = false;
             const statusItem = item.status || 'pendente';
 
             if (statusSelecionado === 'todos') {
                 bateStatus = true;
+            } else if (statusSelecionado === 'reagendado') {
+                bateStatus = obsStr.includes('reagendado');
+            } else if (statusSelecionado === 'facilitada') {
+                bateStatus = revStr.includes('facilitada');
             } else {
                 bateStatus = (statusItem === statusSelecionado);
             }
@@ -194,6 +212,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         renderizarPaginaAtual();
     }
 
+    // 9. CONTROLE DA PAGINAÇÃO
     function renderizarPaginaAtual() {
         const totalItens = listaFiltradaAtual.length;
         const totalPaginas = Math.max(1, Math.ceil(totalItens / ITENS_POR_PAGINA));
@@ -220,6 +239,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         renderizarLinhas(itensDaPagina);
     }
 
+    // 10. RENDERIZAR LINHAS
     function renderizarLinhas(lista) {
         tabelaCorpo.innerHTML = '';
 
@@ -236,7 +256,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (st === 'compareceu') classeCor = 'status-compareceu';
             else if (st === 'faltou') classeCor = 'status-faltou';
 
-            const valorFormatado = (parseFloat(item.valor_unitario) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            const valorNumerico = parseFloat(item.valor_unitario) || 0;
+            const valorFormatado = valorNumerico.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
             const seletorStatusHTML = `
                 <select class="select-status-tabela ${classeCor}" data-id="${item.id}">
@@ -246,18 +267,32 @@ document.addEventListener('DOMContentLoaded', async function() {
                 </select>
             `;
 
-            const classeValor = (st === 'compareceu') ? 'valor-celula-destaque' : '';
-            const estiloValor = (st !== 'compareceu') ? 'color: #94a3b8; font-weight: normal;' : '';
+            let textoRevisao = '-';
+            const revStr = String(item.revisao || '').toUpperCase();
+            if (revStr.includes('FACILITADA')) {
+                textoRevisao = 'Revisão Facilitada';
+            } else if (item.revisao) {
+                textoRevisao = `${item.revisao}ª Revisão`;
+            }
 
+            let celulaObservacao = '<span style="color: #94a3b8;">-</span>';
+            if (item.observacao && String(item.observacao).toLowerCase().includes('reagendado')) {
+                celulaObservacao = '<span class="tag-reagendado">Reagendado</span>';
+            }
+
+            const classeValor = (st === 'compareceu' && valorNumerico > 0) ? 'valor-celula-destaque' : '';
+            const estiloValor = (st !== 'compareceu' || valorNumerico === 0) ? 'color: #94a3b8; font-weight: normal;' : '';
+
+            // Células da linha (sem a coluna EVENTO)
             tr.innerHTML = `
                 <td><strong>${item.autor_nome || 'Operador'}</strong></td>
                 <td class="col-centro">${formatarDataBR(item.data_contato)}</td>
                 <td class="col-centro">${formatarDataBR(item.data_revisao)}</td>
                 <td class="col-centro"><span class="chip-placa">${item.placa || 'SEM-PLACA'}</span></td>
-                <td class="col-centro">${item.evento || 'SEM-EVENTO'}</td>
                 <td class="col-centro"><strong>${item.os || 'SEM-OS'}</strong></td>
-                <td class="col-centro">${item.revisao ? item.revisao + 'ª Revisão' : '-'}</td>
+                <td class="col-centro">${textoRevisao}</td>
                 <td class="col-centro">${seletorStatusHTML}</td>
+                <td class="col-centro">${celulaObservacao}</td>
                 <td class="col-centro celula-valor-bonus ${classeValor}" style="${estiloValor}">${valorFormatado}</td>
             `;
 
@@ -274,10 +309,17 @@ document.addEventListener('DOMContentLoaded', async function() {
                 else if (novoStatus === 'faltou') this.classList.add('status-faltou');
                 else this.classList.add('status-pendente');
 
+                const agendamentoAlvo = todosAgendamentosMes.find(a => a.id == idAgendamento);
+                if (agendamentoAlvo) {
+                    agendamentoAlvo.status = novoStatus;
+                }
+
                 const linhaTr = this.closest('tr');
                 const celulaValor = linhaTr?.querySelector('.celula-valor-bonus');
+                const valorNum = parseFloat(agendamentoAlvo?.valor_unitario) || 0;
+
                 if (celulaValor) {
-                    if (novoStatus === 'compareceu') {
+                    if (novoStatus === 'compareceu' && valorNum > 0) {
                         celulaValor.classList.add('valor-celula-destaque');
                         celulaValor.style.color = '';
                         celulaValor.style.fontWeight = '';
@@ -286,11 +328,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                         celulaValor.style.color = '#94a3b8';
                         celulaValor.style.fontWeight = 'normal';
                     }
-                }
-
-                const agendamentoAlvo = todosAgendamentosMes.find(a => a.id == idAgendamento);
-                if (agendamentoAlvo) {
-                    agendamentoAlvo.status = novoStatus;
                 }
 
                 atualizarCardsResumo(todosAgendamentosMes);
@@ -311,6 +348,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
+    // 11. EVENT LISTENERS
     if (inputBusca) {
         inputBusca.addEventListener('input', () => {
             paginaAtual = 1;

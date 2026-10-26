@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Bônus - Importar e Exportar</title>
-    <link rel="icon" type="image/jpeg" href="imagens/icone.jpeg">
+    <link rel="icon" type="image/jpeg" href="imagens/icone-sem-fundo.png">
+    <!-- Bibliotecas: Supabase e Leitor de Excel/XLSX (SheetJS) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -148,7 +149,6 @@
             display: block;
             margin-bottom: 4px;
         }
-
         .historico-secao {
             max-width: 960px;
             margin: 0 auto 50px auto;
@@ -213,7 +213,6 @@
             background: #eff6ff;
             border-color: #bfdbfe;
         }
-
         .btn-excluir-historico {
             background: none;
             border: none;
@@ -227,7 +226,6 @@
         .btn-excluir-historico:hover {
             background: #fee2e2;
         }
-
         .modal-overlay {
             display: none;
             position: fixed;
@@ -315,12 +313,10 @@
                             <h2>Importar Planilha do Dealer</h2>
                             <p>Envie novos agendamentos da planilha para o banco de dados.</p>
                         </div>
-
                         <div class="grupo-campo">
                             <label for="arquivoPlanilha">Arquivo do Mês (.xlsx ou .csv)</label>
                             <input type="file" id="arquivoPlanilha" class="custom-file-input" accept=".xlsx, .xls, .csv, .txt">
                         </div>
-
                         <div class="grupo-campo">
                             <label for="mesRef">Mês de Referência</label>
                             <select id="mesRef" class="custom-select">
@@ -338,11 +334,10 @@
                                 <option value="12">Dezembro (12/2026)</option>
                             </select>
                         </div>
-
                         <div class="grupo-campo">
                             <label for="consultorDestino">Atribuir agendamentos a:</label>
                             <select id="consultorDestino" class="custom-select">
-                                <option value="auto">Automático (Filtra Equipe Toyota)</option>
+                                <option value="auto">Automático</option>
                                 <option value="70b40aa8-8b9c-4219-acd1-3f16647558fa">Alany Benato</option>
                                 <option value="58267673-516d-4b01-9d27-c60a8a6c39b6">Allana Thaina</option>
                                 <option value="61218e37-acdb-4e75-bc86-8a71e183bf17">Ana Lucia</option>
@@ -367,7 +362,6 @@
                             <h2>Exportar Dados</h2>
                             <p>Guarde o seu relatório mensal ou baixe os dados da equipe.</p>
                         </div>
-
                         <div class="grupo-campo">
                             <label for="mesExport">Mês para Exportação</label>
                             <select id="mesExport" class="custom-select">
@@ -385,27 +379,20 @@
                                 <option value="12">Dezembro (12/2026)</option>
                             </select>
                         </div>
-
                         <div class="grupo-campo">
                             <label for="equipeExport">Filtrar por Equipe</label>
                             <select id="equipeExport" class="custom-select">
                                 <option value="Toyota" selected>Toyota</option>
                             </select>
                         </div>
-
                         <div class="box-info-export">
                             <strong>Formato de Exportação</strong>
                             Os relatórios em planilha contêm colunas formatadas em padrão Excel (ponto e vírgula com UTF-8). A versão em PDF abre diretamente a visualização oficial para impressão.
                         </div>
                     </div>
-
                     <div>
-                        <button type="button" id="btnExportarCsv" class="btn-secundario-acao">
-                            Exportar Planilha (Excel/CSV)
-                        </button>
-                        <button type="button" id="btnIrParaPdf" class="btn-secundario-acao" style="margin-bottom: 0;">
-                            Ver e Gerar Relatório (PDF)
-                        </button>
+                        <button type="button" id="btnExportarCsv" class="btn-secundario-acao">Exportar Planilha (Excel/CSV)</button>
+                        <button type="button" id="btnIrParaPdf" class="btn-secundario-acao" style="margin-bottom: 0;">Ver e Gerar Relatório (PDF)</button>
                     </div>
                 </div>
             </div>
@@ -429,9 +416,7 @@
                             </tr>
                         </thead>
                         <tbody id="tabela-corpo-historico">
-                            <tr>
-                                <td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Carregando histórico...</td>
-                            </tr>
+                            <tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Carregando histórico...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -469,19 +454,13 @@
                 const { data: perfil } = await supabaseClient.from('perfis').select('role, nome').eq('id', USER_ID).maybeSingle();
                 if (perfil) {
                     if (perfil.role === 'admin') isAdmin = true;
-                    if (perfil.nome && perfil.nome.trim().length > 0) {
-                        nomeOperadorLogado = perfil.nome.trim();
-                    }
+                    if (perfil.nome && perfil.nome.trim().length > 0) nomeOperadorLogado = perfil.nome.trim();
                 }
-            } catch (e) {
-                console.warn(e);
-            }
+            } catch (e) {}
 
             if (session.user.email === 'usuariotestesite01@gmail.com' || session.user.email?.includes('admin')) {
                 isAdmin = true;
-                if (!nomeOperadorLogado) nomeOperadorLogado = 'Admin';
             }
-
             if (!isAdmin) {
                 alert('Acesso restrito!');
                 window.location.href = 'relatorios.html';
@@ -515,10 +494,11 @@
             }
 
             function calcularValorPorRevisao(revisao) {
+                if (String(revisao).toUpperCase().includes('FACILITADA')) return 0.00;
                 const r = parseInt(revisao, 10);
-                if (isNaN(r) || r <= 4) return 2.00; 
-                else if (r >= 5 && r <= 7) return 6.00; 
-                else return 10.00; 
+                if (isNaN(r) || r <= 4) return 2.00;
+                else if (r >= 5 && r <= 7) return 6.00;
+                else return 10.00;
             }
 
             const EQUIPE_TOYOTA = [
@@ -533,13 +513,13 @@
             function obterConsultoraPorAgendador(nomeAgendador) {
                 if (!nomeAgendador) return null;
                 const txt = String(nomeAgendador).normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
-                for (const consultora of EQUIPE_TOYOTA) {
-                    if (consultora.match(txt)) return { id: consultora.id, nome: consultora.nome };
+                for (const c of EQUIPE_TOYOTA) {
+                    if (c.match(txt)) return { id: c.id, nome: c.nome };
                 }
                 return null;
             }
 
-            function formatarDataSemHorario(valorData, anoPadrao) {
+            function formatarDataSemHorario(valorData) {
                 if (!valorData) return null;
                 if (valorData instanceof Date) {
                     const y = valorData.getFullYear();
@@ -566,7 +546,9 @@
             function extrairNumeroRevisaoTMO(tmoTexto) {
                 if (!tmoTexto) return null;
                 const txt = String(tmoTexto).normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
-                const ignorados = ['FACILITADA', 'FACILITADO', 'T-SERVICE', 'TSERVICE', 'BAL', 'GEO', 'LAVAGEM', 'PECA', 'FUNILARIA', 'PINTURA', 'ACESSORIO'];
+                if (txt.includes('FACILITAD')) return 'FACILITADA';
+
+                const ignorados = ['T-SERVICE', 'TSERVICE', 'BAL', 'GEO', 'LAVAGEM', 'PECA', 'FUNILARIA', 'PINTURA', 'ACESSORIO'];
                 for (const ign of ignorados) if (txt.includes(ign)) return null;
                 if (!txt.includes('REVIS') && !txt.includes('CSP')) return null;
 
@@ -651,6 +633,7 @@
                 }
             }
 
+            // SINCRONIZAÇÃO COMPLETA DO MÊS (SEM ERRO DE CHAVE E SEM DUPLICATAS)
             btn.addEventListener('click', async function() {
                 try {
                     if (!input.files || input.files.length === 0) {
@@ -671,17 +654,25 @@
                     const hojeDia = String(agora.getDate()).padStart(2, '0');
                     const dataHojeISO = `${hojeAno}-${hojeMes}-${hojeDia}`;
 
-                    log(`Lendo agendamentos já existentes no banco...`);
-                    const { data: agendamentosExistentesBanco, error: errFetch } = await supabaseClient
+                    log(`Lendo histórico atual no banco para conferência de reagendados...`);
+                    const periodoInicio = `2026-${mesPadrao}-01`;
+                    const periodoFim = `2026-${mesPadrao}-31`;
+
+                    const { data: agendamentosBanco, error: errFetch } = await supabaseClient
                         .from('agendamentos')
-                        .select('id, placa, revisao, data_revisao, status, os, user_id, observacao');
+                        .select('placa, revisao, data_revisao')
+                        .gte('data_revisao', periodoInicio)
+                        .lte('data_revisao', periodoFim);
 
                     if (errFetch) throw errFetch;
 
-                    const mapaExistentes = new Map();
-                    (agendamentosExistentesBanco || []).forEach(item => {
+                    // Guarda as datas antigas para saber quem mudou de dia (Reagendado)
+                    const mapaDatasOriginais = new Map();
+                    (agendamentosBanco || []).forEach(item => {
                         const chave = `${String(item.placa).toUpperCase().trim()}_${item.revisao}`;
-                        mapaExistentes.set(chave, item);
+                        if (!mapaDatasOriginais.has(chave)) {
+                            mapaDatasOriginais.set(chave, item.data_revisao);
+                        }
                     });
 
                     log(`Lendo arquivo: ${file.name}...`);
@@ -703,23 +694,19 @@
                             const cabecalho = (linhasMatriz[0] || []).map(c => String(c).toUpperCase().trim());
                             cabecalho.forEach((colNome, idx) => {
                                 if (colNome.includes('AGENDADOR')) colAgendador = idx;
-                                if (colNome.includes('TMO') || colNome.includes('SERVICO') || colNome.includes('SERVIÇO')) colTMO = idx;
+                                if (colNome === 'TMO') colTMO = idx;
+                                else if (colTMO === 12 && (colNome.includes('TMO') || colNome.includes('SERVICO') || colNome.includes('SERVIÇO'))) colTMO = idx;
                                 if (colNome.includes('PLACA')) colPlaca = idx;
                                 if (colNome.includes('CHASSI')) colChassi = idx;
                                 if (colNome === 'OS' || colNome.includes('ORDEM') || colNome.includes('O.S.')) colOS = idx;
                             });
 
-                            const registrosParaInserir = [];
-                            const registrosParaAtualizar = [];
-
-                            let totalNovos = 0;
+                            const registrosParaSalvar = [];
                             let totalReagendados = 0;
-                            let totalStatusAtualizados = 0;
+                            let totalFacilitadas = 0;
                             let totalCompareceu = 0;
                             let totalNoShow = 0;
                             let totalPendente = 0;
-                            let ignoradosOutrosNomes = 0;
-                            let ignoradosNaoRevisao = 0;
 
                             const resumoPorConsultor = {};
 
@@ -737,30 +724,26 @@
                                     consultorAlvo = obterConsultoraPorAgendador(nomeAgendadorPlanilha);
                                 }
 
-                                if (!consultorAlvo) {
-                                    ignoradosOutrosNomes++;
-                                    continue;
-                                }
+                                if (!consultorAlvo) continue;
 
                                 const textoTMO = row[colTMO] || '';
                                 const numRevisao = extrairNumeroRevisaoTMO(textoTMO);
-                                if (!numRevisao) {
-                                    ignoradosNaoRevisao++;
-                                    continue;
-                                }
+                                if (!numRevisao) continue;
 
-                                const dataRevisaoFormatada = formatarDataSemHorario(row[colDataRevisao], 2026) || `2026-${mesPadrao}-01`;
-                                const dataContatoFormatada = formatarDataSemHorario(row[colDataContato], 2026) || dataRevisaoFormatada;
+                                if (numRevisao === 'FACILITADA') totalFacilitadas++;
+
+                                const dataRevisaoFormatada = formatarDataSemHorario(row[colDataRevisao]) || `2026-${mesPadrao}-01`;
+                                const dataContatoFormatada = formatarDataSemHorario(row[colDataContato]) || dataRevisaoFormatada;
 
                                 let placaBruta = String(row[colPlaca] || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-                                if (!placaBruta || placaBruta.length < 3) {
+                                if (!placaBruta || placaBruta.length < 3 || placaBruta === 'NAN') {
                                     const chassi = String(row[colChassi] || '').toUpperCase().trim();
                                     placaBruta = chassi.length >= 6 ? chassi.slice(-6) : 'SEM-PLACA';
                                 }
 
                                 const valorOSLinha = String(row[colOS] || '').trim();
-                                const temOS = (valorOSLinha !== '' && valorOSLinha !== '-' && valorOSLinha !== '0' && valorOSLinha.toUpperCase() !== 'NAN');
-                                
+                                const temOS = (valorOSLinha !== '' && valorOSLinha !== '-' && valorOSLinha !== '0' && valorOSLinha.toUpperCase() !== 'NAN' && valorOSLinha.toUpperCase() !== 'NONE');
+
                                 let statusCalculado = 'pendente';
                                 let osSalva = 'SEM-OS';
 
@@ -776,115 +759,91 @@
                                     totalPendente++;
                                 }
 
+                                const chaveComposta = `${placaBruta}_${numRevisao}`;
+                                let obs = null;
+                                if (mapaDatasOriginais.has(chaveComposta)) {
+                                    const dataOriginal = mapaDatasOriginais.get(chaveComposta);
+                                    if (dataOriginal !== dataRevisaoFormatada) {
+                                        obs = 'Reagendado';
+                                        totalReagendados++;
+                                    }
+                                }
+
+                                const valorUnitario = calcularValorPorRevisao(numRevisao);
+
+                                registrosParaSalvar.push({
+                                    user_id: consultorAlvo.id,
+                                    data_contato: dataContatoFormatada,
+                                    data_revisao: dataRevisaoFormatada,
+                                    status: statusCalculado,
+                                    placa: placaBruta,
+                                    evento: 'SEM-EVENTO',
+                                    os: osSalva,
+                                    revisao: numRevisao,
+                                    valor_unitario: valorUnitario,
+                                    observacao: obs
+                                });
+
                                 if (!resumoPorConsultor[consultorAlvo.nome]) {
-                                    resumoPorConsultor[consultorAlvo.nome] = { total: 0, compareceu: 0, noshow: 0, pendente: 0 };
+                                    resumoPorConsultor[consultorAlvo.nome] = { total: 0, compareceu: 0, noshow: 0, pendente: 0, facilitada: 0 };
                                 }
                                 resumoPorConsultor[consultorAlvo.nome].total++;
                                 if (statusCalculado === 'compareceu') resumoPorConsultor[consultorAlvo.nome].compareceu++;
                                 else if (statusCalculado === 'faltou') resumoPorConsultor[consultorAlvo.nome].noshow++;
                                 else resumoPorConsultor[consultorAlvo.nome].pendente++;
-
-                                const valorUnitario = calcularValorPorRevisao(numRevisao);
-                                const chaveComposta = `${placaBruta}_${numRevisao}`;
-
-                                if (mapaExistentes.has(chaveComposta)) {
-                                    const existente = mapaExistentes.get(chaveComposta);
-                                    let houveMudanca = false;
-                                    let novaObs = existente.observacao || null;
-
-                                    if (existente.data_revisao !== dataRevisaoFormatada) {
-                                        novaObs = 'Reagendado';
-                                        totalReagendados++;
-                                        houveMudanca = true;
-                                    }
-
-                                    if (existente.status !== statusCalculado || existente.os !== osSalva) {
-                                        totalStatusAtualizados++;
-                                        houveMudanca = true;
-                                    }
-
-                                    if (houveMudanca) {
-                                        registrosParaAtualizar.push({
-                                            id: existente.id,
-                                            data_revisao: dataRevisaoFormatada,
-                                            data_contato: dataContatoFormatada,
-                                            status: statusCalculado,
-                                            os: osSalva,
-                                            observacao: novaObs,
-                                            user_id: consultorAlvo.id,
-                                            valor_unitario: valorUnitario
-                                        });
-                                    }
-                                } else {
-                                    totalNovos++;
-                                    registrosParaInserir.push({
-                                        user_id: consultorAlvo.id,
-                                        data_contato: dataContatoFormatada,
-                                        data_revisao: dataRevisaoFormatada,
-                                        status: statusCalculado,
-                                        placa: placaBruta,
-                                        evento: 'SEM-EVENTO',
-                                        os: osSalva,
-                                        revisao: numRevisao,
-                                        valor_unitario: valorUnitario,
-                                        observacao: null
-                                    });
-                                }
+                                if (numRevisao === 'FACILITADA') resumoPorConsultor[consultorAlvo.nome].facilitada++;
                             }
 
+                            const totalGeral = registrosParaSalvar.length;
+
                             log(`-----------------------------------`);
-                            log(`Novos agendamentos inseridos: ${totalNovos}`);
-                            log(`Agendamentos reagendados: ${totalReagendados}`);
-                            log(`Status atualizados (novas O.S. / No-Show): ${totalStatusAtualizados}`);
-                            log(`Nenhum agendamento duplicado.`);
+                            log(`Total de Agendamentos Válidos: ${totalGeral}`);
+                            log(`Comparecidos (com O.S.): ${totalCompareceu}`);
+                            log(`No-Show: ${totalNoShow}`);
+                            log(`Pendentes: ${totalPendente}`);
+                            log(`Revisões Facilitadas: ${totalFacilitadas}`);
+                            log(`Reagendados: ${totalReagendados}`);
                             log(`--- Detalhamento por Consultora ---`);
-                            
+
                             let blocoConsultorasTexto = '';
                             Object.keys(resumoPorConsultor).forEach(nome => {
                                 const c = resumoPorConsultor[nome];
-                                const linha = `• ${nome}: ${c.total} agendamentos (${c.compareceu} comp. | ${c.noshow} no-show | ${c.pendente} pend.)\n`;
+                                const linha = `• ${nome}: ${c.total} agendamentos (${c.compareceu} comp. | ${c.noshow} no-show | ${c.pendente} pend. | ${c.facilitada} facilitadas)\n`;
                                 log(linha.trim());
                                 blocoConsultorasTexto += linha;
                             });
 
                             log(`-----------------------------------`);
-                            log(`Salvando no banco de dados...`);
+                            log(`Atualizando banco de dados com segurança...`);
 
-                            for (let k = 0; k < registrosParaInserir.length; k += 100) {
-                                const lote = registrosParaInserir.slice(k, k + 100);
+                            // 1. Limpa os dados antigos deste mês no banco
+                            const { error: errDelete } = await supabaseClient
+                                .from('agendamentos')
+                                .delete()
+                                .gte('data_revisao', periodoInicio)
+                                .lte('data_revisao', periodoFim);
+
+                            if (errDelete) throw errDelete;
+
+                            // 2. Insere o mês completo atualizado em lotes
+                            for (let k = 0; k < registrosParaSalvar.length; k += 100) {
+                                const lote = registrosParaSalvar.slice(k, k + 100);
                                 const { error: errInsert } = await supabaseClient.from('agendamentos').insert(lote);
                                 if (errInsert) throw errInsert;
                             }
 
-                            for (const reg of registrosParaAtualizar) {
-                                await supabaseClient
-                                    .from('agendamentos')
-                                    .update({
-                                        data_revisao: reg.data_revisao,
-                                        data_contato: reg.data_contato,
-                                        status: reg.status,
-                                        os: reg.os,
-                                        observacao: reg.observacao,
-                                        user_id: reg.user_id,
-                                        valor_unitario: reg.valor_unitario
-                                    })
-                                    .eq('id', reg.id);
-                            }
-
+                            // 3. Grava o histórico
                             let logAuditoria = `Resumo da Importação - ${file.name}\n`;
-                            logAuditoria += `• Novos agendamentos: ${totalNovos}\n`;
-                            logAuditoria += `• Clientes reagendados: ${totalReagendados}\n`;
-                            logAuditoria += `• Status atualizados: ${totalStatusAtualizados}\n\n`;
-                            logAuditoria += `Totais Gerais no Mês:\n`;
+                            logAuditoria += `• Total de Agendamentos: ${totalGeral}\n`;
                             logAuditoria += `• Compareceram: ${totalCompareceu}\n`;
                             logAuditoria += `• No-Show: ${totalNoShow}\n`;
-                            logAuditoria += `• Pendentes: ${totalPendente}\n\n`;
+                            logAuditoria += `• Pendentes: ${totalPendente}\n`;
+                            logAuditoria += `• Revisões Facilitadas: ${totalFacilitadas}\n`;
+                            logAuditoria += `• Reagendados: ${totalReagendados}\n\n`;
                             logAuditoria += `Detalhamento por Consultora:\n`;
                             logAuditoria += blocoConsultorasTexto;
 
-                            const totalGeral = totalNovos + registrosParaAtualizar.length;
-
-                            await supabaseClient.from('historico_importacoes').insert([{
+                            const { error: errHist } = await supabaseClient.from('historico_importacoes').insert([{
                                 nome_arquivo: file.name,
                                 usuario_nome: nomeOperadorLogado,
                                 mes_referencia: mesPadrao,
@@ -895,11 +854,14 @@
                                 detalhes_log: logAuditoria
                             }]);
 
+                            if (errHist) throw errHist;
+
                             carregarHistorico();
-                            log(`SUCESSO! Base de agendamentos sincronizada.`);
+                            log(`SUCESSO! ${totalGeral} agendamentos gravados e histórico atualizado.`);
 
                         } catch (err) {
                             log(`Erro no processamento: ${err.message}`);
+                            console.error(err);
                         } finally {
                             btn.disabled = false;
                             btn.innerText = 'Fazer Upload dos Agendamentos';

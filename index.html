@@ -34,10 +34,21 @@
             color: #b91c1c;
             border-color: #fecaca;
         }
+        .tag-reagendado {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- CABEÇALHO PRINCIPAL -->
         <header class="cabecalho-principal">
             <div class="logo-area">
                 <h1>Painel de Bônus</h1>
@@ -54,6 +65,7 @@
         </header>
 
         <main>
+            <!-- CARDS DE MÉTRICAS DO TOPO -->
             <section class="barra-metricas-topo">
                 <div class="card">
                     <span class="card-titulo">TOTAL AGENDAMENTOS</span>
@@ -77,6 +89,7 @@
                 </div>
             </section>
 
+            <!-- TABELA DE AGENDAMENTOS -->
             <section class="card-tabela-agendamentos">
                 <div class="tabela-cabecalho-acoes">
                     <div>
@@ -85,13 +98,15 @@
                     </div>
                     
                     <div class="grupo-filtros-alinhados">
-                        <input type="text" id="input-busca" class="input-busca-padrao" placeholder="Buscar por placa, evento ou ordem de serviço...">
+                        <input type="text" id="input-busca" class="input-busca-padrao" placeholder="Buscar por placa ou ordem de serviço...">
                         
                         <select id="filtro-status" class="select-filtro-status">
                             <option value="todos">Todos os Status</option>
                             <option value="compareceu">Comparecidos</option>
                             <option value="pendente">Pendentes</option>
                             <option value="faltou">No-Show</option>
+                            <option value="reagendado">Reagendados</option>
+                            <option value="facilitada">Revisão Facilitada</option>
                         </select>
 
                         <input type="month" id="filtro-mes" class="input-mes-padrao">
@@ -106,10 +121,10 @@
                                 <th class="col-centro">DATA CONTATO</th>
                                 <th class="col-centro">DATA REVISÃO</th>
                                 <th class="col-centro">PLACA</th>
-                                <th class="col-centro">EVENTO</th>
                                 <th class="col-centro">O.S</th>
                                 <th class="col-centro">REVISÃO</th>
                                 <th class="col-centro">STATUS</th>
+                                <th class="col-centro">OBSERVAÇÕES</th>
                                 <th class="col-centro">PREVISÃO BÔNUS</th>
                             </tr>
                         </thead>
@@ -121,6 +136,7 @@
                     </table>
                 </div>
 
+                <!-- BARRA DE PAGINAÇÃO -->
                 <div class="paginacao-area">
                     <span id="texto-paginacao-info" class="paginacao-info">Mostrando 1–20 de 0 agendamentos</span>
                     <div class="paginacao-botoes">
