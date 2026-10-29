@@ -3,16 +3,54 @@ document.addEventListener('DOMContentLoaded', async function() {
     const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const METAS_POR_EQUIPE = {
-        'Toyota': 900,
-        'Geral': 900
-    };
-    const META_PADRAO = 900;
-    const META_GLOBAL = 6000;
+    // 1. CARREGAMENTO SEGURO DE METAS
+    let cacheMetasBanco = {};
+    async function sincronizarMetasBanco() {
+        try {
+            const { data, error } = await supabaseClient.from('metas_mensais').select('*');
+            if (!error && data) {
+                cacheMetasBanco = {};
+                data.forEach(item => {
+                    const chave = `${item.mes_referencia}_${item.equipe}`;
+                    cacheMetasBanco[chave] = parseInt(item.meta_valor, 10);
+                });
+            }
+        } catch (e) {
+            console.warn('Tabela metas_mensais opcional:', e);
+        }
+    }
 
+    function obterMetaEquipe(mesAno, equipe) {
+        const chave = `${mesAno}_${equipe}`;
+        if (cacheMetasBanco[chave]) return cacheMetasBanco[chave];
+        const salvoLocal = localStorage.getItem(`meta_${chave}`);
+        if (salvoLocal) return parseInt(salvoLocal, 10);
+        if (mesAno === '2026-09') return 600;
+        return 900;
+    }
+
+    function obterMetaGeral(mesAno) {
+        const chave = `${mesAno}_Geral`;
+        if (cacheMetasBanco[chave]) return cacheMetasBanco[chave];
+        const salvoLocal = localStorage.getItem(`meta_${chave}`);
+        if (salvoLocal) return parseInt(salvoLocal, 10);
+        if (mesAno === '2026-09') return 5000;
+        return 6000;
+    }
+
+    // ELEMENTOS DO DOM
     const secaoFiltrosAdmin = document.getElementById('secao-filtros-admin');
     const filtroMesAdmin = document.getElementById('filtro-mes-admin');
     const filtroEquipeAdmin = document.getElementById('filtro-equipe-admin');
+    const btnAbrirModalMetas = document.getElementById('btn-abrir-modal-metas');
+
+    const modalConfigMetas = document.getElementById('modalConfigMetas');
+    const btnFecharModalMetas = document.getElementById('btnFecharModalMetas');
+    const btnCancelarModalMetas = document.getElementById('btnCancelarModalMetas');
+    const btnSalvarModalMetas = document.getElementById('btnSalvarModalMetas');
+    const modalMetaMes = document.getElementById('modal-meta-mes');
+    const modalMetaEquipe = document.getElementById('modal-meta-equipe');
+    const modalMetaValor = document.getElementById('modal-meta-valor');
 
     const secaoMetricasConsultor = document.getElementById('secao-metricas-consultor');
     const filtroMesConsultor = document.getElementById('filtro-mes-consultor');
@@ -21,13 +59,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     const detalheConfirmadoEl = document.querySelector('.bonus-confirmado')?.parentElement.querySelector('.card-detalhe');
     const inputMonitoria = document.getElementById('input-monitoria');
     const badgeAjusteMonitoria = document.getElementById('badge-ajuste-monitoria');
+    const btnAcaoMonitoria = document.getElementById('btn-acao-monitoria');
 
     const linkMenuImportar = document.getElementById('link-menu-importar');
+
     const secaoMetaEquipe = document.getElementById('secao-meta-equipe');
     const tituloMetaEquipe = document.getElementById('titulo-meta-equipe');
     const textoProgressoMeta = document.getElementById('texto-progresso-meta');
     const textoRestanteMeta = document.getElementById('texto-restante-meta');
     const barraProgressoMeta = document.getElementById('barra-progresso-meta');
+    const badgeBonusEquipe = document.getElementById('badge-bonus-equipe');
 
     const btnAbaVisaoGeral = document.getElementById('btn-aba-visao-geral');
     const btnAbaCategorias = document.getElementById('btn-aba-categorias');
@@ -64,6 +105,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         btnVoltarAdmin.style.setProperty('display', 'none', 'important');
     }
 
+    // 2. AUTH GUARD
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session || !session.user) {
         window.location.href = 'login.html';
@@ -88,7 +130,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (perfil.nome) nomeUsuarioPerfil = perfil.nome;
         }
     } catch (e) {
-        console.warn('Erro ao carregar permissões:', e);
+        console.warn('Erro ao carregar perfil:', e);
     }
 
     if (usuarioAtual.email === 'usuariotestesite01@gmail.com' || usuarioAtual.email?.includes('admin')) {
@@ -100,6 +142,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (secaoFiltrosAdmin) secaoFiltrosAdmin.classList.remove('oculto');
         if (secaoMetricasConsultor) secaoMetricasConsultor.classList.add('oculto');
         if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
+        if (secaoAdminRanking) secaoAdminRanking.classList.remove('oculto');
+        if (badgeBonusEquipe) badgeBonusEquipe.classList.add('oculto');
         if (btnAbaEquipe) btnAbaEquipe.classList.add('oculto');
         if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.add('oculto');
         if (btnAbaVisaoGeral) btnAbaVisaoGeral.textContent = 'Efetividade';
@@ -108,6 +152,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (secaoFiltrosAdmin) secaoFiltrosAdmin.classList.add('oculto');
         if (secaoMetricasConsultor) secaoMetricasConsultor.classList.remove('oculto');
         if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
+        if (secaoAdminRanking) secaoAdminRanking.classList.add('oculto');
+        if (badgeBonusEquipe) badgeBonusEquipe.classList.remove('oculto');
         if (btnAbaEquipe) btnAbaEquipe.classList.remove('oculto');
         if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.remove('oculto');
         if (cardGraficoEquipeAdmin) cardGraficoEquipeAdmin.classList.add('oculto');
@@ -156,8 +202,116 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     let todosAgendamentosHistorico = [];
     let agendamentosMesAtual = [];
-
     let abaGraficoAtual = 'visao-geral';
+
+    // MODAL DE CONFIGURAÇÃO DE METAS
+    if (btnAbrirModalMetas && modalConfigMetas) {
+        btnAbrirModalMetas.addEventListener('click', () => {
+            const mesAtualSel = filtroMesAdmin ? filtroMesAdmin.value : valorMesPadrao;
+            modalMetaMes.value = mesAtualSel;
+            modalMetaEquipe.value = 'Toyota';
+            modalMetaValor.value = obterMetaEquipe(mesAtualSel, 'Toyota');
+            modalConfigMetas.style.display = 'flex';
+        });
+
+        const fecharModal = () => { modalConfigMetas.style.display = 'none'; };
+        btnFecharModalMetas?.addEventListener('click', fecharModal);
+        btnCancelarModalMetas?.addEventListener('click', fecharModal);
+        modalConfigMetas.addEventListener('click', (e) => {
+            if (e.target === modalConfigMetas) fecharModal();
+        });
+
+        modalMetaEquipe?.addEventListener('change', () => {
+            const mesSel = modalMetaMes.value;
+            const eqSel = modalMetaEquipe.value;
+            modalMetaValor.value = (eqSel === 'Geral') ? obterMetaGeral(mesSel) : obterMetaEquipe(mesSel, eqSel);
+        });
+
+        btnSalvarModalMetas?.addEventListener('click', async () => {
+            const mesSel = modalMetaMes.value;
+            const eqSel = modalMetaEquipe.value;
+            const val = parseInt(modalMetaValor.value, 10);
+
+            if (!mesSel || isNaN(val) || val <= 0) {
+                alert('Preencha um valor de meta válido.');
+                return;
+            }
+
+            btnSalvarModalMetas.disabled = true;
+            btnSalvarModalMetas.textContent = 'A guardar...';
+
+            const chave = `${mesSel}_${eqSel}`;
+            localStorage.setItem(`meta_${chave}`, String(val));
+            cacheMetasBanco[chave] = val;
+
+            try {
+                await supabaseClient.from('metas_mensais').upsert({
+                    mes_referencia: mesSel,
+                    equipe: eqSel,
+                    meta_valor: val,
+                    atualizado_em: new Date().toISOString()
+                }, { onConflict: 'mes_referencia, equipe' });
+            } catch (err) {
+                console.warn('Salvo localmente:', err);
+            }
+
+            fecharModal();
+            aplicarVisaoRelatorio();
+            btnSalvarModalMetas.disabled = false;
+            btnSalvarModalMetas.textContent = 'Guardar Meta';
+        });
+    }
+
+    // PERSISTÊNCIA DA MONITORIA (SALVAR / EDITAR / TRAVAR POR MÊS)
+    function obterChaveMonitoria(mes) {
+        return `nota_monitoria_${usuarioAtual.id}_${mes}`;
+    }
+
+    function atualizarEstadoVisualMonitoria(mes) {
+        if (!inputMonitoria || !btnAcaoMonitoria) return;
+        const valorSalvo = localStorage.getItem(obterChaveMonitoria(mes));
+
+        if (valorSalvo !== null) {
+            inputMonitoria.value = valorSalvo;
+            inputMonitoria.disabled = true;
+            btnAcaoMonitoria.textContent = 'Editar';
+            btnAcaoMonitoria.classList.add('btn-modo-editar');
+            btnAcaoMonitoria.title = 'Clique para editar a nota deste mês';
+        } else {
+            inputMonitoria.disabled = false;
+            btnAcaoMonitoria.textContent = 'Salvar';
+            btnAcaoMonitoria.classList.remove('btn-modo-editar');
+            btnAcaoMonitoria.title = 'Salvar nota deste mês';
+        }
+    }
+
+    if (btnAcaoMonitoria) {
+        btnAcaoMonitoria.addEventListener('click', () => {
+            const mesAtualSel = filtroMesConsultor ? filtroMesConsultor.value : valorMesPadrao;
+            const chave = obterChaveMonitoria(mesAtualSel);
+            const estaSalvo = localStorage.getItem(chave) !== null;
+
+            if (estaSalvo && inputMonitoria.disabled) {
+                inputMonitoria.disabled = false;
+                inputMonitoria.focus();
+                btnAcaoMonitoria.textContent = 'Salvar';
+                btnAcaoMonitoria.classList.remove('btn-modo-editar');
+            } else {
+                let valor = parseFloat(inputMonitoria.value);
+                if (isNaN(valor)) valor = 100;
+                if (valor < 0) valor = 0;
+                if (valor > 100) valor = 100;
+                inputMonitoria.value = valor;
+
+                localStorage.setItem(chave, String(valor));
+                inputMonitoria.disabled = true;
+                btnAcaoMonitoria.textContent = 'Editar';
+                btnAcaoMonitoria.classList.add('btn-modo-editar');
+
+                aplicarVisaoRelatorio();
+            }
+        });
+    }
 
     function aplicarVisibilidadeAbas() {
         btnAbaVisaoGeral.classList.toggle('ativo', abaGraficoAtual === 'visao-geral');
@@ -243,40 +397,133 @@ document.addEventListener('DOMContentLoaded', async function() {
         } catch (e) {}
     }
 
+    // CARREGAMENTO COM FALLBACK BLINDADO
     async function carregarDados() {
         const mesSelecionado = isAdmin ? filtroMesAdmin.value : filtroMesConsultor.value;
 
-        const { data, error } = await supabaseClient
-            .from('vw_agendamentos_completos')
-            .select('*')
-            .order('data_revisao', { ascending: true });
+        if (!isAdmin) {
+            atualizarEstadoVisualMonitoria(mesSelecionado);
+        }
 
-        if (error) return console.error(error);
-        todosAgendamentosHistorico = data || [];
+        todosAgendamentosHistorico = [];
+
+        try {
+            const { data: dataView, error: errorView } = await supabaseClient
+                .from('vw_agendamentos_completos')
+                .select('*')
+                .order('data_revisao', { ascending: true });
+
+            if (!errorView && dataView && dataView.length > 0) {
+                todosAgendamentosHistorico = dataView;
+            }
+        } catch (e) {}
+
+        if (todosAgendamentosHistorico.length === 0) {
+            try {
+                const { data: dataRaw } = await supabaseClient
+                    .from('agendamentos')
+                    .select('*')
+                    .order('data_revisao', { ascending: true });
+
+                const { data: perfisRaw } = await supabaseClient
+                    .from('perfis')
+                    .select('id, nome, equipe');
+
+                const mapaPerfis = new Map();
+                (perfisRaw || []).forEach(p => mapaPerfis.set(p.id, p));
+
+                todosAgendamentosHistorico = (dataRaw || []).map(item => {
+                    const perfil = mapaPerfis.get(item.user_id);
+                    return {
+                        ...item,
+                        autor_nome: perfil?.nome || 'Consultora Toyota',
+                        autor_equipe: perfil?.equipe || 'Toyota'
+                    };
+                });
+            } catch (err) {
+                console.error('Falha de leitura no Supabase:', err);
+            }
+        }
 
         agendamentosMesAtual = todosAgendamentosHistorico.filter(item =>
-            item.data_revisao && item.data_revisao.startsWith(mesSelecionado)
+            item.data_revisao && String(item.data_revisao).startsWith(mesSelecionado)
         );
 
         aplicarVisaoRelatorio();
     }
 
+    // APLICAÇÃO DOS CÁLCULOS, BÔNUS E METAS
     function aplicarVisaoRelatorio() {
+        const mesSelecionado = isAdmin ? filtroMesAdmin.value : filtroMesConsultor.value;
+
         if (!isAdmin) {
+            // =============================================================
+            // VISÃO DO CONSULTOR
+            // =============================================================
             if (secaoAdminRanking) secaoAdminRanking.classList.add('oculto');
             if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
             if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.remove('oculto');
             if (cardGraficoEquipeAdmin) cardGraficoEquipeAdmin.classList.add('oculto');
+            if (badgeBonusEquipe) badgeBonusEquipe.classList.remove('oculto');
 
+            if (tituloGraficoVolume) tituloGraficoVolume.textContent = 'Minha Efetividade';
+            if (subtituloGraficoVolume) subtituloGraficoVolume.textContent = 'Taxa de presença';
+
+            // Regra de Monitoria (Corte em 90%)
             let notaMonitoria = inputMonitoria ? parseFloat(inputMonitoria.value) : 100;
             if (isNaN(notaMonitoria)) notaMonitoria = 100;
 
-            let fatorMonitoria = (notaMonitoria >= 80) ? 1.10 : 0.90;
+            let fatorMonitoria = (notaMonitoria >= 90) ? 1.10 : 0.90;
             if (badgeAjusteMonitoria) {
-                badgeAjusteMonitoria.textContent = notaMonitoria >= 80 ? '+10% Bônus' : '-10% Redução';
-                badgeAjusteMonitoria.className = notaMonitoria >= 80 ? 'badge-ajuste-monitoria' : 'badge-ajuste-monitoria-reducao';
+                badgeAjusteMonitoria.textContent = notaMonitoria >= 90 ? '+10% Bônus' : '-10% Redução';
+                badgeAjusteMonitoria.className = notaMonitoria >= 90 ? 'badge-ajuste-monitoria' : 'badge-ajuste-monitoria-reducao';
             }
 
+            // 1. Cálculo da Meta da Equipe e Bônus de Equipe (Gatilho >= 80%)
+            const agendamentosEquipe = agendamentosMesAtual.filter(i => (i.autor_equipe || 'Toyota') === equipeUsuario);
+            const comparecidosEquipe = agendamentosEquipe.filter(item => item.status === 'compareceu').length;
+            const metaEquipeDefinida = obterMetaEquipe(mesSelecionado, equipeUsuario);
+            
+            // Percentual realizado da equipe
+            const percentualExatoEquipe = (comparecidosEquipe / metaEquipeDefinida) * 100;
+            const percentualMeta = Math.min(100, Math.floor(percentualExatoEquipe));
+            const restanteMeta = Math.max(0, metaEquipeDefinida - comparecidosEquipe);
+
+            // Bônus da Equipe: se >= 80%, ganha o valor em reais igual ao percentual (ex: 81% -> R$ 81,00)
+            let bonusEquipe = 0.00;
+            if (percentualMeta >= 80) {
+                bonusEquipe = parseFloat(percentualMeta);
+            }
+
+            tituloMetaEquipe.textContent = `META DA EQUIPE (${equipeUsuario.toUpperCase()})`;
+            textoProgressoMeta.textContent = `${comparecidosEquipe} / ${metaEquipeDefinida} agendamentos (${percentualMeta}%)`;
+            barraProgressoMeta.style.width = `${percentualMeta}%`;
+
+            if (restanteMeta === 0) {
+                textoRestanteMeta.textContent = 'Parabéns! Meta da equipe atingida!';
+                textoRestanteMeta.className = 'meta-badge-sucesso';
+            } else {
+                textoRestanteMeta.textContent = `Faltam ${restanteMeta} agendamento${restanteMeta === 1 ? '' : 's'} para a meta`;
+                textoRestanteMeta.className = 'meta-badge-restante';
+            }
+
+            // Atualiza o Badge de Bônus de Equipe na barra
+            if (badgeBonusEquipe) {
+                if (percentualMeta >= 80) {
+                    badgeBonusEquipe.textContent = `Bônus Equipe: + R$ ${bonusEquipe.toFixed(2).replace('.', ',')} (${percentualMeta}%)`;
+                    badgeBonusEquipe.className = 'meta-badge-bonus-equipe';
+                } else {
+                    badgeBonusEquipe.textContent = `Bônus Equipe: R$ 0,00 (Mínimo 80%)`;
+                    badgeBonusEquipe.className = 'meta-badge-bonus-equipe bloqueado';
+                }
+            }
+
+            // 2. Previsão da Equipe (caso todos os agendados da equipe compareçam)
+            const totalAgendadosEquipe = agendamentosEquipe.length;
+            const percentualPrevistoEquipe = Math.min(100, Math.floor((totalAgendadosEquipe / metaEquipeDefinida) * 100));
+            let bonusEquipePrevisto = (percentualPrevistoEquipe >= 80) ? parseFloat(percentualPrevistoEquipe) : 0.00;
+
+            // 3. Bônus Individual das Revisões
             const meusAgendamentosMes = agendamentosMesAtual.filter(item => item.user_id === usuarioAtual.id);
             let totalCompareceu = 0, totalPendente = 0, totalFaltou = 0, somaBonusBaseRealizado = 0, somaBonusBasePrevisto = 0;
 
@@ -296,71 +543,88 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
             });
 
-            const bonusFinalRealizado = somaBonusBaseRealizado * fatorMonitoria;
-            const bonusFinalPrevisto = somaBonusBasePrevisto * fatorMonitoria;
+            // 4. Bônus Total Final = (Individual x Monitoria) + Bônus Equipe
+            const bonusIndividualComMonitoria = somaBonusBaseRealizado * fatorMonitoria;
+            const bonusFinalRealizado = bonusIndividualComMonitoria + bonusEquipe;
+
+            const bonusIndividualPrevistoComMonitoria = somaBonusBasePrevisto * fatorMonitoria;
+            const bonusFinalPrevisto = bonusIndividualPrevistoComMonitoria + bonusEquipePrevisto;
 
             if (valorConfirmadoEl) valorConfirmadoEl.textContent = `R$ ${bonusFinalRealizado.toFixed(2).replace('.', ',')}`;
             if (valorPrevistoEl) valorPrevistoEl.textContent = `R$ ${bonusFinalPrevisto.toFixed(2).replace('.', ',')}`;
+            
             if (detalheConfirmadoEl) {
-                detalheConfirmadoEl.textContent = `${totalCompareceu} ${totalCompareceu === 1 ? 'presença confirmada' : 'presenças confirmadas'}`;
-            }
-
-            const agendamentosToyota = agendamentosMesAtual.filter(i => (i.autor_equipe || 'Toyota') === equipeUsuario);
-            const comparecidosEquipe = agendamentosToyota.filter(item => item.status === 'compareceu').length;
-            const metaDefinida = METAS_POR_EQUIPE[equipeUsuario] || META_PADRAO;
-            const percentualMeta = Math.min(100, Math.round((comparecidosEquipe / metaDefinida) * 100));
-            const restanteMeta = Math.max(0, metaDefinida - comparecidosEquipe);
-
-            tituloMetaEquipe.textContent = `META DA EQUIPE (${equipeUsuario.toUpperCase()})`;
-            textoProgressoMeta.textContent = `${comparecidosEquipe} / ${metaDefinida} agendamentos (${percentualMeta}%)`;
-            barraProgressoMeta.style.width = `${percentualMeta}%`;
-
-            if (restanteMeta === 0) {
-                textoRestanteMeta.textContent = 'Parabéns! Meta do mês atingida!';
-                textoRestanteMeta.className = 'meta-badge-sucesso';
-            } else {
-                textoRestanteMeta.textContent = `Faltam ${restanteMeta} agendamento${restanteMeta === 1 ? '' : 's'} para bater a meta`;
-                textoRestanteMeta.className = 'meta-badge-restante';
+                if (bonusEquipe > 0) {
+                    detalheConfirmadoEl.textContent = `${totalCompareceu} ${totalCompareceu === 1 ? 'presença' : 'presenças'} (R$ ${bonusIndividualComMonitoria.toFixed(2).replace('.', ',')} ind. + R$ ${bonusEquipe.toFixed(2).replace('.', ',')} equipe)`;
+                } else {
+                    detalheConfirmadoEl.textContent = `${totalCompareceu} ${totalCompareceu === 1 ? 'presença confirmada' : 'presenças confirmadas'}`;
+                }
             }
 
         } else {
+            // =============================================================
+            // VISÃO DO ADMINISTRADOR
+            // =============================================================
             if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
+            if (secaoAdminRanking) secaoAdminRanking.classList.remove('oculto');
+            if (badgeBonusEquipe) badgeBonusEquipe.classList.add('oculto');
             if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.add('oculto');
             if (secaoVolumeEquipeConsultor) secaoVolumeEquipeConsultor.classList.add('oculto');
 
             const equipeFiltro = filtroEquipeAdmin ? filtroEquipeAdmin.value : 'todas';
-            let dadosFiltrados = agendamentosMesAtual;
-            if (equipeFiltro !== 'todas') {
-                dadosFiltrados = agendamentosMesAtual.filter(item => (item.autor_equipe || 'Geral') === equipeFiltro);
-            }
-
-            const comparecidosGeral = agendamentosMesAtual.filter(item => item.status === 'compareceu').length;
-            const percentualMetaAdmin = Math.min(100, Math.round((comparecidosGeral / META_GLOBAL) * 100));
-            const restanteMetaAdmin = Math.max(0, META_GLOBAL - comparecidosGeral);
-
-            if (tituloMetaEquipe) tituloMetaEquipe.textContent = 'META TOTAL DA CENTRAL DE AGENDAMENTOS';
-            textoProgressoMeta.textContent = `${comparecidosGeral} / ${META_GLOBAL} agendamentos (${percentualMetaAdmin}%)`;
-            barraProgressoMeta.style.width = `${percentualMetaAdmin}%`;
-
-            if (textoRestanteMeta) {
-                textoRestanteMeta.textContent = restanteMetaAdmin === 0 
-                    ? 'Parabéns! Meta atingida!' 
-                    : `Faltam ${restanteMetaAdmin} agendamentos no total`;
-                textoRestanteMeta.className = restanteMetaAdmin === 0 ? 'meta-badge-sucesso' : 'meta-badge-restante';
-            }
 
             if (equipeFiltro === 'todas') {
+                if (tituloGraficoVolume) tituloGraficoVolume.textContent = 'Efetividade Geral';
+                if (subtituloGraficoVolume) subtituloGraficoVolume.textContent = 'Taxa de presença de todas as equipes';
+
+                const comparecidosGeral = agendamentosMesAtual.filter(item => item.status === 'compareceu').length;
+                const metaGeral = obterMetaGeral(mesSelecionado);
+                const percGeral = Math.min(100, Math.round((comparecidosGeral / metaGeral) * 100));
+                const restGeral = Math.max(0, metaGeral - comparecidosGeral);
+
+                tituloMetaEquipe.textContent = 'META TOTAL DA CENTRAL DE AGENDAMENTOS';
+                textoProgressoMeta.textContent = `${comparecidosGeral} / ${metaGeral} agendamentos (${percGeral}%)`;
+                barraProgressoMeta.style.width = `${percGeral}%`;
+
+                if (textoRestanteMeta) {
+                    textoRestanteMeta.textContent = restGeral === 0 
+                        ? 'Parabéns! Meta geral atingida!' 
+                        : `Faltam ${restGeral} agendamentos no total`;
+                    textoRestanteMeta.className = restGeral === 0 ? 'meta-badge-sucesso' : 'meta-badge-restante';
+                }
+
                 if (btnVoltarAdmin) {
                     btnVoltarAdmin.classList.add('oculto');
                     btnVoltarAdmin.style.setProperty('display', 'none', 'important');
                 }
                 renderizarTabelaEquipes(agendamentosMesAtual);
+
             } else {
+                if (tituloGraficoVolume) tituloGraficoVolume.textContent = `Efetividade: ${equipeFiltro}`;
+                if (subtituloGraficoVolume) subtituloGraficoVolume.textContent = 'Taxa de presença desta equipe';
+
+                const agendamentosEq = agendamentosMesAtual.filter(item => (item.autor_equipe || 'Geral') === equipeFiltro);
+                const comparecidosEq = agendamentosEq.filter(item => item.status === 'compareceu').length;
+                const metaEq = obterMetaEquipe(mesSelecionado, equipeFiltro);
+                const percEq = Math.min(100, Math.round((comparecidosEq / metaEq) * 100));
+                const restEq = Math.max(0, metaEq - comparecidosEq);
+
+                tituloMetaEquipe.textContent = `META DA EQUIPE (${equipeFiltro.toUpperCase()})`;
+                textoProgressoMeta.textContent = `${comparecidosEq} / ${metaEq} agendamentos (${percEq}%)`;
+                barraProgressoMeta.style.width = `${percEq}%`;
+
+                if (textoRestanteMeta) {
+                    textoRestanteMeta.textContent = restEq === 0 
+                        ? 'Parabéns! Meta da equipe atingida!' 
+                        : `Faltam ${restEq} agendamentos para a meta`;
+                    textoRestanteMeta.className = restEq === 0 ? 'meta-badge-sucesso' : 'meta-badge-restante';
+                }
+
                 if (btnVoltarAdmin) {
                     btnVoltarAdmin.classList.remove('oculto');
                     btnVoltarAdmin.style.setProperty('display', 'inline-flex', 'important');
                 }
-                renderizarTabelaOperadores(dadosFiltrados, equipeFiltro);
+                renderizarTabelaOperadores(agendamentosEq, equipeFiltro);
             }
         }
 
@@ -387,27 +651,15 @@ document.addEventListener('DOMContentLoaded', async function() {
                 else if (status === 'faltou') totalFaltou++;
             });
 
-            if (!isAdmin) {
-                if (tituloGraficoVolume) tituloGraficoVolume.textContent = 'Minha Efetividade';
-                if (subtituloGraficoVolume) subtituloGraficoVolume.textContent = 'Taxa de presença';
-                renderizarGraficoVolume(totalCompareceu, totalPendente, totalFaltou);
+            renderizarGraficoVolume(totalCompareceu, totalPendente, totalFaltou);
 
+            if (!isAdmin) {
                 const meusAgendamentosHistorico = todosAgendamentosHistorico.filter(item => item.user_id === usuarioAtual.id);
                 renderizarGraficoBonusMensal(meusAgendamentosHistorico);
-            } else {
-                if (tituloGraficoVolume) {
-                    tituloGraficoVolume.textContent = equipeFiltro === 'todas' ? 'Efetividade Geral' : `Efetividade: ${equipeFiltro}`;
-                }
-                if (subtituloGraficoVolume) {
-                    subtituloGraficoVolume.textContent = equipeFiltro === 'todas' ? 'Taxa de presença de todas as equipes' : 'Taxa de presença desta equipe';
-                }
-                renderizarGraficoVolume(totalCompareceu, totalPendente, totalFaltou);
-
-                if (equipeFiltro !== 'todas') {
-                    if (tituloGraficoEquipeAdmin) tituloGraficoEquipeAdmin.textContent = `Operadores de ${equipeFiltro}`;
-                    if (subtituloGraficoEquipeAdmin) subtituloGraficoEquipeAdmin.textContent = 'Volume por operador desta equipe';
-                    renderizarGraficoBarrasHorizontais('graficoEquipeAdmin', dadosFiltrados);
-                }
+            } else if (equipeFiltro !== 'todas') {
+                if (tituloGraficoEquipeAdmin) tituloGraficoEquipeAdmin.textContent = `Operadores de ${equipeFiltro}`;
+                if (subtituloGraficoEquipeAdmin) subtituloGraficoEquipeAdmin.textContent = 'Volume por operador desta equipe';
+                renderizarGraficoBarrasHorizontais('graficoEquipeAdmin', dadosFiltrados);
             }
 
         } else if (abaGraficoAtual === 'categorias') {
@@ -436,7 +688,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const operadores = {};
 
         agendamentos.forEach(item => {
-            const id = item.user_id || 'desconhecido';
+            const id = item.user_id || item.autor_nome || 'desconhecido';
             if (!operadores[id]) {
                 operadores[id] = {
                     id: id,
@@ -553,7 +805,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         agendamentosHistorico.forEach(item => {
             if (item.data_revisao && item.status === 'compareceu') {
-                const mesAno = item.data_revisao.substring(0, 7);
+                const mesAno = String(item.data_revisao).substring(0, 7);
                 totaisPorMes[mesAno] = (totaisPorMes[mesAno] || 0) + (parseFloat(item.valor_unitario) || 0);
             }
         });
@@ -726,6 +978,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     function renderizarTabelaEquipes(agendamentos) {
+        if (!tituloTabelaAdmin || !tabelaCabecalhoAdmin || !tabelaCorpoAdmin) return;
+        
         tituloTabelaAdmin.textContent = 'Desempenho por Equipe';
         subtituloTabelaAdmin.textContent = 'Acompanhe por equipe ou filtre individualmente';
         tabelaCabecalhoAdmin.innerHTML = `
@@ -741,7 +995,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const grupos = {};
         agendamentos.forEach(item => {
-            const eq = item.autor_equipe || 'Geral';
+            const eq = item.autor_equipe || 'Toyota';
             if (!grupos[eq]) grupos[eq] = { equipe: eq, total: 0, compareceu: 0, faltou: 0 };
             grupos[eq].total++;
             if (item.status === 'compareceu') grupos[eq].compareceu++;
@@ -789,6 +1043,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     function renderizarTabelaOperadores(agendamentos, nomeEquipe) {
+        if (!tituloTabelaAdmin || !tabelaCabecalhoAdmin || !tabelaCorpoAdmin) return;
+
         tituloTabelaAdmin.textContent = `Operadores da Equipe: ${nomeEquipe}`;
         subtituloTabelaAdmin.textContent = `Métricas individuais e distribuição de revisões dos consultores`;
         tabelaCabecalhoAdmin.innerHTML = `
@@ -805,10 +1061,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const operadores = {};
         agendamentos.forEach(item => {
-            const chave = item.user_id || 'desconhecido';
+            const chave = item.user_id || item.autor_nome || 'desconhecido';
             if (!operadores[chave]) {
                 operadores[chave] = {
-                    nome: item.autor_nome || 'Operador',
+                    nome: item.autor_nome || 'Consultora Toyota',
                     total: 0,
                     compareceu: 0,
                     pendente: 0,
@@ -927,6 +1183,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (filtroMesConsultor) filtroMesConsultor.value = parametroMes;
     }
 
+    await sincronizarMetasBanco();
     await carregarOpcoesEquipes();
 
     if (parametroEquipe && filtroEquipeAdmin) {

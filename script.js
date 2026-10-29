@@ -1,5 +1,5 @@
 /* ==========================================================================
-   CADERNO DE ESTUDOS - JAVASCRIPT (script.js - Sem Coluna Evento)
+   CADERNO DE ESTUDOS - JAVASCRIPT (script.js - Com Meta Geral da Central)
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     const SUPABASE_URL = 'https://potvtrepcoswvzmkewic.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const META_GLOBAL_CENTRAL = 6000;
 
     // 2. ELEMENTOS DO DOM
     const linkMenuImportar = document.getElementById('link-menu-importar');
@@ -27,6 +29,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     const percentualPresencaTopo = document.getElementById('percentual-presenca-topo');
     const totalPendentesTopo = document.getElementById('total-pendentes-topo');
     const totalNoShowTopo = document.getElementById('total-noshow-topo');
+
+    // Elementos da Meta da Central
+    const textoProgressoCentral = document.getElementById('texto-progresso-central');
+    const badgeRestanteCentral = document.getElementById('badge-restante-central');
+    const barraProgressoCentral = document.getElementById('barra-progresso-central');
 
     // 3. AUTH GUARD E PERMISSÕES
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -121,21 +128,27 @@ document.addEventListener('DOMContentLoaded', async function() {
         tabelaCorpo.innerHTML = '<tr><td colspan="9" class="celula-vazia-mensagem">Buscando agendamentos...</td></tr>';
 
         try {
-            let query = supabaseClient
+            // Busca os agendamentos da visualização
+            const { data, error } = await supabaseClient
                 .from('vw_agendamentos_completos')
                 .select('*')
                 .order('data_revisao', { ascending: true });
 
-            if (!isAdmin) {
-                query = query.eq('user_id', usuarioAtual.id);
-            }
-
-            const { data, error } = await query;
             if (error) throw error;
 
-            todosAgendamentosMes = (data || []).filter(item =>
+            const agendamentosGeraisDoMes = (data || []).filter(item =>
                 item.data_revisao && item.data_revisao.startsWith(mesSelecionado)
             );
+
+            // 1. Atualiza a Meta Total da Central (mostra o progresso de toda a central)
+            atualizarBarraMetaCentral(agendamentosGeraisDoMes);
+
+            // 2. Filtra para a tabela: se for admin vê todos; se for consultor vê os seus
+            if (isAdmin) {
+                todosAgendamentosMes = agendamentosGeraisDoMes;
+            } else {
+                todosAgendamentosMes = agendamentosGeraisDoMes.filter(item => item.user_id === usuarioAtual.id);
+            }
 
             atualizarCardsResumo(todosAgendamentosMes);
             paginaAtual = 1;
@@ -147,7 +160,27 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    // 7. ATUALIZAR CARDS SUPERIORES
+    // 7. ATUALIZAR BARRA DA META DA CENTRAL
+    function atualizarBarraMetaCentral(listaGeral) {
+        if (!textoProgressoCentral || !badgeRestanteCentral || !barraProgressoCentral) return;
+
+        const comparecidosCentral = listaGeral.filter(item => item.status === 'compareceu').length;
+        const percentual = Math.min(100, Math.round((comparecidosCentral / META_GLOBAL_CENTRAL) * 100));
+        const restantes = Math.max(0, META_GLOBAL_CENTRAL - comparecidosCentral);
+
+        textoProgressoCentral.textContent = `${comparecidosCentral} / ${META_GLOBAL_CENTRAL} agendamentos (${percentual}%)`;
+        barraProgressoCentral.style.width = `${percentual}%`;
+
+        if (restantes === 0) {
+            badgeRestanteCentral.textContent = 'Parabéns! Meta geral atingida!';
+            badgeRestanteCentral.className = 'meta-central-badge sucesso';
+        } else {
+            badgeRestanteCentral.textContent = `Faltam ${restantes} agendamentos no total`;
+            badgeRestanteCentral.className = 'meta-central-badge';
+        }
+    }
+
+    // 8. ATUALIZAR CARDS SUPERIORES
     function atualizarCardsResumo(lista) {
         const total = lista.length;
         let compareceu = 0;
@@ -170,7 +203,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (totalNoShowTopo) totalNoShowTopo.textContent = noshow;
     }
 
-    // 8. FILTRAGEM DINÂMICA
+    // 9. FILTRAGEM DINÂMICA
     function aplicarFiltrosTabela() {
         const termoBusca = (inputBusca?.value || '').trim().toLowerCase();
         const statusSelecionado = filtroStatus ? filtroStatus.value : 'todos';
@@ -212,7 +245,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         renderizarPaginaAtual();
     }
 
-    // 9. CONTROLE DA PAGINAÇÃO
+    // 10. CONTROLE DA PAGINAÇÃO
     function renderizarPaginaAtual() {
         const totalItens = listaFiltradaAtual.length;
         const totalPaginas = Math.max(1, Math.ceil(totalItens / ITENS_POR_PAGINA));
@@ -239,7 +272,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         renderizarLinhas(itensDaPagina);
     }
 
-    // 10. RENDERIZAR LINHAS
+    // 11. RENDERIZAR LINHAS
     function renderizarLinhas(lista) {
         tabelaCorpo.innerHTML = '';
 
@@ -283,7 +316,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             const classeValor = (st === 'compareceu' && valorNumerico > 0) ? 'valor-celula-destaque' : '';
             const estiloValor = (st !== 'compareceu' || valorNumerico === 0) ? 'color: #94a3b8; font-weight: normal;' : '';
 
-            // Células da linha (sem a coluna EVENTO)
             tr.innerHTML = `
                 <td><strong>${item.autor_nome || 'Operador'}</strong></td>
                 <td class="col-centro">${formatarDataBR(item.data_contato)}</td>
@@ -348,7 +380,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    // 11. EVENT LISTENERS
+    // 12. EVENT LISTENERS
     if (inputBusca) {
         inputBusca.addEventListener('input', () => {
             paginaAtual = 1;

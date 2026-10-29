@@ -34,34 +34,65 @@
         .grupo-input-monitoria {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             margin-top: 6px;
+            flex-wrap: wrap;
         }
         .grupo-input-monitoria input[type="number"] {
-            width: 70px;
+            width: 65px;
             height: 36px;
-            padding: 0 8px;
+            padding: 0 6px;
             border: 1px solid #cbd5e1;
             border-radius: 6px;
             background-color: #f8fafc;
             color: #1e293b;
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 700;
             outline: none;
             text-align: center;
             box-sizing: border-box;
-            transition: border-color 0.2s ease, background-color 0.2s ease;
+            transition: all 0.2s ease;
         }
-        .grupo-input-monitoria input[type="number"]:focus {
+        .grupo-input-monitoria input[type="number"]:disabled {
+            background-color: #e2e8f0;
+            color: #475569;
+            cursor: not-allowed;
+            border-color: #cbd5e1;
+        }
+        .grupo-input-monitoria input[type="number"]:focus:not(:disabled) {
             border-color: #2563eb;
             background-color: #ffffff;
         }
         .grupo-input-monitoria .sufixo-porcentagem {
-            font-weight: 600;
+            font-weight: 700;
             color: #475569;
             font-size: 14px;
         }
-        .grupo-input-monitoria .badge-ajuste-monitoria {
+        .btn-acao-monitoria {
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 0 10px;
+            height: 36px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .btn-acao-monitoria:hover {
+            background: #1d4ed8;
+        }
+        .btn-acao-monitoria.btn-modo-editar {
+            background: #ffffff;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+        }
+        .btn-acao-monitoria.btn-modo-editar:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+        .badge-ajuste-monitoria {
             background-color: #dcfce7;
             color: #15803d;
             font-size: 11px;
@@ -70,7 +101,7 @@
             border-radius: 20px;
             white-space: nowrap;
         }
-        .grupo-input-monitoria .badge-ajuste-monitoria-reducao {
+        .badge-ajuste-monitoria-reducao {
             background-color: #fee2e2;
             color: #b91c1c;
             font-size: 11px;
@@ -94,12 +125,20 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .meta-equipe-cabecalho h3 {
             margin: 4px 0 0 0;
             font-size: 18px;
             font-weight: 700;
             color: #1e293b;
+        }
+        .area-badges-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
         }
         .meta-badge-restante {
             background-color: #eff6ff;
@@ -119,6 +158,21 @@
             border-radius: 20px;
             border: 1px solid #bbf7d0;
         }
+        .meta-badge-bonus-equipe {
+            background-color: #dcfce7;
+            color: #15803d;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid #86efac;
+        }
+        .meta-badge-bonus-equipe.bloqueado {
+            background-color: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #cbd5e1;
+        }
+
         .barra-progresso-container {
             width: 100%;
             height: 10px;
@@ -163,6 +217,131 @@
             box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
         }
 
+        .btn-abrir-config-metas {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #1e293b;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            height: 40px;
+            margin-top: 18px;
+        }
+        .btn-abrir-config-metas:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(2px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .modal-card-metas {
+            background: #ffffff;
+            color: #1e293b;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 440px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+        .modal-topo-metas {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .modal-topo-metas h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0;
+            color: #0f172a;
+        }
+        .modal-corpo-metas {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .modal-campo-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .modal-input-metas {
+            width: 100%;
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #1e293b;
+            background: #f8fafc;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .modal-input-metas:focus {
+            border-color: #2563eb;
+            background: #ffffff;
+        }
+        .modal-rodape-metas {
+            padding: 14px 20px;
+            background: #f8fafc;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .btn-cancelar-modal {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .btn-salvar-modal {
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-salvar-modal:hover {
+            background: #1d4ed8;
+        }
+
         .grade-graficos-lado-a-lado {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -186,10 +365,6 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.02);
             transition: all 0.2s ease;
         }
-        .faixas-revisao-container:hover {
-            border-color: #cbd5e1;
-            background: #ffffff;
-        }
         .faixa-item {
             display: inline-flex;
             align-items: center;
@@ -206,13 +381,10 @@
         }
         .faixa-azul .faixa-dot { background-color: #2563eb; }
         .faixa-azul { color: #1e40af; }
-
         .faixa-roxa .faixa-dot { background-color: #8b5cf6; }
         .faixa-roxa { color: #6d28d9; }
-
         .faixa-verde .faixa-dot { background-color: #10b981; }
         .faixa-verde { color: #047857; }
-
         .faixa-divisor {
             color: #cbd5e1;
             font-size: 12px;
@@ -226,7 +398,6 @@
             padding-right: 20px !important;
             min-width: 250px;
         }
-
         #tabela-cabecalho-admin th:last-child,
         #tabela-corpo-admin td:last-child {
             padding-right: 28px !important;
@@ -382,10 +553,11 @@
         </header>
 
         <main>
+            <!-- FILTROS ADMINISTRADOR -->
             <section id="secao-filtros-admin" class="painel-filtros-admin oculto">
                 <div class="info-titulos">
                     <h2>Visão Administrador</h2>
-                    <p>Filtre o período e equipe</p>
+                    <p>Filtre o período e equipe ou configure as metas</p>
                 </div>
                 <div class="controles-filtros-admin">
                     <div>
@@ -398,9 +570,15 @@
                             <option value="todas">Todas as Equipes</option>
                         </select>
                     </div>
+                    <div>
+                        <button type="button" id="btn-abrir-modal-metas" class="btn-abrir-config-metas">
+                            ⚙️ Configurar Metas
+                        </button>
+                    </div>
                 </div>
             </section>
 
+            <!-- CARDS DE MÉTRICAS DO CONSULTOR -->
             <section id="secao-metricas-consultor" class="barra-metricas-topo oculto">
                 <div class="card">
                     <span class="card-titulo">MÊS DE REFERÊNCIA</span>
@@ -422,25 +600,31 @@
                     <div class="grupo-input-monitoria">
                         <input type="number" id="input-monitoria" value="100" min="0" max="100">
                         <span class="sufixo-porcentagem">%</span>
+                        <button type="button" id="btn-acao-monitoria" class="btn-acao-monitoria" title="Salvar nota deste mês">Salvar</button>
                         <span id="badge-ajuste-monitoria" class="badge-ajuste-monitoria">+10% Bônus</span>
                     </div>
-                    <span class="card-detalhe">≥80% (+10%) | &lt;80% (-10%)</span>
+                    <span class="card-detalhe">≥90% (+10%) | &lt;90% (-10%)</span>
                 </div>
             </section>
 
+            <!-- BARRA DE META COM BÔNUS DE EQUIPE INTEGRADO -->
             <section id="secao-meta-equipe" class="card-meta-equipe">
                 <div class="meta-equipe-cabecalho">
                     <div>
                         <span id="titulo-meta-equipe" class="card-titulo" style="font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">META DA EQUIPE (TOYOTA)</span>
                         <h3 id="texto-progresso-meta">0 / 900 agendamentos (0%)</h3>
                     </div>
-                    <span id="texto-restante-meta" class="meta-badge-restante">Carregando meta...</span>
+                    <div class="area-badges-meta">
+                        <span id="badge-bonus-equipe" class="meta-badge-bonus-equipe oculto">Bônus Equipe: R$ 0,00</span>
+                        <span id="texto-restante-meta" class="meta-badge-restante">Carregando meta...</span>
+                    </div>
                 </div>
                 <div class="barra-progresso-container">
                     <div id="barra-progresso-meta" class="barra-progresso-preenchimento" style="width: 0%;"></div>
                 </div>
             </section>
 
+            <!-- ABAS DOS GRÁFICOS -->
             <div class="barra-filtros-graficos">
                 <button type="button" id="btn-aba-visao-geral" class="btn-filtro-grafico ativo">
                     Efetividade
@@ -456,11 +640,12 @@
                 </button>
             </div>
 
+            <!-- GRADE DE GRÁFICOS -->
             <section id="grade-graficos" class="grade-graficos-lado-a-lado">
                 <div class="card-grafico" id="card-grafico-volume-wrapper">
                     <div class="grafico-cabecalho">
-                        <h3 id="titulo-grafico-volume">Minha Efetividade</h3>
-                        <p id="subtitulo-grafico-volume">Taxa de presença</p>
+                        <h3 id="titulo-grafico-volume">Efetividade Geral</h3>
+                        <p id="subtitulo-grafico-volume">Taxa de presença de todas as equipes</p>
                     </div>
                     <div class="grafico-container" style="height: 270px;">
                         <canvas id="graficoVolume"></canvas>
@@ -488,6 +673,7 @@
                 </div>
             </section>
 
+            <!-- GRÁFICO REVISÕES POR CATEGORIA -->
             <section id="secao-grafico-revisoes-tipo" class="card-grafico oculto" style="margin-bottom: 24px;">
                 <div class="grafico-cabecalho">
                     <h3 id="titulo-grafico-revisoes-tipo">Distribuição por Categoria de Revisão</h3>
@@ -498,6 +684,7 @@
                 </div>
             </section>
 
+            <!-- RANKING -->
             <section id="secao-ranking-operadores" class="ranking-card-wrapper oculto">
                 <div class="grafico-cabecalho">
                     <h3 style="font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 4px;">🏆 Ranking Geral dos Operadores</h3>
@@ -506,6 +693,7 @@
                 <div id="container-ranking-lista" class="ranking-lista"></div>
             </section>
 
+            <!-- VOLUME EQUIPE CONSULTOR -->
             <section id="secao-volume-equipe-consultor" class="card-grafico oculto" style="margin-bottom: 24px;">
                 <div class="grafico-cabecalho">
                     <h3 id="titulo-grafico-equipe-consultor">Volume da Equipe: Toyota</h3>
@@ -516,22 +704,65 @@
                 </div>
             </section>
 
+            <!-- TABELA DO ADMINISTRADOR -->
             <section id="secao-admin-ranking" class="card-tabela-agendamentos oculto" style="margin-top: 24px;">
                 <div class="tabela-cabecalho-acoes">
                     <div>
-                        <h2 id="titulo-tabela-admin">Desempenho da Equipe</h2>
-                        <span id="subtitulo-tabela-admin" class="subtitulo-contador">Detalhamento dos agendamentos</span>
+                        <h2 id="titulo-tabela-admin">Desempenho por Equipe</h2>
+                        <span id="subtitulo-tabela-admin" class="subtitulo-contador">Acompanhe por equipe ou filtre individualmente</span>
                     </div>
                     <button id="btn-voltar-admin" class="btn-secundario-tabela oculto">← Voltar para Todas as Equipes</button>
                 </div>
                 <div class="tabela-container">
                     <table>
-                        <thead id="tabela-cabecalho-admin"></thead>
-                        <tbody id="tabela-corpo-admin"></tbody>
+                        <thead id="tabela-cabecalho-admin">
+                            <tr>
+                                <th>EQUIPE</th>
+                                <th class="col-centro">TOTAL AGENDADOS</th>
+                                <th class="col-centro">COMPARECIDOS</th>
+                                <th class="col-centro">NO-SHOW</th>
+                                <th class="col-centro">TAXA DE PRESENÇA</th>
+                                <th class="col-centro">AÇÃO</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-corpo-admin">
+                            <tr><td colspan="6" class="celula-vazia-mensagem">Carregando dados...</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </section>
         </main>
+    </div>
+
+    <!-- MODAL DE CONFIGURAÇÃO DE METAS (ADMIN) -->
+    <div id="modalConfigMetas" class="modal-overlay">
+        <div class="modal-card-metas">
+            <div class="modal-topo-metas">
+                <h3>Definir Meta do Mês</h3>
+                <button type="button" id="btnFecharModalMetas" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">&times;</button>
+            </div>
+            <div class="modal-corpo-metas">
+                <div>
+                    <label class="modal-campo-label">Mês de Aplicação</label>
+                    <input type="month" id="modal-meta-mes" class="modal-input-metas">
+                </div>
+                <div>
+                    <label class="modal-campo-label">Equipe ou Geral</label>
+                    <select id="modal-meta-equipe" class="modal-input-metas">
+                        <option value="Toyota">Equipe Toyota</option>
+                        <option value="Geral">Central Geral (Todas)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="modal-campo-label">Quantidade Alvo de Agendamentos</label>
+                    <input type="number" id="modal-meta-valor" class="modal-input-metas" placeholder="Ex: 900" min="1">
+                </div>
+            </div>
+            <div class="modal-rodape-metas">
+                <button type="button" id="btnCancelarModalMetas" class="btn-cancelar-modal">Cancelar</button>
+                <button type="button" id="btnSalvarModalMetas" class="btn-salvar-modal">Guardar Meta</button>
+            </div>
+        </div>
     </div>
 
     <script src="relatorios.js"></script>
