@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         grupoSenhaConfirma.classList.add('oculto');
         campoSenhaConfirma.removeAttribute('required');
+        campoEquipe.removeAttribute('required');
         
         btnSubmit.textContent = 'Acessar Painel';
         subtituloLogin.textContent = 'Acesse sua conta para continuar';
@@ -59,6 +60,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         grupoSenhaConfirma.classList.remove('oculto');
         campoSenhaConfirma.setAttribute('required', 'required');
+        campoEquipe.setAttribute('required', 'required');
         
         btnSubmit.textContent = 'Cadastrar Conta';
         subtituloLogin.textContent = 'Crie seu perfil profissional no sistema';
@@ -87,7 +89,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 exibirMensagem('Login realizado com sucesso! Redirecionando...', 'sucesso');
                 setTimeout(() => {
                     window.location.href = 'index.html';
-                }, 800);
+                }, 700);
 
             } else {
                 const nomeCompleto = campoNome.value.trim();
@@ -110,7 +112,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
 
                 if (!equipeSelecionada) {
-                    exibirMensagem('Por favor, selecione sua equipe de trabalho.');
+                    exibirMensagem('Por favor, selecione sua marca ou equipe de trabalho.');
                     btnSubmit.disabled = false;
                     btnSubmit.textContent = 'Cadastrar Conta';
                     return;
@@ -141,7 +143,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 exibirMensagem('Conta criada com sucesso! Redirecionando...', 'sucesso');
                 setTimeout(() => {
                     window.location.href = 'index.html';
-                }, 1000);
+                }, 900);
             }
         } catch (erro) {
             console.error('Erro na autenticação:', erro);

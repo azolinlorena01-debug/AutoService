@@ -9,6 +9,30 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .select-equipe-estilizado {
+            height: 42px;
+            width: 100%;
+            padding: 0 12px;
+            border: 1px solid var(--cor-borda-input);
+            border-radius: 6px;
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--texto-principal);
+            background-color: #ffffff;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .select-equipe-estilizado:focus {
+            border-color: var(--cor-destaque);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+        .select-equipe-estilizado optgroup {
+            font-weight: 700;
+            color: #64748b;
+        }
+    </style>
 </head>
 <body class="corpo-login">
     <div class="cartao-login">
@@ -26,12 +50,12 @@
         <form id="formulario-autenticacao">
             <div class="campo-login oculto" id="grupo-nome">
                 <label for="campo-nome">Nome Completo</label>
-                <input type="text" id="campo-nome" placeholder="Digite seu nome">
+                <input type="text" id="campo-nome" placeholder="Digite seu nome completo">
             </div>
 
             <div class="campo-login">
-                <label for="campo-email">E-mail</label>
-                <input type="email" id="campo-email" placeholder="seu.email@autoservice.com.br" required>
+                <label for="campo-email">E-mail Corporativo</label>
+                <input type="email" id="campo-email" placeholder="seu.email@grupobarigui.com.br" required>
             </div>
 
             <div class="campo-login">
@@ -45,9 +69,23 @@
             </div>
 
             <div class="campo-login oculto" id="grupo-equipe">
-                <label for="campo-equipe">Equipe de Trabalho</label>
-                <select id="campo-equipe">
-                    <option value="Toyota" selected>Toyota</option>
+                <label for="campo-equipe">Marca / Equipe de Trabalho</label>
+                <select id="campo-equipe" class="select-equipe-estilizado">
+                    <option value="" disabled selected>Selecione a sua equipe...</option>
+                    
+                    <optgroup label="Marcas Individuais">
+                        <option value="Toyota">Toyota</option>
+                        <option value="Chery">Chery</option>
+                        <option value="Fiat">Fiat</option>
+                        <option value="Ford">Ford</option>
+                        <option value="Nissan">Nissan</option>
+                        <option value="Volkswagen">Volkswagen</option>
+                    </optgroup>
+
+                    <optgroup label="Multimarcas (Mais de uma marca)">
+                        <option value="Renault | BYD">Renault | BYD</option>
+                        <option value="Audi | Citroen | Kia | Omoda">Audi | Citroën | Kia | Omoda</option>
+                    </optgroup>
                 </select>
             </div>
 
