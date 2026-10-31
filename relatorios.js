@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 1. CARREGAMENTO SEGURO DE METAS
+    // 1. SINCRONIZACAO E LEITURA DE METAS POR MARCA
     let cacheMetasBanco = {};
     async function sincronizarMetasBanco() {
         try {
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (!error && data) {
                 cacheMetasBanco = {};
                 data.forEach(item => {
-                    const chave = `${item.mes_referencia}_${item.equipe}`;
+                    const chave = `${item.mes_referencia}_${normalizarNomeMarca(item.equipe)}`;
                     cacheMetasBanco[chave] = parseInt(item.meta_valor, 10);
                 });
             }
@@ -20,13 +20,38 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    function obterMetaEquipe(mesAno, equipe) {
-        const chave = `${mesAno}_${equipe}`;
+    function normalizarNomeMarca(str) {
+        if (!str) return 'Toyota';
+        const s = str.trim();
+        const u = s.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase();
+        if (u.includes('TOYOTA')) return 'Toyota';
+        if (u.includes('VW') || u.includes('VOLKS')) return 'Volkswagen';
+        if (u.includes('FIAT')) return 'Fiat';
+        if (u.includes('RENAULT')) return 'Renault';
+        if (u.includes('BYD')) return 'BYD';
+        if (u.includes('CHERY')) return 'Chery';
+        if (u.includes('NISSAN')) return 'Nissan';
+        if (u.includes('FORD')) return 'Ford';
+        if (u.includes('HYUNDAI')) return 'Hyundai';
+        if (u.includes('OMODA')) return 'Omoda';
+        if (u.includes('KIA')) return 'Kia';
+        if (u.includes('AUDI')) return 'Audi';
+        if (u.includes('CITROEN')) return 'Citroen';
+        if (u.includes('GEELY')) return 'Geely';
+        return s;
+    }
+
+    function obterMetaEquipe(mesAno, marca) {
+        const marcaNorm = normalizarNomeMarca(marca);
+        const chave = `${mesAno}_${marcaNorm}`;
         if (cacheMetasBanco[chave]) return cacheMetasBanco[chave];
+        
         const salvoLocal = localStorage.getItem(`meta_${chave}`);
         if (salvoLocal) return parseInt(salvoLocal, 10);
-        if (mesAno === '2026-09') return 600;
-        return 900;
+        
+        if (marcaNorm === 'Toyota') return 900;
+        if (['Renault', 'Fiat', 'Volkswagen'].includes(marcaNorm)) return 300;
+        return 100;
     }
 
     function obterMetaGeral(mesAno) {
@@ -34,8 +59,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (cacheMetasBanco[chave]) return cacheMetasBanco[chave];
         const salvoLocal = localStorage.getItem(`meta_${chave}`);
         if (salvoLocal) return parseInt(salvoLocal, 10);
-        if (mesAno === '2026-09') return 5000;
-        return 6000;
+        return 2000;
     }
 
     // ELEMENTOS DO DOM
@@ -54,6 +78,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     const secaoMetricasConsultor = document.getElementById('secao-metricas-consultor');
     const filtroMesConsultor = document.getElementById('filtro-mes-consultor');
+    const wrapperSeletorMarca = document.getElementById('wrapper-seletor-marca');
+    const filtroMarcaConsultor = document.getElementById('filtro-marca-consultor');
+    const legendaCardPeriodo = document.getElementById('legenda-card-periodo');
+    const cardMonitoriaConsultor = document.getElementById('card-monitoria-consultor');
+
     const valorConfirmadoEl = document.querySelector('.bonus-confirmado');
     const valorPrevistoEl = document.querySelector('.bonus-previsto');
     const detalheConfirmadoEl = document.querySelector('.bonus-confirmado')?.parentElement.querySelector('.card-detalhe');
@@ -105,7 +134,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         btnVoltarAdmin.style.setProperty('display', 'none', 'important');
     }
 
-    // 2. AUTH GUARD
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session || !session.user) {
         window.location.href = 'login.html';
@@ -114,7 +142,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     const usuarioAtual = session.user;
 
     let isAdmin = false;
-    let equipeUsuario = 'Toyota';
+    let marcasPermitidasUsuario = ['Toyota'];
+    let equipeOficialUsuario = 'Toyota';
     let nomeUsuarioPerfil = '';
 
     try {
@@ -126,7 +155,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         if (perfil) {
             if (perfil.role === 'admin') isAdmin = true;
-            if (perfil.equipe) equipeUsuario = perfil.equipe;
+            if (perfil.equipe) {
+                equipeOficialUsuario = perfil.equipe;
+                marcasPermitidasUsuario = perfil.equipe.split('|').map(s => normalizarNomeMarca(s.trim()));
+            }
             if (perfil.nome) nomeUsuarioPerfil = perfil.nome;
         }
     } catch (e) {
@@ -158,6 +190,24 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.remove('oculto');
         if (cardGraficoEquipeAdmin) cardGraficoEquipeAdmin.classList.add('oculto');
         if (btnAbaVisaoGeral) btnAbaVisaoGeral.textContent = 'Efetividade & Bônus';
+
+        // SELETOR EMBUTIDO NO CARD 1 SE O CONSULTOR FOR MULTIMARCA
+        if (wrapperSeletorMarca && filtroMarcaConsultor) {
+            if (marcasPermitidasUsuario.length > 1) {
+                wrapperSeletorMarca.classList.remove('oculto');
+                filtroMarcaConsultor.innerHTML = '<option value="todas">Todas as Minhas Marcas</option>';
+                marcasPermitidasUsuario.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m;
+                    opt.textContent = m;
+                    filtroMarcaConsultor.appendChild(opt);
+                });
+                if (legendaCardPeriodo) legendaCardPeriodo.textContent = 'Mês e marca de atuação';
+            } else {
+                wrapperSeletorMarca.classList.add('oculto');
+                if (legendaCardPeriodo) legendaCardPeriodo.textContent = 'Filtre o período de apuração';
+            }
+        }
     }
 
     const areaAuth = document.getElementById('area-autenticacao');
@@ -173,7 +223,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
 
         const tagAdmin = isAdmin ? '<span class="tag-badge-admin">Admin</span>' : '';
-        const tagEquipe = !isAdmin ? `<span class="tag-badge-equipe">${equipeUsuario}</span>` : '';
+        const tagEquipe = !isAdmin ? `<span class="tag-badge-equipe">${marcasPermitidasUsuario.join(' | ')}</span>` : '';
 
         areaAuth.innerHTML = `
             <span class="usuario-logado-tag">Olá, <strong>${nomeExibicao}</strong>${tagEquipe}${tagAdmin}</span>
@@ -204,13 +254,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     let agendamentosMesAtual = [];
     let abaGraficoAtual = 'visao-geral';
 
-    // MODAL DE CONFIGURAÇÃO DE METAS
     if (btnAbrirModalMetas && modalConfigMetas) {
         btnAbrirModalMetas.addEventListener('click', () => {
             const mesAtualSel = filtroMesAdmin ? filtroMesAdmin.value : valorMesPadrao;
             modalMetaMes.value = mesAtualSel;
-            modalMetaEquipe.value = 'Toyota';
-            modalMetaValor.value = obterMetaEquipe(mesAtualSel, 'Toyota');
+            const eqAtual = modalMetaEquipe.value || 'Toyota';
+            modalMetaValor.value = (eqAtual === 'Geral') ? obterMetaGeral(mesAtualSel) : obterMetaEquipe(mesAtualSel, eqAtual);
+            if (typeof window.sincronizarDropdownModal === 'function') {
+                window.sincronizarDropdownModal(eqAtual);
+            }
             modalConfigMetas.style.display = 'flex';
         });
 
@@ -222,6 +274,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
 
         modalMetaEquipe?.addEventListener('change', () => {
+            const mesSel = modalMetaMes.value;
+            const eqSel = modalMetaEquipe.value;
+            modalMetaValor.value = (eqSel === 'Geral') ? obterMetaGeral(mesSel) : obterMetaEquipe(mesSel, eqSel);
+        });
+
+        modalMetaMes?.addEventListener('change', () => {
             const mesSel = modalMetaMes.value;
             const eqSel = modalMetaEquipe.value;
             modalMetaValor.value = (eqSel === 'Geral') ? obterMetaGeral(mesSel) : obterMetaEquipe(mesSel, eqSel);
@@ -240,14 +298,15 @@ document.addEventListener('DOMContentLoaded', async function() {
             btnSalvarModalMetas.disabled = true;
             btnSalvarModalMetas.textContent = 'A guardar...';
 
-            const chave = `${mesSel}_${eqSel}`;
+            const eqNorm = (eqSel === 'Geral') ? 'Geral' : normalizarNomeMarca(eqSel);
+            const chave = `${mesSel}_${eqNorm}`;
             localStorage.setItem(`meta_${chave}`, String(val));
             cacheMetasBanco[chave] = val;
 
             try {
                 await supabaseClient.from('metas_mensais').upsert({
                     mes_referencia: mesSel,
-                    equipe: eqSel,
+                    equipe: eqNorm,
                     meta_valor: val,
                     atualizado_em: new Date().toISOString()
                 }, { onConflict: 'mes_referencia, equipe' });
@@ -262,7 +321,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    // PERSISTÊNCIA DA MONITORIA (SALVAR / EDITAR / TRAVAR POR MÊS)
     function obterChaveMonitoria(mes) {
         return `nota_monitoria_${usuarioAtual.id}_${mes}`;
     }
@@ -371,25 +429,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function carregarOpcoesEquipes() {
         if (!isAdmin || !filtroEquipeAdmin) return;
         try {
-            const { data: perfis } = await supabaseClient.from('perfis').select('equipe');
-            const listaEquipes = new Set();
+            const listaMarcas = new Set([
+                'Toyota', 'Chery', 'Fiat', 'Ford', 'Nissan', 'Volkswagen',
+                'Hyundai', 'Renault', 'BYD', 'Geely', 'Audi', 'Citroen', 'Kia', 'Omoda'
+            ]);
             
-            (perfis || []).forEach(p => { 
-                if (p.equipe && p.equipe.trim().length > 0) {
-                    const nomeEq = p.equipe.trim();
-                    if (nomeEq !== 'Pós-Venda' && nomeEq !== 'Equipe Alfa' && nomeEq !== 'Equipe Beta') {
-                        listaEquipes.add(nomeEq);
-                    }
-                }
-            });
-            
-            listaEquipes.add('Toyota');
-            
-            filtroEquipeAdmin.innerHTML = '<option value="todas">Todas as Equipes</option>';
-            [...listaEquipes].sort().forEach(eq => {
+            filtroEquipeAdmin.innerHTML = '<option value="todas">Todas as Marcas</option>';
+            [...listaMarcas].sort().forEach(m => {
                 const opt = document.createElement('option');
-                opt.value = eq;
-                opt.textContent = eq;
+                opt.value = m;
+                opt.textContent = m;
                 filtroEquipeAdmin.appendChild(opt);
             });
 
@@ -397,7 +446,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         } catch (e) {}
     }
 
-    // CARREGAMENTO COM FALLBACK BLINDADO
     async function carregarDados() {
         const mesSelecionado = isAdmin ? filtroMesAdmin.value : filtroMesConsultor.value;
 
@@ -414,7 +462,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                 .order('data_revisao', { ascending: true });
 
             if (!errorView && dataView && dataView.length > 0) {
-                todosAgendamentosHistorico = dataView;
+                todosAgendamentosHistorico = dataView.map(i => ({
+                    ...i,
+                    marca: normalizarNomeMarca(i.marca || i.autor_equipe || 'Toyota')
+                }));
             }
         } catch (e) {}
 
@@ -436,8 +487,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                     const perfil = mapaPerfis.get(item.user_id);
                     return {
                         ...item,
-                        autor_nome: perfil?.nome || 'Consultora Toyota',
-                        autor_equipe: perfil?.equipe || 'Toyota'
+                        autor_nome: perfil?.nome || 'Consultor',
+                        autor_equipe: perfil?.equipe || 'Toyota',
+                        marca: normalizarNomeMarca(item.marca || perfil?.equipe || 'Toyota')
                     };
                 });
             } catch (err) {
@@ -452,13 +504,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         aplicarVisaoRelatorio();
     }
 
-    // APLICAÇÃO DOS CÁLCULOS, BÔNUS E METAS
     function aplicarVisaoRelatorio() {
         const mesSelecionado = isAdmin ? filtroMesAdmin.value : filtroMesConsultor.value;
 
         if (!isAdmin) {
             // =============================================================
-            // VISÃO DO CONSULTOR
+            // VISAO DO CONSULTOR
             // =============================================================
             if (secaoAdminRanking) secaoAdminRanking.classList.add('oculto');
             if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
@@ -466,10 +517,25 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (cardGraficoEquipeAdmin) cardGraficoEquipeAdmin.classList.add('oculto');
             if (badgeBonusEquipe) badgeBonusEquipe.classList.remove('oculto');
 
-            if (tituloGraficoVolume) tituloGraficoVolume.textContent = 'Minha Efetividade';
+            const marcaFiltroConsultor = filtroMarcaConsultor ? filtroMarcaConsultor.value : 'todas';
+
+            // REGRA: Monitoria so aparece se estiver em "Todas as Minhas Marcas" (ou se o usuario so tiver 1 marca)
+            const ehMultimarca = marcasPermitidasUsuario.length > 1;
+            if (cardMonitoriaConsultor) {
+                if (ehMultimarca && marcaFiltroConsultor !== 'todas') {
+                    cardMonitoriaConsultor.classList.add('oculto');
+                } else {
+                    cardMonitoriaConsultor.classList.remove('oculto');
+                }
+            }
+
+            if (tituloGraficoVolume) {
+                tituloGraficoVolume.textContent = (marcaFiltroConsultor === 'todas') 
+                    ? 'Minha Efetividade' 
+                    : `Minha Efetividade: ${marcaFiltroConsultor}`;
+            }
             if (subtituloGraficoVolume) subtituloGraficoVolume.textContent = 'Taxa de presença';
 
-            // Regra de Monitoria (Corte em 90%)
             let notaMonitoria = inputMonitoria ? parseFloat(inputMonitoria.value) : 100;
             if (isNaN(notaMonitoria)) notaMonitoria = 100;
 
@@ -479,35 +545,43 @@ document.addEventListener('DOMContentLoaded', async function() {
                 badgeAjusteMonitoria.className = notaMonitoria >= 90 ? 'badge-ajuste-monitoria' : 'badge-ajuste-monitoria-reducao';
             }
 
-            // 1. Cálculo da Meta da Equipe e Bônus de Equipe (Gatilho >= 80%)
-            const agendamentosEquipe = agendamentosMesAtual.filter(i => (i.autor_equipe || 'Toyota') === equipeUsuario);
+            // 1. Filtragem da Marca Ativa
+            let agendamentosEquipe = [];
+            let metaEquipeDefinida = 0;
+            let rotuloMeta = '';
+
+            if (marcaFiltroConsultor === 'todas') {
+                agendamentosEquipe = agendamentosMesAtual.filter(i => marcasPermitidasUsuario.includes(i.marca));
+                metaEquipeDefinida = marcasPermitidasUsuario.reduce((acc, m) => acc + obterMetaEquipe(mesSelecionado, m), 0);
+                rotuloMeta = marcasPermitidasUsuario.join(' | ').toUpperCase();
+            } else {
+                agendamentosEquipe = agendamentosMesAtual.filter(i => i.marca.toUpperCase() === marcaFiltroConsultor.toUpperCase());
+                metaEquipeDefinida = obterMetaEquipe(mesSelecionado, marcaFiltroConsultor);
+                rotuloMeta = marcaFiltroConsultor.toUpperCase();
+            }
+
             const comparecidosEquipe = agendamentosEquipe.filter(item => item.status === 'compareceu').length;
-            const metaEquipeDefinida = obterMetaEquipe(mesSelecionado, equipeUsuario);
-            
-            // Percentual realizado da equipe
-            const percentualExatoEquipe = (comparecidosEquipe / metaEquipeDefinida) * 100;
+            const percentualExatoEquipe = (comparecidosEquipe / Math.max(1, metaEquipeDefinida)) * 100;
             const percentualMeta = Math.min(100, Math.floor(percentualExatoEquipe));
             const restanteMeta = Math.max(0, metaEquipeDefinida - comparecidosEquipe);
 
-            // Bônus da Equipe: se >= 80%, ganha o valor em reais igual ao percentual (ex: 81% -> R$ 81,00)
             let bonusEquipe = 0.00;
             if (percentualMeta >= 80) {
                 bonusEquipe = parseFloat(percentualMeta);
             }
 
-            tituloMetaEquipe.textContent = `META DA EQUIPE (${equipeUsuario.toUpperCase()})`;
+            tituloMetaEquipe.textContent = `META DA MARCA (${rotuloMeta})`;
             textoProgressoMeta.textContent = `${comparecidosEquipe} / ${metaEquipeDefinida} agendamentos (${percentualMeta}%)`;
             barraProgressoMeta.style.width = `${percentualMeta}%`;
 
             if (restanteMeta === 0) {
-                textoRestanteMeta.textContent = 'Parabéns! Meta da equipe atingida!';
+                textoRestanteMeta.textContent = 'Parabéns! Meta da marca atingida!';
                 textoRestanteMeta.className = 'meta-badge-sucesso';
             } else {
                 textoRestanteMeta.textContent = `Faltam ${restanteMeta} agendamento${restanteMeta === 1 ? '' : 's'} para a meta`;
                 textoRestanteMeta.className = 'meta-badge-restante';
             }
 
-            // Atualiza o Badge de Bônus de Equipe na barra
             if (badgeBonusEquipe) {
                 if (percentualMeta >= 80) {
                     badgeBonusEquipe.textContent = `Bônus Equipe: + R$ ${bonusEquipe.toFixed(2).replace('.', ',')} (${percentualMeta}%)`;
@@ -518,13 +592,16 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
             }
 
-            // 2. Previsão da Equipe (caso todos os agendados da equipe compareçam)
             const totalAgendadosEquipe = agendamentosEquipe.length;
-            const percentualPrevistoEquipe = Math.min(100, Math.floor((totalAgendadosEquipe / metaEquipeDefinida) * 100));
+            const percentualPrevistoEquipe = Math.min(100, Math.floor((totalAgendadosEquipe / Math.max(1, metaEquipeDefinida)) * 100));
             let bonusEquipePrevisto = (percentualPrevistoEquipe >= 80) ? parseFloat(percentualPrevistoEquipe) : 0.00;
 
-            // 3. Bônus Individual das Revisões
-            const meusAgendamentosMes = agendamentosMesAtual.filter(item => item.user_id === usuarioAtual.id);
+            // 2. Meus Agendamentos
+            let meusAgendamentosMes = agendamentosMesAtual.filter(item => item.user_id === usuarioAtual.id);
+            if (marcaFiltroConsultor !== 'todas') {
+                meusAgendamentosMes = meusAgendamentosMes.filter(item => item.marca.toUpperCase() === marcaFiltroConsultor.toUpperCase());
+            }
+
             let totalCompareceu = 0, totalPendente = 0, totalFaltou = 0, somaBonusBaseRealizado = 0, somaBonusBasePrevisto = 0;
 
             meusAgendamentosMes.forEach(item => {
@@ -543,39 +620,42 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
             });
 
-            // 4. Bônus Total Final = (Individual x Monitoria) + Bônus Equipe
-            const bonusIndividualComMonitoria = somaBonusBaseRealizado * fatorMonitoria;
-            const bonusFinalRealizado = bonusIndividualComMonitoria + bonusEquipe;
+            const fatorAplicado = (ehMultimarca && marcaFiltroConsultor !== 'todas') ? 1.00 : fatorMonitoria;
 
-            const bonusIndividualPrevistoComMonitoria = somaBonusBasePrevisto * fatorMonitoria;
-            const bonusFinalPrevisto = bonusIndividualPrevistoComMonitoria + bonusEquipePrevisto;
+            // REGRA ALINHADA COM O SUPORTE:
+            // Soma o Bônus Individual Base com o Bônus de Equipe primeiro,
+            // e depois incide a Monitoria sobre o valor total conjunto.
+            const subtotalRealizado = somaBonusBaseRealizado + bonusEquipe;
+            const bonusFinalRealizado = subtotalRealizado * fatorAplicado;
+
+            const subtotalPrevisto = somaBonusBasePrevisto + bonusEquipePrevisto;
+            const bonusFinalPrevisto = subtotalPrevisto * fatorAplicado;
 
             if (valorConfirmadoEl) valorConfirmadoEl.textContent = `R$ ${bonusFinalRealizado.toFixed(2).replace('.', ',')}`;
             if (valorPrevistoEl) valorPrevistoEl.textContent = `R$ ${bonusFinalPrevisto.toFixed(2).replace('.', ',')}`;
             
             if (detalheConfirmadoEl) {
+                const rotuloMonitoria = fatorAplicado >= 1.10 ? ' + 10% mon.' : (fatorAplicado <= 0.90 ? ' - 10% mon.' : '');
                 if (bonusEquipe > 0) {
-                    detalheConfirmadoEl.textContent = `${totalCompareceu} ${totalCompareceu === 1 ? 'presença' : 'presenças'} (R$ ${bonusIndividualComMonitoria.toFixed(2).replace('.', ',')} ind. + R$ ${bonusEquipe.toFixed(2).replace('.', ',')} equipe)`;
+                    detalheConfirmadoEl.textContent = `${totalCompareceu} ${totalCompareceu === 1 ? 'presença' : 'presenças'} (R$ ${somaBonusBaseRealizado.toFixed(2).replace('.', ',')} ind. + R$ ${bonusEquipe.toFixed(2).replace('.', ',')} eq.${rotuloMonitoria})`;
                 } else {
-                    detalheConfirmadoEl.textContent = `${totalCompareceu} ${totalCompareceu === 1 ? 'presença confirmada' : 'presenças confirmadas'}`;
+                    detalheConfirmadoEl.textContent = `${totalCompareceu} ${totalCompareceu === 1 ? 'presença confirmada' : 'presenças confirmadas'}${rotuloMonitoria ? ' (' + rotuloMonitoria.trim() + ')' : ''}`;
                 }
             }
 
         } else {
-            // =============================================================
-            // VISÃO DO ADMINISTRADOR
-            // =============================================================
+            // ADMIN
             if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
             if (secaoAdminRanking) secaoAdminRanking.classList.remove('oculto');
             if (badgeBonusEquipe) badgeBonusEquipe.classList.add('oculto');
             if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.add('oculto');
             if (secaoVolumeEquipeConsultor) secaoVolumeEquipeConsultor.classList.add('oculto');
 
-            const equipeFiltro = filtroEquipeAdmin ? filtroEquipeAdmin.value : 'todas';
+            const marcaFiltro = filtroEquipeAdmin ? filtroEquipeAdmin.value : 'todas';
 
-            if (equipeFiltro === 'todas') {
+            if (marcaFiltro === 'todas') {
                 if (tituloGraficoVolume) tituloGraficoVolume.textContent = 'Efetividade Geral';
-                if (subtituloGraficoVolume) subtituloGraficoVolume.textContent = 'Taxa de presença de todas as equipes';
+                if (subtituloGraficoVolume) subtituloGraficoVolume.textContent = 'Taxa de presença de todas as marcas';
 
                 const comparecidosGeral = agendamentosMesAtual.filter(item => item.status === 'compareceu').length;
                 const metaGeral = obterMetaGeral(mesSelecionado);
@@ -600,31 +680,31 @@ document.addEventListener('DOMContentLoaded', async function() {
                 renderizarTabelaEquipes(agendamentosMesAtual);
 
             } else {
-                if (tituloGraficoVolume) tituloGraficoVolume.textContent = `Efetividade: ${equipeFiltro}`;
-                if (subtituloGraficoVolume) subtituloGraficoVolume.textContent = 'Taxa de presença desta equipe';
+                if (tituloGraficoVolume) tituloGraficoVolume.textContent = `Efetividade: ${marcaFiltro}`;
+                if (subtituloGraficoVolume) subtituloGraficoVolume.textContent = 'Taxa de presença desta marca';
 
-                const agendamentosEq = agendamentosMesAtual.filter(item => (item.autor_equipe || 'Geral') === equipeFiltro);
-                const comparecidosEq = agendamentosEq.filter(item => item.status === 'compareceu').length;
-                const metaEq = obterMetaEquipe(mesSelecionado, equipeFiltro);
-                const percEq = Math.min(100, Math.round((comparecidosEq / metaEq) * 100));
-                const restEq = Math.max(0, metaEq - comparecidosEq);
+                const agendamentosMarca = agendamentosMesAtual.filter(item => item.marca.toUpperCase() === marcaFiltro.toUpperCase());
+                const comparecidosMarca = agendamentosMarca.filter(item => item.status === 'compareceu').length;
+                const metaMarca = obterMetaEquipe(mesSelecionado, marcaFiltro);
+                const percMarca = Math.min(100, Math.round((comparecidosMarca / Math.max(1, metaMarca)) * 100));
+                const restMarca = Math.max(0, metaMarca - comparecidosMarca);
 
-                tituloMetaEquipe.textContent = `META DA EQUIPE (${equipeFiltro.toUpperCase()})`;
-                textoProgressoMeta.textContent = `${comparecidosEq} / ${metaEq} agendamentos (${percEq}%)`;
-                barraProgressoMeta.style.width = `${percEq}%`;
+                tituloMetaEquipe.textContent = `META DA MARCA: ${marcaFiltro.toUpperCase()}`;
+                textoProgressoMeta.textContent = `${comparecidosMarca} / ${metaMarca} agendamentos (${percMarca}%)`;
+                barraProgressoMeta.style.width = `${percMarca}%`;
 
                 if (textoRestanteMeta) {
-                    textoRestanteMeta.textContent = restEq === 0 
-                        ? 'Parabéns! Meta da equipe atingida!' 
-                        : `Faltam ${restEq} agendamentos para a meta`;
-                    textoRestanteMeta.className = restEq === 0 ? 'meta-badge-sucesso' : 'meta-badge-restante';
+                    textoRestanteMeta.textContent = restMarca === 0 
+                        ? 'Parabéns! Meta da marca atingida!' 
+                        : `Faltam ${restMarca} agendamentos para a meta`;
+                    textoRestanteMeta.className = restMarca === 0 ? 'meta-badge-sucesso' : 'meta-badge-restante';
                 }
 
                 if (btnVoltarAdmin) {
                     btnVoltarAdmin.classList.remove('oculto');
                     btnVoltarAdmin.style.setProperty('display', 'inline-flex', 'important');
                 }
-                renderizarTabelaOperadores(agendamentosEq, equipeFiltro);
+                renderizarTabelaOperadores(agendamentosMarca, marcaFiltro);
             }
         }
 
@@ -633,12 +713,28 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     function renderizarGraficosAtivos() {
-        const equipeFiltro = isAdmin ? (filtroEquipeAdmin ? filtroEquipeAdmin.value : 'todas') : equipeUsuario;
+        const marcaFiltro = isAdmin 
+            ? (filtroEquipeAdmin ? filtroEquipeAdmin.value : 'todas') 
+            : (filtroMarcaConsultor ? filtroMarcaConsultor.value : 'todas');
+        
         let dadosFiltrados = agendamentosMesAtual;
-        if (isAdmin && equipeFiltro !== 'todas') {
-            dadosFiltrados = agendamentosMesAtual.filter(item => (item.autor_equipe || 'Geral') === equipeFiltro);
+
+        if (isAdmin) {
+            if (marcaFiltro !== 'todas') {
+                dadosFiltrados = agendamentosMesAtual.filter(item => item.marca.toUpperCase() === marcaFiltro.toUpperCase());
+            }
+        } else {
+            if (marcaFiltro === 'todas') {
+                dadosFiltrados = agendamentosMesAtual.filter(item => marcasPermitidasUsuario.includes(item.marca));
+            } else {
+                dadosFiltrados = agendamentosMesAtual.filter(item => item.marca.toUpperCase() === marcaFiltro.toUpperCase());
+            }
         }
-        const meusAgendamentosMes = agendamentosMesAtual.filter(item => item.user_id === usuarioAtual.id);
+
+        let meusAgendamentosMes = agendamentosMesAtual.filter(item => item.user_id === usuarioAtual.id);
+        if (!isAdmin && marcaFiltro !== 'todas') {
+            meusAgendamentosMes = meusAgendamentosMes.filter(item => item.marca.toUpperCase() === marcaFiltro.toUpperCase());
+        }
 
         if (abaGraficoAtual === 'visao-geral') {
             let totalCompareceu = 0, totalPendente = 0, totalFaltou = 0;
@@ -654,11 +750,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             renderizarGraficoVolume(totalCompareceu, totalPendente, totalFaltou);
 
             if (!isAdmin) {
-                const meusAgendamentosHistorico = todosAgendamentosHistorico.filter(item => item.user_id === usuarioAtual.id);
-                renderizarGraficoBonusMensal(meusAgendamentosHistorico);
-            } else if (equipeFiltro !== 'todas') {
-                if (tituloGraficoEquipeAdmin) tituloGraficoEquipeAdmin.textContent = `Operadores de ${equipeFiltro}`;
-                if (subtituloGraficoEquipeAdmin) subtituloGraficoEquipeAdmin.textContent = 'Volume por operador desta equipe';
+                let meusHistorico = todosAgendamentosHistorico.filter(item => item.user_id === usuarioAtual.id);
+                if (marcaFiltro !== 'todas') {
+                    meusHistorico = meusHistorico.filter(item => item.marca.toUpperCase() === marcaFiltro.toUpperCase());
+                }
+                renderizarGraficoBonusMensal(meusHistorico);
+            } else if (marcaFiltro !== 'todas') {
+                if (tituloGraficoEquipeAdmin) tituloGraficoEquipeAdmin.textContent = `Operadores de ${marcaFiltro}`;
+                if (subtituloGraficoEquipeAdmin) subtituloGraficoEquipeAdmin.textContent = 'Volume por operador desta marca';
                 renderizarGraficoBarrasHorizontais('graficoEquipeAdmin', dadosFiltrados);
             }
 
@@ -667,7 +766,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (tituloGraficoRevisoesTipo) {
                 tituloGraficoRevisoesTipo.textContent = !isAdmin 
                     ? 'Minhas Revisões por Categoria' 
-                    : (equipeFiltro === 'todas' ? 'Revisões por Categoria (Todas as Equipes)' : `Revisões por Categoria: Equipe ${equipeFiltro}`);
+                    : (marcaFiltro === 'todas' ? 'Revisões por Categoria (Todas as Marcas)' : `Revisões por Categoria: ${marcaFiltro}`);
             }
             renderizarGraficoRevisoesPorTipo(listaCategorias);
 
@@ -675,12 +774,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             renderizarRankingOperadores(agendamentosMesAtual);
 
         } else if (abaGraficoAtual === 'equipe') {
-            if (tituloGraficoEquipeConsultor) tituloGraficoEquipeConsultor.textContent = `Volume da Equipe: ${equipeUsuario}`;
+            const rotulo = (!isAdmin && marcaFiltro !== 'todas') ? marcaFiltro : marcasPermitidasUsuario.join(' | ');
+            if (tituloGraficoEquipeConsultor) tituloGraficoEquipeConsultor.textContent = `Volume da Equipe: ${rotulo}`;
             if (subtituloGraficoEquipeConsultor) subtituloGraficoEquipeConsultor.textContent = 'Volume por operador desta equipe';
-            renderizarGraficoBarrasHorizontais('graficoEquipeConsultor', agendamentosMesAtual);
+            renderizarGraficoBarrasHorizontais('graficoEquipeConsultor', dadosFiltrados);
         }
     }
 
+    // RANKING OFICIAL UNIFICADO POR OPERADOR (PUXA A EQUIPE CADASTRADA NO SUPABASE)
     function renderizarRankingOperadores(agendamentos) {
         if (!containerRankingLista) return;
         containerRankingLista.innerHTML = '';
@@ -693,7 +794,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 operadores[id] = {
                     id: id,
                     nome: (item.autor_nome || 'Operador').trim(),
-                    equipe: item.autor_equipe || 'Geral',
+                    equipeOficial: item.autor_equipe || item.marca || 'Geral',
                     total: 0,
                     compareceu: 0,
                     faltou: 0
@@ -742,7 +843,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <div class="posicao-circulo ${classePos}">${textoPos}</div>
                     <div class="operador-info-bloco">
                         <strong>${op.nome}</strong>
-                        <span>Equipe ${op.equipe} • ${taxaPresenca}% de presença</span>
+                        <span>${op.equipeOficial} • ${taxaPresenca}% de presença</span>
                     </div>
                     <div class="ranking-barra-area">
                         <div class="ranking-trilho">
@@ -980,11 +1081,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     function renderizarTabelaEquipes(agendamentos) {
         if (!tituloTabelaAdmin || !tabelaCabecalhoAdmin || !tabelaCorpoAdmin) return;
         
-        tituloTabelaAdmin.textContent = 'Desempenho por Equipe';
-        subtituloTabelaAdmin.textContent = 'Acompanhe por equipe ou filtre individualmente';
+        tituloTabelaAdmin.textContent = 'Desempenho por Marca';
+        subtituloTabelaAdmin.textContent = 'Acompanhe por montadora ou filtre individualmente';
         tabelaCabecalhoAdmin.innerHTML = `
             <tr>
-                <th>EQUIPE</th>
+                <th>MARCA / MONTADORA</th>
                 <th class="col-centro">TOTAL AGENDADOS</th>
                 <th class="col-centro">COMPARECIDOS</th>
                 <th class="col-centro">NO-SHOW</th>
@@ -995,11 +1096,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const grupos = {};
         agendamentos.forEach(item => {
-            const eq = item.autor_equipe || 'Toyota';
-            if (!grupos[eq]) grupos[eq] = { equipe: eq, total: 0, compareceu: 0, faltou: 0 };
-            grupos[eq].total++;
-            if (item.status === 'compareceu') grupos[eq].compareceu++;
-            else if (item.status === 'faltou') grupos[eq].faltou++;
+            const m = normalizarNomeMarca(item.marca || 'Toyota');
+            if (!grupos[m]) grupos[m] = { marca: m, total: 0, compareceu: 0, faltou: 0 };
+            grupos[m].total++;
+            if (item.status === 'compareceu') grupos[m].compareceu++;
+            else if (item.status === 'faltou') grupos[m].faltou++;
         });
 
         const lista = Object.values(grupos).sort((a, b) => b.total - a.total);
@@ -1010,22 +1111,22 @@ document.addEventListener('DOMContentLoaded', async function() {
             return;
         }
 
-        lista.forEach(eq => {
-            const taxa = eq.total > 0 ? Math.round((eq.compareceu / eq.total) * 100) : 0;
+        lista.forEach(itemMarca => {
+            const taxa = itemMarca.total > 0 ? Math.round((itemMarca.compareceu / itemMarca.total) * 100) : 0;
             const badgeClasse = taxa >= 70 ? 'badge-taxa-alta' : 'badge-taxa-normal';
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><strong>${eq.equipe}</strong></td>
-                <td class="col-centro"><strong>${eq.total}</strong></td>
-                <td class="col-centro admin-val-sucesso"><strong>${eq.compareceu}</strong></td>
-                <td class="col-centro admin-val-perigo">${eq.faltou}</td>
+                <td><strong>${itemMarca.marca}</strong></td>
+                <td class="col-centro"><strong>${itemMarca.total}</strong></td>
+                <td class="col-centro admin-val-sucesso"><strong>${itemMarca.compareceu}</strong></td>
+                <td class="col-centro admin-val-perigo">${itemMarca.faltou}</td>
                 <td class="col-centro">
                     <span class="badge-taxa-tabela ${badgeClasse}">
                         ${taxa}%
                     </span>
                 </td>
                 <td class="col-centro">
-                    <button class="btn-ver-equipe" data-equipe="${eq.equipe}">
+                    <button class="btn-ver-equipe" data-equipe="${itemMarca.marca}">
                         Ver Operadores ➔
                     </button>
                 </td>
@@ -1035,17 +1136,17 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         document.querySelectorAll('.btn-ver-equipe').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const equipe = e.currentTarget.dataset.equipe;
-                if (filtroEquipeAdmin) filtroEquipeAdmin.value = equipe;
+                const marca = e.currentTarget.dataset.equipe;
+                if (filtroEquipeAdmin) filtroEquipeAdmin.value = marca;
                 aplicarVisaoRelatorio();
             });
         });
     }
 
-    function renderizarTabelaOperadores(agendamentos, nomeEquipe) {
+    function renderizarTabelaOperadores(agendamentos, nomeMarca) {
         if (!tituloTabelaAdmin || !tabelaCabecalhoAdmin || !tabelaCorpoAdmin) return;
 
-        tituloTabelaAdmin.textContent = `Operadores da Equipe: ${nomeEquipe}`;
+        tituloTabelaAdmin.textContent = `Operadores de ${nomeMarca}`;
         subtituloTabelaAdmin.textContent = `Métricas individuais e distribuição de revisões dos consultores`;
         tabelaCabecalhoAdmin.innerHTML = `
             <tr>
@@ -1064,7 +1165,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const chave = item.user_id || item.autor_nome || 'desconhecido';
             if (!operadores[chave]) {
                 operadores[chave] = {
-                    nome: item.autor_nome || 'Consultora Toyota',
+                    nome: item.autor_nome || 'Operador',
                     total: 0,
                     compareceu: 0,
                     pendente: 0,
@@ -1085,7 +1186,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         tabelaCorpoAdmin.innerHTML = '';
 
         if (lista.length === 0) {
-            tabelaCorpoAdmin.innerHTML = '<tr><td colspan="7" class="celula-vazia-mensagem">Nenhum agendamento para esta equipe.</td></tr>';
+            tabelaCorpoAdmin.innerHTML = '<tr><td colspan="7" class="celula-vazia-mensagem">Nenhum agendamento para esta marca.</td></tr>';
             return;
         }
 
@@ -1162,6 +1263,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (filtroMesAdmin) filtroMesAdmin.addEventListener('change', carregarDados);
     if (filtroEquipeAdmin) filtroEquipeAdmin.addEventListener('change', aplicarVisaoRelatorio);
     if (filtroMesConsultor) filtroMesConsultor.addEventListener('change', carregarDados);
+    if (filtroMarcaConsultor) filtroMarcaConsultor.addEventListener('change', aplicarVisaoRelatorio);
     if (inputMonitoria) inputMonitoria.addEventListener('input', aplicarVisaoRelatorio);
 
     if (btnVoltarAdmin) {

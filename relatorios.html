@@ -6,6 +6,7 @@
     <title>Painel de Bônus - Relatórios & Gráficos</title>
     <link rel="icon" type="image/jpeg" href="imagens/icone-sem-fundo.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
@@ -29,6 +30,21 @@
         .card .input-mes-card:focus {
             border-color: #2563eb;
             background-color: #ffffff;
+        }
+
+        .select-marca-embutido {
+            width: 100%;
+            height: 34px;
+            padding: 0 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background-color: #ffffff;
+            color: #1e293b;
+            font-size: 12.5px;
+            font-weight: 600;
+            outline: none;
+            margin-top: 6px;
+            box-sizing: border-box;
         }
 
         .grupo-input-monitoria {
@@ -238,6 +254,7 @@
             border-color: #94a3b8;
         }
 
+        /* MODAL COM DESIGN RESPONSIVO E SEGURO */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -258,12 +275,12 @@
             color: #1e293b;
             border-radius: 12px;
             width: 100%;
-            max-width: 440px;
+            max-width: 460px;
             display: flex;
             flex-direction: column;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
             border: 1px solid #e2e8f0;
-            overflow: hidden;
+            position: relative;
         }
         .modal-topo-metas {
             display: flex;
@@ -304,11 +321,97 @@
             background: #f8fafc;
             outline: none;
             box-sizing: border-box;
+            transition: border-color 0.2s;
         }
         .modal-input-metas:focus {
             border-color: #2563eb;
             background: #ffffff;
         }
+
+        /* DROPDOWN CUSTOMIZADO COM ALTURA MÁXIMA CONTROLADA */
+        .custom-dropdown-container {
+            position: relative;
+            width: 100%;
+        }
+        .custom-dropdown-trigger {
+            width: 100%;
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #1e293b;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            box-sizing: border-box;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+        .custom-dropdown-trigger:hover {
+            border-color: #94a3b8;
+            background: #ffffff;
+        }
+        .custom-dropdown-trigger.aberto {
+            border-color: #2563eb;
+            background: #ffffff;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+        .custom-dropdown-arrow {
+            font-size: 11px;
+            color: #64748b;
+            transition: transform 0.2s ease;
+        }
+        .custom-dropdown-trigger.aberto .custom-dropdown-arrow {
+            transform: rotate(180deg);
+        }
+        .custom-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            width: 100%;
+            max-height: 175px; /* Altura controlada para nunca cortar nem descer até a barra de tarefas */
+            overflow-y: auto;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            z-index: 10000;
+            box-sizing: border-box;
+            padding: 4px 0;
+        }
+        .custom-dropdown-menu.visivel {
+            display: block;
+        }
+        .custom-dropdown-group-title {
+            padding: 6px 12px 2px 12px;
+            font-size: 10.5px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            user-select: none;
+        }
+        .custom-dropdown-item {
+            padding: 8px 14px;
+            font-size: 13.5px;
+            color: #1e293b;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .custom-dropdown-item:hover {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+        .custom-dropdown-item.selecionado {
+            background: #2563eb;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
         .modal-rodape-metas {
             padding: 14px 20px;
             background: #f8fafc;
@@ -557,7 +660,7 @@
             <section id="secao-filtros-admin" class="painel-filtros-admin oculto">
                 <div class="info-titulos">
                     <h2>Visão Administrador</h2>
-                    <p>Filtre o período e equipe ou configure as metas</p>
+                    <p>Filtre o período e a marca de atuação ou configure as metas</p>
                 </div>
                 <div class="controles-filtros-admin">
                     <div>
@@ -565,9 +668,9 @@
                         <input type="month" id="filtro-mes-admin" class="input-mes-estilizado filtro-admin-mes-select">
                     </div>
                     <div>
-                        <span class="filtro-item-label">FILTRAR EQUIPE</span>
+                        <span class="filtro-item-label">FILTRAR MARCA</span>
                         <select id="filtro-equipe-admin" class="input-mes-estilizado filtro-admin-equipe-select">
-                            <option value="todas">Todas as Equipes</option>
+                            <option value="todas">Todas as Marcas</option>
                         </select>
                     </div>
                     <div>
@@ -578,24 +681,36 @@
                 </div>
             </section>
 
-            <!-- CARDS DE MÉTRICAS DO CONSULTOR -->
+            <!-- CARDS DE MÉTRICAS DO CONSULTOR (SEMPRE 4 CARDS EM UMA LINHA HARMONIOSA) -->
             <section id="secao-metricas-consultor" class="barra-metricas-topo oculto">
-                <div class="card">
-                    <span class="card-titulo">MÊS DE REFERÊNCIA</span>
+                <!-- Card 1: Período e Seletor de Marca (embutido se for multimarca) -->
+                <div class="card" id="card-periodo-consultor">
+                    <span class="card-titulo">PERÍODO & ATUAÇÃO</span>
                     <input type="month" id="filtro-mes-consultor" class="input-mes-card">
-                    <span class="card-detalhe">Filtre o período de apuração</span>
+                    <div id="wrapper-seletor-marca" class="oculto">
+                        <select id="filtro-marca-consultor" class="select-marca-embutido">
+                            <option value="todas">Todas as Minhas Marcas</option>
+                        </select>
+                    </div>
+                    <span id="legenda-card-periodo" class="card-detalhe">Filtre o período de apuração</span>
                 </div>
+
+                <!-- Card 2: Bônus Realizado -->
                 <div class="card">
                     <span class="card-titulo">BÔNUS REALIZADO</span>
                     <h2 class="bonus-confirmado">R$ 0,00</h2>
                     <span class="card-detalhe">0 presenças confirmadas</span>
                 </div>
+
+                <!-- Card 3: Previsão Máxima -->
                 <div class="card">
                     <span class="card-titulo">PREVISÃO MÁXIMA</span>
                     <h2 class="bonus-previsto">R$ 0,00</h2>
                     <span class="card-detalhe">Se todos os agendados comparecerem</span>
                 </div>
-                <div class="card">
+
+                <!-- Card 4: Nota de Monitoria (visível para marcas únicas ou na visão global) -->
+                <div class="card" id="card-monitoria-consultor">
                     <span class="card-titulo">NOTA DE MONITORIA</span>
                     <div class="grupo-input-monitoria">
                         <input type="number" id="input-monitoria" value="100" min="0" max="100">
@@ -645,7 +760,7 @@
                 <div class="card-grafico" id="card-grafico-volume-wrapper">
                     <div class="grafico-cabecalho">
                         <h3 id="titulo-grafico-volume">Efetividade Geral</h3>
-                        <p id="subtitulo-grafico-volume">Taxa de presença de todas as equipes</p>
+                        <p id="subtitulo-grafico-volume">Taxa de presença de todas as marcas</p>
                     </div>
                     <div class="grafico-container" style="height: 270px;">
                         <canvas id="graficoVolume"></canvas>
@@ -664,8 +779,8 @@
 
                 <div id="card-grafico-equipe-admin" class="card-grafico oculto">
                     <div class="grafico-cabecalho">
-                        <h3 id="titulo-grafico-equipe-admin">Operadores da Equipe</h3>
-                        <p id="subtitulo-grafico-equipe-admin">Volume por operador desta equipe</p>
+                        <h3 id="titulo-grafico-equipe-admin">Operadores da Marca</h3>
+                        <p id="subtitulo-grafico-equipe-admin">Volume por operador desta marca</p>
                     </div>
                     <div class="grafico-container" style="height: 270px;">
                         <canvas id="graficoEquipeAdmin"></canvas>
@@ -696,8 +811,8 @@
             <!-- VOLUME EQUIPE CONSULTOR -->
             <section id="secao-volume-equipe-consultor" class="card-grafico oculto" style="margin-bottom: 24px;">
                 <div class="grafico-cabecalho">
-                    <h3 id="titulo-grafico-equipe-consultor">Volume da Equipe: Toyota</h3>
-                    <p id="subtitulo-grafico-equipe-consultor">Volume por operador desta equipe</p>
+                    <h3 id="titulo-grafico-equipe-consultor">Volume da Equipe</h3>
+                    <p id="subtitulo-grafico-equipe-consultor">Volume por operador desta marca</p>
                 </div>
                 <div class="grafico-container" style="height: 300px;">
                     <canvas id="graficoEquipeConsultor"></canvas>
@@ -708,16 +823,16 @@
             <section id="secao-admin-ranking" class="card-tabela-agendamentos oculto" style="margin-top: 24px;">
                 <div class="tabela-cabecalho-acoes">
                     <div>
-                        <h2 id="titulo-tabela-admin">Desempenho por Equipe</h2>
-                        <span id="subtitulo-tabela-admin" class="subtitulo-contador">Acompanhe por equipe ou filtre individualmente</span>
+                        <h2 id="titulo-tabela-admin">Desempenho por Marca</h2>
+                        <span id="subtitulo-tabela-admin" class="subtitulo-contador">Acompanhe por montadora ou filtre individualmente</span>
                     </div>
-                    <button id="btn-voltar-admin" class="btn-secundario-tabela oculto">← Voltar para Todas as Equipes</button>
+                    <button id="btn-voltar-admin" class="btn-secundario-tabela oculto">← Voltar para Todas as Marcas</button>
                 </div>
                 <div class="tabela-container">
                     <table>
                         <thead id="tabela-cabecalho-admin">
                             <tr>
-                                <th>EQUIPE</th>
+                                <th>MARCA / MONTADORA</th>
                                 <th class="col-centro">TOTAL AGENDADOS</th>
                                 <th class="col-centro">COMPARECIDOS</th>
                                 <th class="col-centro">NO-SHOW</th>
@@ -734,7 +849,7 @@
         </main>
     </div>
 
-    <!-- MODAL DE CONFIGURAÇÃO DE METAS (ADMIN) -->
+    <!-- MODAL DE CONFIGURAÇÃO DE METAS (ADMIN) - COM DROPDOWN CONTROLADO QUE NUNCA CORTA -->
     <div id="modalConfigMetas" class="modal-overlay">
         <div class="modal-card-metas">
             <div class="modal-topo-metas">
@@ -747,11 +862,55 @@
                     <input type="month" id="modal-meta-mes" class="modal-input-metas">
                 </div>
                 <div>
-                    <label class="modal-campo-label">Equipe ou Geral</label>
-                    <select id="modal-meta-equipe" class="modal-input-metas">
-                        <option value="Toyota">Equipe Toyota</option>
-                        <option value="Geral">Central Geral (Todas)</option>
+                    <label class="modal-campo-label">Marca / Montadora</label>
+                    
+                    <!-- Select original mantido para compatibilidade total com JS -->
+                    <select id="modal-meta-equipe" style="display: none;">
+                        <option value="Geral">Central Geral (Todas as Marcas)</option>
+                        <option value="Toyota" selected>Toyota</option>
+                        <option value="Chery">Chery</option>
+                        <option value="Fiat">Fiat</option>
+                        <option value="Ford">Ford</option>
+                        <option value="Nissan">Nissan</option>
+                        <option value="Volkswagen">Volkswagen</option>
+                        <option value="Hyundai">Hyundai</option>
+                        <option value="Renault">Renault</option>
+                        <option value="BYD">BYD</option>
+                        <option value="Geely">Geely</option>
+                        <option value="Audi">Audi</option>
+                        <option value="Citroen">Citroën</option>
+                        <option value="Kia">Kia</option>
+                        <option value="Omoda">Omoda</option>
                     </select>
+
+                    <!-- Dropdown Customizado com limite de altura e rolagem suave -->
+                    <div class="custom-dropdown-container" id="custom-marca-dropdown">
+                        <div class="custom-dropdown-trigger" id="custom-dropdown-trigger">
+                            <span id="custom-dropdown-label">Toyota</span>
+                            <span class="custom-dropdown-arrow">▼</span>
+                        </div>
+                        <div class="custom-dropdown-menu" id="custom-dropdown-menu">
+                            <div class="custom-dropdown-item" data-value="Geral">Central Geral (Todas as Marcas)</div>
+                            
+                            <div class="custom-dropdown-group-title">Marcas Individuais</div>
+                            <div class="custom-dropdown-item selecionado" data-value="Toyota">Toyota</div>
+                            <div class="custom-dropdown-item" data-value="Chery">Chery</div>
+                            <div class="custom-dropdown-item" data-value="Fiat">Fiat</div>
+                            <div class="custom-dropdown-item" data-value="Ford">Ford</div>
+                            <div class="custom-dropdown-item" data-value="Nissan">Nissan</div>
+                            <div class="custom-dropdown-item" data-value="Volkswagen">Volkswagen</div>
+                            <div class="custom-dropdown-item" data-value="Hyundai">Hyundai</div>
+
+                            <div class="custom-dropdown-group-title">Multimarcas (Outras)</div>
+                            <div class="custom-dropdown-item" data-value="Renault">Renault</div>
+                            <div class="custom-dropdown-item" data-value="BYD">BYD</div>
+                            <div class="custom-dropdown-item" data-value="Geely">Geely</div>
+                            <div class="custom-dropdown-item" data-value="Audi">Audi</div>
+                            <div class="custom-dropdown-item" data-value="Citroen">Citroën</div>
+                            <div class="custom-dropdown-item" data-value="Kia">Kia</div>
+                            <div class="custom-dropdown-item" data-value="Omoda">Omoda</div>
+                        </div>
+                    </div>
                 </div>
                 <div>
                     <label class="modal-campo-label">Quantidade Alvo de Agendamentos</label>
@@ -764,6 +923,72 @@
             </div>
         </div>
     </div>
+
+    <!-- Script integrado para controlar o dropdown elegante do modal sem estourar limites -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const trigger = document.getElementById('custom-dropdown-trigger');
+            const menu = document.getElementById('custom-dropdown-menu');
+            const label = document.getElementById('custom-dropdown-label');
+            const selectOriginal = document.getElementById('modal-meta-equipe');
+            const itens = document.querySelectorAll('.custom-dropdown-item');
+
+            if (!trigger || !menu || !selectOriginal) return;
+
+            // Abrir e fechar ao clicar no campo
+            trigger.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const estaAberto = menu.classList.contains('visivel');
+                if (estaAberto) {
+                    menu.classList.remove('visivel');
+                    trigger.classList.remove('aberto');
+                } else {
+                    menu.classList.add('visivel');
+                    trigger.classList.add('aberto');
+                }
+            });
+
+            // Seleção de item
+            itens.forEach(function(item) {
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const valor = item.getAttribute('data-value');
+                    const texto = item.textContent.trim();
+
+                    itens.forEach(i => i.classList.remove('selecionado'));
+                    item.classList.add('selecionado');
+                    label.textContent = texto;
+
+                    // Atualiza o select nativo e dispara o evento change do relatorios.js
+                    selectOriginal.value = valor;
+                    selectOriginal.dispatchEvent(new Event('change'));
+
+                    menu.classList.remove('visivel');
+                    trigger.classList.remove('aberto');
+                });
+            });
+
+            // Sincroniza se o JS alterar o selectOriginal externamente
+            window.sincronizarDropdownModal = function(val) {
+                selectOriginal.value = val;
+                itens.forEach(function(i) {
+                    if (i.getAttribute('data-value') === val) {
+                        itens.forEach(it => it.classList.remove('selecionado'));
+                        i.classList.add('selecionado');
+                        label.textContent = i.textContent.trim();
+                    }
+                });
+            };
+
+            // Fechar ao clicar fora
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#custom-marca-dropdown')) {
+                    menu.classList.remove('visivel');
+                    trigger.classList.remove('aberto');
+                }
+            });
+        });
+    </script>
 
     <script src="relatorios.js"></script>
 </body>

@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Bônus - Importar e Exportar</title>
     <link rel="icon" type="image/jpeg" href="imagens/icone-sem-fundo.png">
-    <!-- Bibliotecas: Supabase e Leitor de Excel/XLSX (SheetJS) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -30,23 +29,10 @@
             min-height: 520px;
             box-sizing: border-box;
         }
-        .import-header {
-            margin-bottom: 20px;
-        }
-        .import-header h2 {
-            font-size: 18px;
-            font-weight: 700;
-            color: #1e293b;
-            margin: 0 0 6px 0;
-        }
-        .import-header p {
-            font-size: 13px;
-            color: #64748b;
-            margin: 0;
-        }
-        .grupo-campo {
-            margin-bottom: 18px;
-        }
+        .import-header { margin-bottom: 20px; }
+        .import-header h2 { font-size: 18px; font-weight: 700; color: #1e293b; margin: 0 0 6px 0; }
+        .import-header p { font-size: 13px; color: #64748b; margin: 0; }
+        .grupo-campo { margin-bottom: 18px; }
         .grupo-campo label {
             display: block;
             font-size: 12px;
@@ -68,9 +54,7 @@
             cursor: pointer;
             transition: border-color 0.2s ease;
         }
-        .custom-file-input:hover {
-            border-color: #2563eb;
-        }
+        .custom-file-input:hover { border-color: #2563eb; }
         .custom-select {
             width: 100%;
             height: 42px;
@@ -95,13 +79,8 @@
             cursor: pointer;
             transition: background 0.2s ease;
         }
-        .btn-enviar-dados:hover {
-            background: #1d4ed8;
-        }
-        .btn-enviar-dados:disabled {
-            background: #94a3b8;
-            cursor: not-allowed;
-        }
+        .btn-enviar-dados:hover { background: #1d4ed8; }
+        .btn-enviar-dados:disabled { background: #94a3b8; cursor: not-allowed; }
         .btn-secundario-acao {
             width: 100%;
             height: 44px;
@@ -115,10 +94,7 @@
             transition: all 0.2s ease;
             margin-bottom: 12px;
         }
-        .btn-secundario-acao:hover {
-            background: #f8fafc;
-            border-color: #94a3b8;
-        }
+        .btn-secundario-acao:hover { background: #f8fafc; border-color: #94a3b8; }
         .status-box {
             margin-top: 14px;
             background: #f8fafc;
@@ -144,11 +120,7 @@
             color: #475569;
             margin-bottom: 18px;
         }
-        .box-info-export strong {
-            color: #1e293b;
-            display: block;
-            margin-bottom: 4px;
-        }
+        .box-info-export strong { color: #1e293b; display: block; margin-bottom: 4px; }
         .historico-secao {
             max-width: 960px;
             margin: 0 auto 50px auto;
@@ -159,29 +131,11 @@
             padding: 26px 30px;
             box-sizing: border-box;
         }
-        .historico-cabecalho {
-            margin-bottom: 18px;
-        }
-        .historico-cabecalho h2 {
-            font-size: 18px;
-            font-weight: 700;
-            color: #1e293b;
-            margin: 0 0 4px 0;
-        }
-        .historico-cabecalho p {
-            font-size: 13px;
-            color: #64748b;
-            margin: 0;
-        }
-        .historico-tabela-container {
-            width: 100%;
-            overflow-x: auto;
-        }
-        .historico-tabela {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
+        .historico-cabecalho { margin-bottom: 18px; }
+        .historico-cabecalho h2 { font-size: 18px; font-weight: 700; color: #1e293b; margin: 0 0 4px 0; }
+        .historico-cabecalho p { font-size: 13px; color: #64748b; margin: 0; }
+        .historico-tabela-container { width: 100%; overflow-x: auto; }
+        .historico-tabela { width: 100%; border-collapse: collapse; font-size: 13px; }
         .historico-tabela th {
             padding: 12px 14px;
             background: #f8fafc;
@@ -209,10 +163,7 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        .btn-ver-detalhes-log:hover {
-            background: #eff6ff;
-            border-color: #bfdbfe;
-        }
+        .btn-ver-detalhes-log:hover { background: #eff6ff; border-color: #bfdbfe; }
         .btn-excluir-historico {
             background: none;
             border: none;
@@ -223,69 +174,38 @@
             border-radius: 6px;
             transition: background 0.2s;
         }
-        .btn-excluir-historico:hover {
-            background: #fee2e2;
-        }
+        .btn-excluir-historico:hover { background: #fee2e2; }
         .modal-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.6);
             backdrop-filter: blur(2px);
             z-index: 9999;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
+            justify-content: center; align-items: center;
+            padding: 20px; box-sizing: border-box;
         }
         .modal-card {
             background: #0f172a;
             color: #f8fafc;
             border-radius: 12px;
-            width: 100%;
-            max-width: 580px;
-            max-height: 80vh;
-            display: flex;
-            flex-direction: column;
+            width: 100%; max-width: 580px; max-height: 80vh;
+            display: flex; flex-direction: column;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
             border: 1px solid #334155;
             overflow: hidden;
         }
         .modal-topo {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px;
-            border-bottom: 1px solid #1e293b;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 20px; border-bottom: 1px solid #1e293b;
         }
-        .modal-topo h3 {
-            font-size: 15px;
-            font-weight: 700;
-            margin: 0;
-            color: #ffffff;
-        }
-        .btn-fechar-modal {
-            background: none;
-            border: none;
-            color: #94a3b8;
-            font-size: 20px;
-            cursor: pointer;
-            font-weight: 700;
-        }
-        .btn-fechar-modal:hover {
-            color: #ffffff;
-        }
+        .modal-topo h3 { font-size: 15px; font-weight: 700; margin: 0; color: #ffffff; }
+        .btn-fechar-modal { background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; font-weight: 700; }
+        .btn-fechar-modal:hover { color: #ffffff; }
         .modal-corpo {
-            padding: 20px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 12.5px;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            color: #cbd5e1;
+            padding: 20px; overflow-y: auto; font-family: monospace;
+            font-size: 12.5px; line-height: 1.6; white-space: pre-wrap; color: #cbd5e1;
         }
     </style>
 </head>
@@ -311,7 +231,7 @@
                     <div>
                         <div class="import-header">
                             <h2>Importar Planilha do Dealer</h2>
-                            <p>Envie novos agendamentos da planilha para o banco de dados.</p>
+                            <p>Envie novos agendamentos da Toyota ou Outras Marcas para o banco de dados.</p>
                         </div>
                         <div class="grupo-campo">
                             <label for="arquivoPlanilha">Arquivo do Mês (.xlsx ou .csv)</label>
@@ -337,13 +257,34 @@
                         <div class="grupo-campo">
                             <label for="consultorDestino">Atribuir agendamentos a:</label>
                             <select id="consultorDestino" class="custom-select">
-                                <option value="auto">Automático</option>
-                                <option value="70b40aa8-8b9c-4219-acd1-3f16647558fa">Alany Benato</option>
-                                <option value="58267673-516d-4b01-9d27-c60a8a6c39b6">Allana Thaina</option>
-                                <option value="61218e37-acdb-4e75-bc86-8a71e183bf17">Ana Lucia</option>
-                                <option value="45ac2ad5-cce7-4d0a-9cf8-58c2a5690777">Cristiane da Silva</option>
-                                <option value="b3bc63cd-c783-482d-a2d8-c978bbd32703">Lorena Mendes</option>
-                                <option value="b5167b50-fe5e-429f-b2fe-7bf861190f30">Nicoly Moreira</option>
+                                <option value="auto">Automático (Lê Empresa e Operador)</option>
+                                <optgroup label="Toyota">
+                                    <option value="70b40aa8-8b9c-4219-acd1-3f16647558fa">Alany Benato [ALANYNI]</option>
+                                    <option value="58267673-516d-4b01-9d27-c60a8a6c39b6">Allana Thaina [ALLANASAL]</option>
+                                    <option value="61218e37-acdb-4e75-bc86-8a71e183bf17">Ana Lucia [ANAPIL]</option>
+                                    <option value="45ac2ad5-cce7-4d0a-9cf8-58c2a5690777">Cristiane da Silva [CRISTIANESZT]</option>
+                                    <option value="b3bc63cd-c783-482d-a2d8-c978bbd32703">Lorena Mendes [LORENAAZ]</option>
+                                    <option value="b5167b50-fe5e-429f-b2fe-7bf861190f30">Nicoly Moreira [NICOLYMOSANG]</option>
+                                </optgroup>
+                                <optgroup label="Multimarcas">
+                                    <option value="6ecc4207-4078-46ca-9719-83e26cb7f87c">Guilherme Meira [GUILHERMEHENP]</option>
+                                    <option value="0145aff1-9805-40ec-811c-f40dac682576">Anita Henrique [ANITAH]</option>
+                                    <option value="0a574cb7-71aa-493e-8d4f-7949c71abec4">Talita Soares [TALITANSO]</option>
+                                </optgroup>
+                                <optgroup label="Marcas Individuais">
+                                    <option value="1eab4622-a0ef-445c-9002-36dd49a05736">Camila Macioszki [CAMILAMAC]</option>
+                                    <option value="f239082b-2cec-440b-b530-c59d5b19b7b7">Lucas Oliveira [LUCASORO]</option>
+                                    <option value="3f7bf777-f5d4-4041-9dd1-b3fddf83b6a7">Larissa Rodrigues [LARISSABTRG]</option>
+                                    <option value="be200c79-0a05-439a-8575-8f88a1eb60c0">Francine Silva [FRANCINEDLS]</option>
+                                    <option value="613c5992-4e73-4f7b-9506-8c589da86899">Emili Almeida [EMILIALM]</option>
+                                    <option value="973837fa-77b7-402b-b8b6-90569e73d26c">Ana Eliza Lopes [ANAERLPS]</option>
+                                    <option value="24ba66ba-1a58-4263-95c8-eea8fed14ac1">Nicolly Prado [NICOLLYGFP]</option>
+                                    <option value="cd857f41-4a48-4284-af7e-569d16f9c179">Ana Galdino [ANAGATI]</option>
+                                    <option value="c541b7bb-4068-4b9e-87b7-d33a6388a698">Isabela Alves [ISABELACBA]</option>
+                                    <option value="dd448d7e-c65e-4a91-9cf8-f07cb3c4ab81">Ellen Ferreira [ELLENMDSF]</option>
+                                    <option value="13f5b203-b846-482e-b322-b607ff16d3c3">Guilherme Araujo [GUILHERMEAAL]</option>
+                                    <option value="13e2c547-9af5-43a5-9870-94c4b66575a9">Mayara Santos [MAYARAS]</option>
+                                </optgroup>
                             </select>
                         </div>
                     </div>
@@ -382,7 +323,16 @@
                         <div class="grupo-campo">
                             <label for="equipeExport">Filtrar por Equipe</label>
                             <select id="equipeExport" class="custom-select">
+                                <option value="todas">Todas as Equipes</option>
                                 <option value="Toyota" selected>Toyota</option>
+                                <option value="Fiat">Fiat</option>
+                                <option value="Nissan">Nissan</option>
+                                <option value="Volkswagen">Volkswagen</option>
+                                <option value="Ford">Ford</option>
+                                <option value="Chery">Chery</option>
+                                <option value="Hyundai">Hyundai</option>
+                                <option value="Renault | BYD | Geely">Renault | BYD | Geely</option>
+                                <option value="Audi | Citroen | Kia | Omoda">Audi | Citroën | Kia | Omoda</option>
                             </select>
                         </div>
                         <div class="box-info-export">
@@ -501,22 +451,71 @@
                 else return 10.00;
             }
 
-            const EQUIPE_TOYOTA = [
-                { id: '45ac2ad5-cce7-4d0a-9cf8-58c2a5690777', nome: 'Cristiane da Silva', match: (txt) => txt.includes('CRISTIANE') || txt.includes('CRISTIAN') },
-                { id: 'b5167b50-fe5e-429f-b2fe-7bf861190f30', nome: 'Nicoly Moreira', match: (txt) => txt.includes('NICOLY') || txt.includes('SANGA') },
-                { id: '61218e37-acdb-4e75-bc86-8a71e183bf17', nome: 'Ana Lucia', match: (txt) => txt.includes('ANA LUCIA') || txt.includes('BUGALA') },
-                { id: 'b3bc63cd-c783-482d-a2d8-c978bbd32703', nome: 'Lorena Mendes', match: (txt) => txt.includes('LORENA') || txt.includes('AZOLIN') },
-                { id: '70b40aa8-8b9c-4219-acd1-3f16647558fa', nome: 'Alany Benato', match: (txt) => txt.includes('ALANY') || txt.includes('BENATO') || txt.includes('WEIGERT') },
-                { id: '58267673-516d-4b01-9d27-c60a8a6c39b6', nome: 'Allana Thaina', match: (txt) => txt.includes('ALLANA') || txt.includes('THAINA') || txt.includes('VAZ') }
+            // LISTA MESTRE BLINDADA (SEM FALSOS POSITIVOS DE NOMES)
+            const OPERADORES_MESTRE = [
+                // Toyota (As 6 consultoras oficiais)
+                { id: 'b5167b50-fe5e-429f-b2fe-7bf861190f30', dealer: 'NICOLYMOSANG', nome: 'Nicoly Moreira', match: (t) => t.includes('NICOLYMOSANG') || t.includes('NICOLY') || t.includes('SANGA') },
+                { id: '58267673-516d-4b01-9d27-c60a8a6c39b6', dealer: 'ALLANASAL', nome: 'Allana Thaina', match: (t) => t.includes('ALLANASAL') || (t.includes('ALLANA') && (t.includes('VAZ') || t.includes('THAINA'))) },
+                { id: '45ac2ad5-cce7-4d0a-9cf8-58c2a5690777', dealer: 'CRISTIANESZT', nome: 'Cristiane da Silva', match: (t) => t.includes('CRISTIANESZT') || (t.includes('CRISTIANE') && t.includes('SILVA')) },
+                { id: '61218e37-acdb-4e75-bc86-8a71e183bf17', dealer: 'ANAPIL', nome: 'Ana Lucia', match: (t) => t.includes('ANAPIL') || (t.includes('ANA') && t.includes('LUCIA')) || t.includes('BUGALA') },
+                { id: '70b40aa8-8b9c-4219-acd1-3f16647558fa', dealer: 'ALANYNI', nome: 'Alany Benato', match: (t) => t.includes('ALANYNI') || t.includes('ALANY') || t.includes('BENATO') || t.includes('WEIGERT') },
+                { id: 'b3bc63cd-c783-482d-a2d8-c978bbd32703', dealer: 'LORENAAZ', nome: 'Lorena Mendes', match: (t) => t.includes('LORENAAZ') || t.includes('LORENA') || t.includes('AZOLIN') },
+
+                // Multimarcas
+                { id: '6ecc4207-4078-46ca-9719-83e26cb7f87c', dealer: 'GUILHERMEHENP', nome: 'Guilherme Meira', match: (t) => t.includes('GUILHERMEHENP') || (t.includes('GUILHERME') && (t.includes('MEIRA') || t.includes('PINTO'))) },
+                { id: '0145aff1-9805-40ec-811c-f40dac682576', dealer: 'ANITAH', nome: 'Anita Henrique', match: (t) => t.includes('ANITAH') || (t.includes('ANITA') && (t.includes('ZANOSO') || t.includes('HENRIQUE'))) },
+                { id: '0a574cb7-71aa-493e-8d4f-7949c71abec4', dealer: 'TALITANSO', nome: 'Talita Soares', match: (t) => t.includes('TALITANSO') || (t.includes('TALITA') && (t.includes('SOARES') || t.includes('NASCIMENTO'))) },
+
+                // Marcas Individuais
+                { id: '1eab4622-a0ef-445c-9002-36dd49a05736', dealer: 'CAMILAMAC', nome: 'Camila Macioszki', match: (t) => t.includes('CAMILAMAC') || t.includes('MACIOSZKI') || (t.includes('CAMILA') && t.includes('RIBEIRO')) },
+                { id: 'f239082b-2cec-440b-b530-c59d5b19b7b7', dealer: 'LUCASORO', nome: 'Lucas Oliveira', match: (t) => t.includes('LUCASORO') || (t.includes('LUCAS') && (t.includes('OLIVEIRA') || t.includes('ROCHA'))) },
+                { id: '3f7bf777-f5d4-4041-9dd1-b3fddf83b6a7', dealer: 'LARISSABTRG', nome: 'Larissa Rodrigues', match: (t) => t.includes('LARISSABTRG') || (t.includes('LARISSA') && (t.includes('RODRIGUES') || t.includes('BATALHA'))) },
+                { id: 'be200c79-0a05-439a-8575-8f88a1eb60c0', dealer: 'FRANCINEDLS', nome: 'Francine Silva', match: (t) => t.includes('FRANCINEDLS') || (t.includes('FRANCINE') && (t.includes('DIOVANA') || t.includes('LEAL'))) },
+                { id: '613c5992-4e73-4f7b-9506-8c589da86899', dealer: 'EMILIALM', nome: 'Emili Almeida', match: (t) => t.includes('EMILIALM') || (t.includes('EMILI') && (t.includes('ALVES') || t.includes('ALMEIDA'))) },
+                
+                // Ana Eliza (Restrito estritamente a Ana Eliza Lopes, sem pegar nomes com Rangel avulsos)
+                { id: '973837fa-77b7-402b-b8b6-90569e73d26c', dealer: 'ANAERLPS', nome: 'Ana Eliza Lopes', match: (t) => t.includes('ANAERLPS') || (t.includes('ANA') && t.includes('ELIZA')) || (t.includes('ELIZA') && t.includes('LOPES')) },
+
+                { id: '24ba66ba-1a58-4263-95c8-eea8fed14ac1', dealer: 'NICOLLYGFP', nome: 'Nicolly Prado', match: (t) => t.includes('NICOLLYGFP') || (t.includes('NICOLLY') && (t.includes('PRADO') || t.includes('FRAGOZO'))) },
+                { id: 'cd857f41-4a48-4284-af7e-569d16f9c179', dealer: 'ANAGATI', nome: 'Ana Galdino', match: (t) => t.includes('ANAGATI') || (t.includes('ANA') && t.includes('GALDINO')) || (t.includes('CAROLINE') && t.includes('GALDINO')) },
+                { id: 'c541b7bb-4068-4b9e-87b7-d33a6388a698', dealer: 'ISABELACBA', nome: 'Isabela Alves', match: (t) => t.includes('ISABELACBA') || (t.includes('ISABELA') && (t.includes('BRANDELERO') || t.includes('CECILIA'))) },
+                { id: 'dd448d7e-c65e-4a91-9cf8-f07cb3c4ab81', dealer: 'ELLENMDSF', nome: 'Ellen Ferreira', match: (t) => t.includes('ELLENMDSF') || (t.includes('ELLEN') && (t.includes('FERREIRA') || t.includes('MAYLIN'))) },
+                { id: '13f5b203-b846-482e-b322-b607ff16d3c3', dealer: 'GUILHERMEAAL', nome: 'Guilherme Araujo', match: (t) => t.includes('GUILHERMEAAL') || (t.includes('GUILHERME') && (t.includes('ARAUJO') || t.includes('ALMEIDA'))) },
+                { id: '13e2c547-9af5-43a5-9870-94c4b66575a9', dealer: 'MAYARAS', nome: 'Mayara Santos', match: (t) => t.includes('MAYARAS') || (t.includes('MAYARA') && (t.includes('SANTOS') || t.includes('BARBOSA'))) }
             ];
 
-            function obterConsultoraPorAgendador(nomeAgendador) {
-                if (!nomeAgendador) return null;
-                const txt = String(nomeAgendador).normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
-                for (const c of EQUIPE_TOYOTA) {
-                    if (c.match(txt)) return { id: c.id, nome: c.nome };
+            function identificarConsultor(textoAgendador) {
+                if (!textoAgendador) return null;
+                const txt = String(textoAgendador).normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+                if (txt === 'MASTER' || txt.includes('SUPORTE') || txt.includes('PESQUISA') || txt.includes('BACKUP')) return null;
+
+                for (const op of OPERADORES_MESTRE) {
+                    if (txt === op.dealer || op.match(txt)) {
+                        return { id: op.id, nome: op.nome, dealer: op.dealer };
+                    }
                 }
                 return null;
+            }
+
+            function extrairMarcaEmpresa(textoEmpresa) {
+                if (!textoEmpresa) return 'Toyota';
+                const t = String(textoEmpresa).normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase();
+                if (t.includes('TOYOTA')) return 'Toyota';
+                if (t.includes('VW') || t.includes('VOLKS')) return 'Volkswagen';
+                if (t.includes('FIAT')) return 'Fiat';
+                if (t.includes('RENAULT')) return 'Renault';
+                if (t.includes('BYD')) return 'BYD';
+                if (t.includes('CHERY')) return 'Chery';
+                if (t.includes('NISSAN')) return 'Nissan';
+                if (t.includes('FORD')) return 'Ford';
+                if (t.includes('HYUNDAI')) return 'Hyundai';
+                if (t.includes('OMODA')) return 'Omoda';
+                if (t.includes('KIA')) return 'Kia';
+                if (t.includes('AUDI')) return 'Audi';
+                if (t.includes('CITROEN')) return 'Citroen';
+                if (t.includes('GEELY')) return 'Geely';
+                if (t.includes('JEEP')) return 'Jeep';
+                return 'Toyota';
             }
 
             function formatarDataSemHorario(valorData) {
@@ -548,9 +547,9 @@
                 const txt = String(tmoTexto).normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
                 if (txt.includes('FACILITAD')) return 'FACILITADA';
 
-                const ignorados = ['T-SERVICE', 'TSERVICE', 'BAL', 'GEO', 'LAVAGEM', 'PECA', 'FUNILARIA', 'PINTURA', 'ACESSORIO'];
-                for (const ign of ignorados) if (txt.includes(ign)) return null;
-                if (!txt.includes('REVIS') && !txt.includes('CSP')) return null;
+                const ignorados = ['T-SERVICE', 'TSERVICE', 'BAL', 'GEO', 'LAVAGEM', 'PECA', 'FUNILARIA', 'PINTURA', 'ACESSORIO', 'DIAGNOSTICO', 'RECALL', 'TROCA DE OLEO', 'TROCA DE PECA'];
+                for (const ign of ignorados) if (txt === ign || txt.startsWith(ign)) return null;
+                if (!txt.includes('REVIS') && !txt.includes('CSP') && !txt.includes('-REV')) return null;
 
                 const porExtenso = { 'PRIMEIR': 1, 'SEGUND': 2, 'TERCEIR': 3, 'QUART': 4, 'QUINT': 5, 'SEXT': 6, 'SETIM': 7, 'OITAV': 8, 'NON': 9, 'DECIM': 10, 'VIGESIM': 20 };
                 for (const [chave, num] of Object.entries(porExtenso)) if (txt.includes(chave)) return num;
@@ -562,8 +561,6 @@
                         if (n >= 1 && n <= 50) return n;
                     }
                 }
-                const matchKm = txt.match(/(\d{1,3})\.?000\s*KM/i);
-                if (matchKm) return Math.max(1, Math.round(parseInt(matchKm[1], 10) / 10));
                 return 1;
             }
 
@@ -600,7 +597,7 @@
                                 <button type="button" class="btn-ver-detalhes-log" data-id="${item.id}">Ver Detalhes</button>
                             </td>
                             <td style="text-align: center;">
-                                <button type="button" class="btn-excluir-historico" data-id="${item.id}" title="Excluir este registro">🗑️</button>
+                                <button type="button" class="btn-excluir-historico" data-id="${item.id}" title="Excluir este histórico e os agendamentos dele">🗑️</button>
                             </td>
                         `;
                         tabelaHistoricoCorpo.appendChild(tr);
@@ -620,10 +617,27 @@
 
                     document.querySelectorAll('.btn-excluir-historico').forEach(b => {
                         b.addEventListener('click', async (e) => {
-                            const id = e.currentTarget.dataset.id;
-                            if (confirm('Tem certeza que deseja remover este registro do histórico?')) {
-                                await supabaseClient.from('historico_importacoes').delete().eq('id', id);
-                                carregarHistorico();
+                            const idHistorico = parseInt(e.currentTarget.dataset.id, 10);
+                            const itemHist = historicoCache.find(h => h.id === idHistorico);
+                            const nomeArq = itemHist ? itemHist.nome_arquivo : 'este arquivo';
+
+                            if (confirm(`Atenção:\nDeseja excluir o registro de "${nomeArq}" e também REMOVER todos os agendamentos que foram importados por ele?`)) {
+                                try {
+                                    await supabaseClient
+                                        .from('agendamentos')
+                                        .delete()
+                                        .eq('importacao_id', idHistorico);
+
+                                    await supabaseClient
+                                        .from('historico_importacoes')
+                                        .delete()
+                                        .eq('id', idHistorico);
+
+                                    alert('Histórico e agendamentos do arquivo removidos com sucesso!');
+                                    carregarHistorico();
+                                } catch (errEx) {
+                                    alert('Erro ao excluir: ' + errEx.message);
+                                }
                             }
                         });
                     });
@@ -633,7 +647,7 @@
                 }
             }
 
-            // SINCRONIZAÇÃO COMPLETA DO MÊS (SEM ERRO DE CHAVE E SEM DUPLICATAS)
+            // UPLOAD E PROCESSAMENTO
             btn.addEventListener('click', async function() {
                 try {
                     if (!input.files || input.files.length === 0) {
@@ -660,18 +674,21 @@
 
                     const { data: agendamentosBanco, error: errFetch } = await supabaseClient
                         .from('agendamentos')
-                        .select('placa, revisao, data_revisao')
+                        .select('placa, revisao, data_revisao, observacao, marca')
                         .gte('data_revisao', periodoInicio)
                         .lte('data_revisao', periodoFim);
 
                     if (errFetch) throw errFetch;
 
-                    // Guarda as datas antigas para saber quem mudou de dia (Reagendado)
-                    const mapaDatasOriginais = new Map();
+                    const mapaHistoricoPlacas = new Map();
                     (agendamentosBanco || []).forEach(item => {
                         const chave = `${String(item.placa).toUpperCase().trim()}_${item.revisao}`;
-                        if (!mapaDatasOriginais.has(chave)) {
-                            mapaDatasOriginais.set(chave, item.data_revisao);
+                        if (!mapaHistoricoPlacas.has(chave)) {
+                            mapaHistoricoPlacas.set(chave, {
+                                data_revisao: item.data_revisao,
+                                observacao: item.observacao,
+                                marca: item.marca
+                            });
                         }
                     });
 
@@ -682,7 +699,16 @@
                         try {
                             const data = new Uint8Array(e.target.result);
                             const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-                            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                            
+                            let sheetName = workbook.SheetNames[0];
+                            if (workbook.SheetNames.includes('OUTRAS MARCAS')) {
+                                sheetName = 'OUTRAS MARCAS';
+                            } else if (workbook.SheetNames.includes('TOYOTA')) {
+                                sheetName = 'TOYOTA';
+                            }
+                            
+                            log(`Processando aba: [${sheetName}]...`);
+                            const worksheet = workbook.Sheets[sheetName];
                             const linhasMatriz = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
 
                             if (linhasMatriz.length < 2) {
@@ -690,16 +716,34 @@
                                 return;
                             }
 
-                            let colDataRevisao = 1, colDataContato = 2, colPlaca = 8, colChassi = 9, colTMO = 12, colAgendador = 15, colOS = 18;
+                            let colEmpresa = -1, colDataContato = -1, colDataRevisao = -1, colPlaca = -1, colChassi = -1;
+                            let colServico = -1, colAgendador = -1, colOS = -1, colComparecido = -1, colStatusPlanilha = -1;
+
                             const cabecalho = (linhasMatriz[0] || []).map(c => String(c).toUpperCase().trim());
+
                             cabecalho.forEach((colNome, idx) => {
-                                if (colNome.includes('AGENDADOR')) colAgendador = idx;
-                                if (colNome === 'TMO') colTMO = idx;
-                                else if (colTMO === 12 && (colNome.includes('TMO') || colNome.includes('SERVICO') || colNome.includes('SERVIÇO'))) colTMO = idx;
-                                if (colNome.includes('PLACA')) colPlaca = idx;
-                                if (colNome.includes('CHASSI')) colChassi = idx;
-                                if (colNome === 'OS' || colNome.includes('ORDEM') || colNome.includes('O.S.')) colOS = idx;
+                                if (colNome === 'EMPRESA') colEmpresa = idx;
+                                if (colNome === 'DATA INCLUSAO' || colNome === 'DATA CONTATO') colDataContato = idx;
+                                if (colNome === 'DATA PROXIMA ACAO' || colNome === 'DATA AGENDAMENTO' || colNome === 'DATA/HORA AGENDAMENTO') colDataRevisao = idx;
+                                if (colNome === 'PLACA') colPlaca = idx;
+                                if (colNome === 'CHASSI') colChassi = idx;
+                                if (colNome === 'TMO' || colNome === 'TIPO DE SERVIÇO' || colNome === 'SERVIÇO CORRETO' || colNome === 'TIPO EVENTO' || colNome === 'SERVICOS') {
+                                    if (colServico === -1 || colNome === 'TIPO DE SERVIÇO' || colNome === 'TMO') colServico = idx;
+                                }
+                                if (colNome === 'AGENDADOR' || colNome === 'OPERADOR') colAgendador = idx;
+                                if (colNome === 'OS' || colNome === 'O.S.' || colNome === 'ORDEM') colOS = idx;
+                                if (colNome === 'COMPARECIDO') colComparecido = idx;
+                                if (colNome === 'STATUS') colStatusPlanilha = idx;
                             });
+
+                            if (colEmpresa === -1) colEmpresa = 0;
+                            if (colDataRevisao === -1) colDataRevisao = 1;
+                            if (colDataContato === -1) colDataContato = 2;
+                            if (colPlaca === -1) colPlaca = 8;
+                            if (colChassi === -1) colChassi = 9;
+                            if (colServico === -1) colServico = 12;
+                            if (colAgendador === -1) colAgendador = 15;
+                            if (colOS === -1) colOS = 18;
 
                             const registrosParaSalvar = [];
                             let totalReagendados = 0;
@@ -714,24 +758,25 @@
                                 const row = linhasMatriz[i];
                                 if (!row || row.length === 0) continue;
 
-                                const nomeAgendadorPlanilha = row[colAgendador] || '';
+                                const textoAgendador = row[colAgendador] || '';
                                 let consultorAlvo = null;
 
                                 if (destinoEscolhido !== 'auto') {
-                                    const cEncontrada = EQUIPE_TOYOTA.find(u => u.id === destinoEscolhido);
-                                    consultorAlvo = { id: destinoEscolhido, nome: cEncontrada ? cEncontrada.nome : 'Manual' };
+                                    const cOp = OPERADORES_MESTRE.find(o => o.id === destinoEscolhido);
+                                    consultorAlvo = { id: destinoEscolhido, nome: cOp ? cOp.nome : 'Manual', dealer: cOp ? cOp.dealer : 'MANUAL' };
                                 } else {
-                                    consultorAlvo = obterConsultoraPorAgendador(nomeAgendadorPlanilha);
+                                    consultorAlvo = identificarConsultor(textoAgendador);
                                 }
 
                                 if (!consultorAlvo) continue;
 
-                                const textoTMO = row[colTMO] || '';
-                                const numRevisao = extrairNumeroRevisaoTMO(textoTMO);
+                                const textoServico = row[colServico] || row[1] || '';
+                                const numRevisao = extrairNumeroRevisaoTMO(textoServico);
                                 if (!numRevisao) continue;
 
                                 if (numRevisao === 'FACILITADA') totalFacilitadas++;
 
+                                const marcaDetectada = extrairMarcaEmpresa(row[colEmpresa]);
                                 const dataRevisaoFormatada = formatarDataSemHorario(row[colDataRevisao]) || `2026-${mesPadrao}-01`;
                                 const dataContatoFormatada = formatarDataSemHorario(row[colDataContato]) || dataRevisaoFormatada;
 
@@ -743,15 +788,19 @@
 
                                 const valorOSLinha = String(row[colOS] || '').trim();
                                 const temOS = (valorOSLinha !== '' && valorOSLinha !== '-' && valorOSLinha !== '0' && valorOSLinha.toUpperCase() !== 'NAN' && valorOSLinha.toUpperCase() !== 'NONE');
+                                
+                                const valorComp = colComparecido !== -1 ? String(row[colComparecido] || '').toUpperCase().trim() : '';
+                                const marcouSim = (valorComp === 'SIM' || valorComp === 'SUCESSO');
+                                const marcouNao = (valorComp === 'NAO' || valorComp === 'NÃO' || valorComp === 'INSUCESSO');
 
                                 let statusCalculado = 'pendente';
                                 let osSalva = 'SEM-OS';
 
-                                if (temOS) {
+                                if (marcouSim || temOS) {
                                     statusCalculado = 'compareceu';
-                                    osSalva = valorOSLinha;
+                                    osSalva = temOS ? valorOSLinha : 'COMPARECEU';
                                     totalCompareceu++;
-                                } else if (dataRevisaoFormatada < dataHojeISO) {
+                                } else if (marcouNao || dataRevisaoFormatada < dataHojeISO) {
                                     statusCalculado = 'faltou';
                                     totalNoShow++;
                                 } else {
@@ -759,13 +808,21 @@
                                     totalPendente++;
                                 }
 
-                                const chaveComposta = `${placaBruta}_${numRevisao}`;
                                 let obs = null;
-                                if (mapaDatasOriginais.has(chaveComposta)) {
-                                    const dataOriginal = mapaDatasOriginais.get(chaveComposta);
-                                    if (dataOriginal !== dataRevisaoFormatada) {
-                                        obs = 'Reagendado';
-                                        totalReagendados++;
+                                const statusNaPlanilha = colStatusPlanilha !== -1 ? String(row[colStatusPlanilha] || '').toUpperCase() : '';
+                                if (statusNaPlanilha.includes('REAGENDAD')) {
+                                    obs = 'Reagendado';
+                                    totalReagendados++;
+                                }
+
+                                const chaveComposta = `${placaBruta}_${numRevisao}`;
+                                if (mapaHistoricoPlacas.has(chaveComposta)) {
+                                    const regAnterior = mapaHistoricoPlacas.get(chaveComposta);
+                                    if (regAnterior.data_revisao !== dataRevisaoFormatada || (regAnterior.observacao && regAnterior.observacao.includes('Reagendado'))) {
+                                        if (obs !== 'Reagendado') {
+                                            obs = 'Reagendado';
+                                            totalReagendados++;
+                                        }
                                     }
                                 }
 
@@ -781,34 +838,38 @@
                                     os: osSalva,
                                     revisao: numRevisao,
                                     valor_unitario: valorUnitario,
-                                    observacao: obs
+                                    observacao: obs,
+                                    marca: marcaDetectada
                                 });
 
-                                if (!resumoPorConsultor[consultorAlvo.nome]) {
-                                    resumoPorConsultor[consultorAlvo.nome] = { total: 0, compareceu: 0, noshow: 0, pendente: 0, facilitada: 0 };
+                                const rotuloDealer = consultorAlvo.dealer ? ` [${consultorAlvo.dealer}]` : '';
+                                const chaveResumo = `${consultorAlvo.nome}${rotuloDealer} (${marcaDetectada})`;
+
+                                if (!resumoPorConsultor[chaveResumo]) {
+                                    resumoPorConsultor[chaveResumo] = { total: 0, compareceu: 0, noshow: 0, pendente: 0, facilitada: 0 };
                                 }
-                                resumoPorConsultor[consultorAlvo.nome].total++;
-                                if (statusCalculado === 'compareceu') resumoPorConsultor[consultorAlvo.nome].compareceu++;
-                                else if (statusCalculado === 'faltou') resumoPorConsultor[consultorAlvo.nome].noshow++;
-                                else resumoPorConsultor[consultorAlvo.nome].pendente++;
-                                if (numRevisao === 'FACILITADA') resumoPorConsultor[consultorAlvo.nome].facilitada++;
+                                resumoPorConsultor[chaveResumo].total++;
+                                if (statusCalculado === 'compareceu') resumoPorConsultor[chaveResumo].compareceu++;
+                                else if (statusCalculado === 'faltou') resumoPorConsultor[chaveResumo].noshow++;
+                                else resumoPorConsultor[chaveResumo].pendente++;
+                                if (numRevisao === 'FACILITADA') resumoPorConsultor[chaveResumo].facilitada++;
                             }
 
                             const totalGeral = registrosParaSalvar.length;
 
                             log(`-----------------------------------`);
                             log(`Total de Agendamentos Válidos: ${totalGeral}`);
-                            log(`Comparecidos (com O.S.): ${totalCompareceu}`);
+                            log(`Comparecidos: ${totalCompareceu}`);
                             log(`No-Show: ${totalNoShow}`);
                             log(`Pendentes: ${totalPendente}`);
                             log(`Revisões Facilitadas: ${totalFacilitadas}`);
                             log(`Reagendados: ${totalReagendados}`);
-                            log(`--- Detalhamento por Consultora ---`);
+                            log(`--- Detalhamento por Operador e Marca ---`);
 
                             let blocoConsultorasTexto = '';
-                            Object.keys(resumoPorConsultor).forEach(nome => {
-                                const c = resumoPorConsultor[nome];
-                                const linha = `• ${nome}: ${c.total} agendamentos (${c.compareceu} comp. | ${c.noshow} no-show | ${c.pendente} pend. | ${c.facilitada} facilitadas)\n`;
+                            Object.keys(resumoPorConsultor).forEach(nomeChave => {
+                                const c = resumoPorConsultor[nomeChave];
+                                const linha = `• ${nomeChave}: ${c.total} agendamentos (${c.compareceu} comp. | ${c.noshow} no-show | ${c.pendente} pend.)\n`;
                                 log(linha.trim());
                                 blocoConsultorasTexto += linha;
                             });
@@ -816,48 +877,63 @@
                             log(`-----------------------------------`);
                             log(`Atualizando banco de dados com segurança...`);
 
-                            // 1. Limpa os dados antigos deste mês no banco
-                            const { error: errDelete } = await supabaseClient
+                            const marcasNoArquivo = [...new Set(registrosParaSalvar.map(r => r.marca || 'Toyota'))];
+
+                            let queryDelete = supabaseClient
                                 .from('agendamentos')
                                 .delete()
                                 .gte('data_revisao', periodoInicio)
                                 .lte('data_revisao', periodoFim);
 
+                            if (marcasNoArquivo.length === 1 && marcasNoArquivo[0] === 'Toyota') {
+                                queryDelete = queryDelete.eq('marca', 'Toyota');
+                            } else {
+                                queryDelete = queryDelete.in('marca', marcasNoArquivo);
+                            }
+
+                            const { error: errDelete } = await queryDelete;
                             if (errDelete) throw errDelete;
 
-                            // 2. Insere o mês completo atualizado em lotes
+                            let logAuditoria = `Resumo da Importação - ${file.name} (Aba: ${sheetName})\n`;
+                            logAuditoria += `• Marcas Afetadas: ${marcasNoArquivo.join(', ')}\n`;
+                            logAuditoria += `• Total Válido: ${totalGeral}\n`;
+                            logAuditoria += `• Compareceram: ${totalCompareceu}\n`;
+                            logAuditoria += `• No-Show: ${totalNoShow}\n`;
+                            logAuditoria += `• Pendentes: ${totalPendente}\n\n`;
+                            logAuditoria += `Detalhamento por Operador e Marca:\n`;
+                            logAuditoria += blocoConsultorasTexto;
+
+                            const { data: histData, error: errHist } = await supabaseClient
+                                .from('historico_importacoes')
+                                .insert([{
+                                    nome_arquivo: file.name,
+                                    usuario_nome: nomeOperadorLogado,
+                                    mes_referencia: mesPadrao,
+                                    total_revisoes: totalGeral,
+                                    total_compareceu: totalCompareceu,
+                                    total_noshow: totalNoShow,
+                                    total_pendente: totalPendente,
+                                    detalhes_log: logAuditoria
+                                }])
+                                .select('id')
+                                .single();
+
+                            if (errHist) throw errHist;
+
+                            const importacaoIdGerado = histData?.id || null;
+
+                            registrosParaSalvar.forEach(r => {
+                                r.importacao_id = importacaoIdGerado;
+                            });
+
                             for (let k = 0; k < registrosParaSalvar.length; k += 100) {
                                 const lote = registrosParaSalvar.slice(k, k + 100);
                                 const { error: errInsert } = await supabaseClient.from('agendamentos').insert(lote);
                                 if (errInsert) throw errInsert;
                             }
 
-                            // 3. Grava o histórico
-                            let logAuditoria = `Resumo da Importação - ${file.name}\n`;
-                            logAuditoria += `• Total de Agendamentos: ${totalGeral}\n`;
-                            logAuditoria += `• Compareceram: ${totalCompareceu}\n`;
-                            logAuditoria += `• No-Show: ${totalNoShow}\n`;
-                            logAuditoria += `• Pendentes: ${totalPendente}\n`;
-                            logAuditoria += `• Revisões Facilitadas: ${totalFacilitadas}\n`;
-                            logAuditoria += `• Reagendados: ${totalReagendados}\n\n`;
-                            logAuditoria += `Detalhamento por Consultora:\n`;
-                            logAuditoria += blocoConsultorasTexto;
-
-                            const { error: errHist } = await supabaseClient.from('historico_importacoes').insert([{
-                                nome_arquivo: file.name,
-                                usuario_nome: nomeOperadorLogado,
-                                mes_referencia: mesPadrao,
-                                total_revisoes: totalGeral,
-                                total_compareceu: totalCompareceu,
-                                total_noshow: totalNoShow,
-                                total_pendente: totalPendente,
-                                detalhes_log: logAuditoria
-                            }]);
-
-                            if (errHist) throw errHist;
-
                             carregarHistorico();
-                            log(`SUCESSO! ${totalGeral} agendamentos gravados e histórico atualizado.`);
+                            log(`SUCESSO! ${totalGeral} agendamentos gravados e associados com segurança.`);
 
                         } catch (err) {
                             log(`Erro no processamento: ${err.message}`);
@@ -886,7 +962,7 @@
 
                 try {
                     let query = supabaseClient.from('vw_agendamentos_completos').select('*');
-                    if (equipe !== 'todas') query = query.eq('autor_equipe', equipe);
+                    if (equipe !== 'todas') query = query.eq('marca', equipe);
 
                     const { data, error } = await query.order('data_revisao', { ascending: true });
                     if (error) throw error;
@@ -897,19 +973,19 @@
                         return;
                     }
 
-                    const cabecalho = ['Operador', 'Equipe', 'Data Contato', 'Data Revisao', 'Status', 'Placa', 'Revisao', 'Evento', 'OS', 'Valor Unitario', 'Observacao'];
+                    const cabecalho = ['Operador', 'Equipe', 'Marca', 'Data Contato', 'Data Revisao', 'Status', 'Placa', 'Revisao', 'OS', 'Valor Unitario', 'Observacao'];
                     const linhasCsv = [cabecalho.join(';')];
 
                     filtrados.forEach(item => {
                         const linha = [
                             `"${(item.autor_nome || 'Operador').replace(/"/g, '""')}"`,
                             `"${(item.autor_equipe || 'Toyota').replace(/"/g, '""')}"`,
+                            `"${(item.marca || 'Toyota').replace(/"/g, '""')}"`,
                             item.data_contato || '',
                             item.data_revisao || '',
                             item.status || '',
                             item.placa || '',
                             item.revisao || '',
-                            item.evento || '',
                             item.os || '',
                             (parseFloat(item.valor_unitario) || 0).toFixed(2).replace('.', ','),
                             item.observacao || ''
