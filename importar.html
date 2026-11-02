@@ -207,6 +207,71 @@
             padding: 20px; overflow-y: auto; font-family: monospace;
             font-size: 12.5px; line-height: 1.6; white-space: pre-wrap; color: #cbd5e1;
         }
+        /* DROPDOWN CUSTOMIZADO (mesmo padrão do modal de metas: altura máxima e rolagem) */
+        .custom-dropdown-container { position: relative; width: 100%; }
+        .custom-dropdown-trigger {
+            width: 100%;
+            height: 42px;
+            padding: 0 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #1e293b;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            cursor: pointer;
+            box-sizing: border-box;
+            user-select: none;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .custom-dropdown-trigger:hover { border-color: #94a3b8; }
+        .custom-dropdown-trigger.aberto,
+        .custom-dropdown-trigger:focus-visible {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+        .custom-dropdown-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .custom-dropdown-arrow { font-size: 11px; color: #64748b; transition: transform 0.2s ease; flex-shrink: 0; }
+        .custom-dropdown-trigger.aberto .custom-dropdown-arrow { transform: rotate(180deg); }
+        .custom-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            width: 100%;
+            max-height: 175px;
+            overflow-y: auto;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            z-index: 10000;
+            box-sizing: border-box;
+            padding: 4px 0;
+        }
+        .custom-dropdown-menu.visivel { display: block; }
+        .custom-dropdown-group-title {
+            padding: 6px 12px 2px 12px;
+            font-size: 10.5px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            user-select: none;
+        }
+        .custom-dropdown-item {
+            padding: 8px 14px;
+            font-size: 13.5px;
+            color: #1e293b;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .custom-dropdown-item:hover { background: #eff6ff; color: #2563eb; }
+        .custom-dropdown-item.selecionado { background: #2563eb; color: #ffffff; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -331,8 +396,13 @@
                                 <option value="Ford">Ford</option>
                                 <option value="Chery">Chery</option>
                                 <option value="Hyundai">Hyundai</option>
-                                <option value="Renault | BYD | Geely">Renault | BYD | Geely</option>
-                                <option value="Audi | Citroen | Kia | Omoda">Audi | Citroën | Kia | Omoda</option>
+                                <option value="Renault">Renault</option>
+                                <option value="BYD">BYD</option>
+                                <option value="Geely">Geely</option>
+                                <option value="Audi">Audi</option>
+                                <option value="Citroen">Citroën</option>
+                                <option value="Kia">Kia</option>
+                                <option value="Omoda">Omoda</option>
                             </select>
                         </div>
                         <div class="box-info-export">
@@ -383,6 +453,108 @@
             <div id="modalConteudoTexto" class="modal-corpo"></div>
         </div>
     </div>
+
+    <script>
+        // Transforma os <select class="custom-select"> no dropdown customizado (mesmo padrão do modal de metas).
+        // O <select> original continua na página (oculto) e é quem guarda o valor, então o restante do código não muda.
+        document.addEventListener('DOMContentLoaded', function() {
+            const fecharTodos = () => {
+                document.querySelectorAll('.custom-dropdown-menu.visivel').forEach(m => m.classList.remove('visivel'));
+                document.querySelectorAll('.custom-dropdown-trigger.aberto').forEach(t => t.classList.remove('aberto'));
+            };
+
+            document.querySelectorAll('select.custom-select').forEach(function(select) {
+                const container = document.createElement('div');
+                container.className = 'custom-dropdown-container';
+
+                const trigger = document.createElement('div');
+                trigger.className = 'custom-dropdown-trigger';
+                trigger.tabIndex = 0;
+                trigger.innerHTML = '<span class="custom-dropdown-label"></span><span class="custom-dropdown-arrow">▼</span>';
+                const label = trigger.querySelector('.custom-dropdown-label');
+
+                const menu = document.createElement('div');
+                menu.className = 'custom-dropdown-menu';
+
+                const itens = [];
+                function adicionarItem(opt) {
+                    const el = document.createElement('div');
+                    el.className = 'custom-dropdown-item';
+                    el.dataset.value = opt.value;
+                    el.textContent = opt.textContent.trim();
+                    el.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        definirValor(opt.value, true);
+                        fecharTodos();
+                    });
+                    menu.appendChild(el);
+                    itens.push(el);
+                }
+                Array.from(select.children).forEach(function(filho) {
+                    if (filho.tagName === 'OPTGROUP') {
+                        const titulo = document.createElement('div');
+                        titulo.className = 'custom-dropdown-group-title';
+                        titulo.textContent = filho.label;
+                        menu.appendChild(titulo);
+                        Array.from(filho.children).forEach(adicionarItem);
+                    } else if (filho.tagName === 'OPTION') {
+                        adicionarItem(filho);
+                    }
+                });
+
+                function sincronizar() {
+                    itens.forEach(function(el) {
+                        const ativo = el.dataset.value === select.value;
+                        el.classList.toggle('selecionado', ativo);
+                        if (ativo) label.textContent = el.textContent;
+                    });
+                }
+                function definirValor(valor, disparar) {
+                    select.value = valor;
+                    sincronizar();
+                    if (disparar) select.dispatchEvent(new Event('change'));
+                }
+
+                function abrir() {
+                    fecharTodos();
+                    menu.classList.add('visivel');
+                    trigger.classList.add('aberto');
+                    const ativo = menu.querySelector('.custom-dropdown-item.selecionado');
+                    if (ativo) menu.scrollTop = Math.max(0, ativo.offsetTop - 40);
+                }
+                trigger.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (menu.classList.contains('visivel')) fecharTodos(); else abrir();
+                });
+                trigger.addEventListener('keydown', function(e) {
+                    const idx = itens.findIndex(el => el.dataset.value === select.value);
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        if (menu.classList.contains('visivel')) fecharTodos(); else abrir();
+                    } else if (e.key === 'Escape') {
+                        fecharTodos();
+                    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const prox = itens[Math.min(itens.length - 1, Math.max(0, idx + (e.key === 'ArrowDown' ? 1 : -1)))];
+                        if (prox) {
+                            definirValor(prox.dataset.value, true);
+                            prox.scrollIntoView({ block: 'nearest' });
+                        }
+                    }
+                });
+
+                select.style.display = 'none';
+                select.parentNode.insertBefore(container, select.nextSibling);
+                container.appendChild(trigger);
+                container.appendChild(menu);
+                sincronizar();
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.custom-dropdown-container')) fecharTodos();
+            });
+        });
+    </script>
 
     <script>
         document.addEventListener('DOMContentLoaded', async function() {
@@ -443,6 +615,27 @@
                 logBox.scrollTop = logBox.scrollHeight;
             }
 
+            // Último dia real do mês (evita datas inválidas como 31/11) e leitura paginada:
+            // o Supabase devolve no máximo 1.000 linhas por consulta, então buscamos em blocos.
+            function intervaloDoMes(mm, ano = 2026) {
+                const ultimoDia = new Date(ano, parseInt(mm, 10), 0).getDate();
+                return { inicio: `${ano}-${mm}-01`, fim: `${ano}-${mm}-${String(ultimoDia).padStart(2, '0')}` };
+            }
+
+            async function buscarTodasLinhas(montarConsulta, tamanho = 1000) {
+                let todas = [];
+                let de = 0;
+                while (true) {
+                    const { data, error } = await montarConsulta().range(de, de + tamanho - 1);
+                    if (error) throw error;
+                    const bloco = data || [];
+                    todas = todas.concat(bloco);
+                    if (bloco.length < tamanho) break;
+                    de += tamanho;
+                }
+                return todas;
+            }
+
             function calcularValorPorRevisao(revisao) {
                 if (String(revisao).toUpperCase().includes('FACILITADA')) return 0.00;
                 const r = parseInt(revisao, 10);
@@ -453,13 +646,13 @@
 
             // LISTA MESTRE BLINDADA (SEM FALSOS POSITIVOS DE NOMES)
             const OPERADORES_MESTRE = [
-                // Toyota (As 6 consultoras oficiais)
-                { id: 'b5167b50-fe5e-429f-b2fe-7bf861190f30', dealer: 'NICOLYMOSANG', nome: 'Nicoly Moreira', match: (t) => t.includes('NICOLYMOSANG') || t.includes('NICOLY') || t.includes('SANGA') },
-                { id: '58267673-516d-4b01-9d27-c60a8a6c39b6', dealer: 'ALLANASAL', nome: 'Allana Thaina', match: (t) => t.includes('ALLANASAL') || (t.includes('ALLANA') && (t.includes('VAZ') || t.includes('THAINA'))) },
-                { id: '45ac2ad5-cce7-4d0a-9cf8-58c2a5690777', dealer: 'CRISTIANESZT', nome: 'Cristiane da Silva', match: (t) => t.includes('CRISTIANESZT') || (t.includes('CRISTIANE') && t.includes('SILVA')) },
-                { id: '61218e37-acdb-4e75-bc86-8a71e183bf17', dealer: 'ANAPIL', nome: 'Ana Lucia', match: (t) => t.includes('ANAPIL') || (t.includes('ANA') && t.includes('LUCIA')) || t.includes('BUGALA') },
-                { id: '70b40aa8-8b9c-4219-acd1-3f16647558fa', dealer: 'ALANYNI', nome: 'Alany Benato', match: (t) => t.includes('ALANYNI') || t.includes('ALANY') || t.includes('BENATO') || t.includes('WEIGERT') },
-                { id: 'b3bc63cd-c783-482d-a2d8-c978bbd32703', dealer: 'LORENAAZ', nome: 'Lorena Mendes', match: (t) => t.includes('LORENAAZ') || t.includes('LORENA') || t.includes('AZOLIN') },
+                // Toyota (As 6 consultoras oficiais - marcadas com toyota: true; só entram na planilha da Toyota)
+                { id: 'b5167b50-fe5e-429f-b2fe-7bf861190f30', dealer: 'NICOLYMOSANG', nome: 'Nicoly Moreira', toyota: true, match: (t) => t.includes('NICOLYMOSANG') || t.includes('NICOLY') || t.includes('SANGA') },
+                { id: '58267673-516d-4b01-9d27-c60a8a6c39b6', dealer: 'ALLANASAL', nome: 'Allana Thaina', toyota: true, match: (t) => t.includes('ALLANASAL') || (t.includes('ALLANA') && (t.includes('VAZ') || t.includes('THAINA'))) },
+                { id: '45ac2ad5-cce7-4d0a-9cf8-58c2a5690777', dealer: 'CRISTIANESZT', nome: 'Cristiane da Silva', toyota: true, match: (t) => t.includes('CRISTIANESZT') || (t.includes('CRISTIANE') && t.includes('SILVA')) },
+                { id: '61218e37-acdb-4e75-bc86-8a71e183bf17', dealer: 'ANAPIL', nome: 'Ana Lucia', toyota: true, match: (t) => t.includes('ANAPIL') || (t.includes('ANA') && t.includes('LUCIA')) || t.includes('BUGALA') },
+                { id: '70b40aa8-8b9c-4219-acd1-3f16647558fa', dealer: 'ALANYNI', nome: 'Alany Benato', toyota: true, match: (t) => t.includes('ALANYNI') || t.includes('ALANY') || t.includes('BENATO') || t.includes('WEIGERT') },
+                { id: 'b3bc63cd-c783-482d-a2d8-c978bbd32703', dealer: 'LORENAAZ', nome: 'Lorena Mendes', toyota: true, match: (t) => t.includes('LORENAAZ') || t.includes('LORENA') || t.includes('AZOLIN') },
 
                 // Multimarcas
                 { id: '6ecc4207-4078-46ca-9719-83e26cb7f87c', dealer: 'GUILHERMEHENP', nome: 'Guilherme Meira', match: (t) => t.includes('GUILHERMEHENP') || (t.includes('GUILHERME') && (t.includes('MEIRA') || t.includes('PINTO'))) },
@@ -491,7 +684,7 @@
 
                 for (const op of OPERADORES_MESTRE) {
                     if (txt === op.dealer || op.match(txt)) {
-                        return { id: op.id, nome: op.nome, dealer: op.dealer };
+                        return { id: op.id, nome: op.nome, dealer: op.dealer, toyota: !!op.toyota };
                     }
                 }
                 return null;
@@ -669,16 +862,14 @@
                     const dataHojeISO = `${hojeAno}-${hojeMes}-${hojeDia}`;
 
                     log(`Lendo histórico atual no banco para conferência de reagendados...`);
-                    const periodoInicio = `2026-${mesPadrao}-01`;
-                    const periodoFim = `2026-${mesPadrao}-31`;
+                    const { inicio: periodoInicio, fim: periodoFim } = intervaloDoMes(mesPadrao);
 
-                    const { data: agendamentosBanco, error: errFetch } = await supabaseClient
+                    const agendamentosBanco = await buscarTodasLinhas(() => supabaseClient
                         .from('agendamentos')
-                        .select('placa, revisao, data_revisao, observacao, marca')
+                        .select('id, placa, revisao, data_revisao, observacao, marca')
                         .gte('data_revisao', periodoInicio)
-                        .lte('data_revisao', periodoFim);
-
-                    if (errFetch) throw errFetch;
+                        .lte('data_revisao', periodoFim)
+                        .order('id', { ascending: true }));
 
                     const mapaHistoricoPlacas = new Map();
                     (agendamentosBanco || []).forEach(item => {
@@ -717,7 +908,7 @@
                             }
 
                             let colEmpresa = -1, colDataContato = -1, colDataRevisao = -1, colPlaca = -1, colChassi = -1;
-                            let colServico = -1, colAgendador = -1, colOS = -1, colComparecido = -1, colStatusPlanilha = -1;
+                            let colServico = -1, colServicoCorreto = -1, colAgendador = -1, colOS = -1, colComparecido = -1, colStatusPlanilha = -1;
 
                             const cabecalho = (linhasMatriz[0] || []).map(c => String(c).toUpperCase().trim());
 
@@ -734,7 +925,12 @@
                                 if (colNome === 'OS' || colNome === 'O.S.' || colNome === 'ORDEM') colOS = idx;
                                 if (colNome === 'COMPARECIDO') colComparecido = idx;
                                 if (colNome === 'STATUS') colStatusPlanilha = idx;
+                                if (colNome === 'SERVIÇO CORRETO' || colNome === 'SERVICO CORRETO') colServicoCorreto = idx;
                             });
+
+                            // Se a planilha tem a coluna "Serviço Correto", ela é a fonte oficial da revisão
+                            // (a coluna "Tipo de Serviço" pode vir vazia ou genérica, ex.: "REVISAO" sem número).
+                            if (colServicoCorreto !== -1) colServico = colServicoCorreto;
 
                             if (colEmpresa === -1) colEmpresa = 0;
                             if (colDataRevisao === -1) colDataRevisao = 1;
@@ -745,7 +941,27 @@
                             if (colAgendador === -1) colAgendador = 15;
                             if (colOS === -1) colOS = 18;
 
+                            // Tipo da planilha: cada importação só aceita as operadoras do seu próprio grupo.
+                            // Aba TOYOTA -> só as 6 da Toyota. Aba OUTRAS MARCAS -> todas, menos as 6 da Toyota.
+                            let modoPlanilha;
+                            if (sheetName === 'TOYOTA') {
+                                modoPlanilha = 'toyota';
+                            } else if (sheetName === 'OUTRAS MARCAS') {
+                                modoPlanilha = 'outras';
+                            } else {
+                                let qtdToyota = 0, qtdTotal = 0;
+                                for (let i = 1; i < linhasMatriz.length; i++) {
+                                    const r = linhasMatriz[i];
+                                    if (!r || r.length === 0) continue;
+                                    qtdTotal++;
+                                    if (extrairMarcaEmpresa(r[colEmpresa]) === 'Toyota') qtdToyota++;
+                                }
+                                modoPlanilha = (qtdTotal > 0 && qtdToyota / qtdTotal > 0.5) ? 'toyota' : 'outras';
+                            }
+                            log(`Tipo de planilha: ${modoPlanilha === 'toyota' ? 'Toyota' : 'Outras Marcas'}`);
+
                             const registrosParaSalvar = [];
+                            let totalIgnoradosOutroGrupo = 0;
                             let totalReagendados = 0;
                             let totalFacilitadas = 0;
                             let totalCompareceu = 0;
@@ -773,6 +989,12 @@
                                 const textoServico = row[colServico] || row[1] || '';
                                 const numRevisao = extrairNumeroRevisaoTMO(textoServico);
                                 if (!numRevisao) continue;
+
+                                // Na atribuição automática, ignora operadoras do outro grupo (Toyota x Outras Marcas)
+                                if (destinoEscolhido === 'auto') {
+                                    if (modoPlanilha === 'outras' && consultorAlvo.toyota) { totalIgnoradosOutroGrupo++; continue; }
+                                    if (modoPlanilha === 'toyota' && !consultorAlvo.toyota) { totalIgnoradosOutroGrupo++; continue; }
+                                }
 
                                 if (numRevisao === 'FACILITADA') totalFacilitadas++;
 
@@ -864,6 +1086,9 @@
                             log(`Pendentes: ${totalPendente}`);
                             log(`Revisões Facilitadas: ${totalFacilitadas}`);
                             log(`Reagendados: ${totalReagendados}`);
+                            if (totalIgnoradosOutroGrupo > 0) {
+                                log(`Ignorados (operadoras do outro grupo, ${modoPlanilha === 'outras' ? 'Toyota' : 'Outras Marcas'}): ${totalIgnoradosOutroGrupo}`);
+                            }
                             log(`--- Detalhamento por Operador e Marca ---`);
 
                             let blocoConsultorasTexto = '';
@@ -899,7 +1124,11 @@
                             logAuditoria += `• Total Válido: ${totalGeral}\n`;
                             logAuditoria += `• Compareceram: ${totalCompareceu}\n`;
                             logAuditoria += `• No-Show: ${totalNoShow}\n`;
-                            logAuditoria += `• Pendentes: ${totalPendente}\n\n`;
+                            logAuditoria += `• Pendentes: ${totalPendente}\n`;
+                            if (totalIgnoradosOutroGrupo > 0) {
+                                logAuditoria += `• Ignorados (operadoras do outro grupo): ${totalIgnoradosOutroGrupo}\n`;
+                            }
+                            logAuditoria += `\n`;
                             logAuditoria += `Detalhamento por Operador e Marca:\n`;
                             logAuditoria += blocoConsultorasTexto;
 
@@ -926,14 +1155,51 @@
                                 r.importacao_id = importacaoIdGerado;
                             });
 
+                            // Grava em lotes de 100. Se um lote falhar, divide ao meio até isolar a(s) linha(s) com problema,
+                            // grava todas as outras e mostra o motivo no log (em vez de parar a importação no meio).
+                            const falhasGravacao = [];
+                            const motivosFalha = new Set();
+                            async function gravarLote(lote) {
+                                const { error: errLote } = await supabaseClient.from('agendamentos').insert(lote);
+                                if (!errLote) return lote.length;
+                                if (lote.length === 1) {
+                                    falhasGravacao.push(lote[0]);
+                                    motivosFalha.add(errLote.message || String(errLote));
+                                    return 0;
+                                }
+                                const meio = Math.ceil(lote.length / 2);
+                                const a = await gravarLote(lote.slice(0, meio));
+                                const b = await gravarLote(lote.slice(meio));
+                                return a + b;
+                            }
+
+                            let totalGravados = 0;
                             for (let k = 0; k < registrosParaSalvar.length; k += 100) {
-                                const lote = registrosParaSalvar.slice(k, k + 100);
-                                const { error: errInsert } = await supabaseClient.from('agendamentos').insert(lote);
-                                if (errInsert) throw errInsert;
+                                totalGravados += await gravarLote(registrosParaSalvar.slice(k, k + 100));
+                                if (falhasGravacao.length > 50) {
+                                    throw new Error(`Muitas falhas ao gravar (${falhasGravacao.length}). Motivo: ${[...motivosFalha][0]}`);
+                                }
+                            }
+
+                            // Confere no banco quantos registros desta importação realmente ficaram gravados
+                            let totalNoBanco = null;
+                            if (importacaoIdGerado) {
+                                const { count } = await supabaseClient
+                                    .from('agendamentos')
+                                    .select('id', { count: 'exact', head: true })
+                                    .eq('importacao_id', importacaoIdGerado);
+                                if (typeof count === 'number') totalNoBanco = count;
                             }
 
                             carregarHistorico();
-                            log(`SUCESSO! ${totalGeral} agendamentos gravados e associados com segurança.`);
+
+                            if (falhasGravacao.length === 0 && (totalNoBanco === null || totalNoBanco === totalGravados)) {
+                                log(`SUCESSO! ${totalGravados} agendamentos gravados e associados com segurança.` + (totalNoBanco !== null ? ` (conferido no banco: ${totalNoBanco})` : ''));
+                            } else {
+                                log(`ATENÇÃO: ${totalGravados} de ${totalGeral} gravados` + (totalNoBanco !== null ? ` (no banco: ${totalNoBanco})` : '') + `.`);
+                                motivosFalha.forEach(m => log(`Motivo do erro: ${m}`));
+                                falhasGravacao.slice(0, 5).forEach(f => log(`  - não gravou: placa ${f.placa}, revisão ${f.revisao}, O.S ${f.os}, data ${f.data_revisao}`));
+                            }
 
                         } catch (err) {
                             log(`Erro no processamento: ${err.message}`);
@@ -961,13 +1227,18 @@
                 btnExportarCsv.innerText = 'Baixando...';
 
                 try {
-                    let query = supabaseClient.from('vw_agendamentos_completos').select('*');
-                    if (equipe !== 'todas') query = query.eq('marca', equipe);
+                    const { inicio, fim } = intervaloDoMes(mes);
+                    const data = await buscarTodasLinhas(() => {
+                        let q = supabaseClient
+                            .from('vw_agendamentos_completos')
+                            .select('*')
+                            .gte('data_revisao', inicio)
+                            .lte('data_revisao', fim);
+                        if (equipe !== 'todas') q = q.eq('marca', equipe);
+                        return q.order('data_revisao', { ascending: true }).order('id', { ascending: true });
+                    });
 
-                    const { data, error } = await query.order('data_revisao', { ascending: true });
-                    if (error) throw error;
-
-                    const filtrados = (data || []).filter(item => item.data_revisao && item.data_revisao.startsWith(periodoAnoMes));
+                    const filtrados = data.filter(item => item.data_revisao && item.data_revisao.startsWith(periodoAnoMes));
                     if (filtrados.length === 0) {
                         alert(`Nenhum registro encontrado para o mês ${mes}/2026.`);
                         return;
@@ -1019,4 +1290,4 @@
         });
     </script>
 </body>
-</html>
+</html>

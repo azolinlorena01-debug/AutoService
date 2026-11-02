@@ -3,6 +3,27 @@ document.addEventListener('DOMContentLoaded', async function() {
     const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // Último dia real do mês e leitura paginada (o Supabase devolve no máximo 1.000 linhas por consulta)
+    function intervaloDoMes(valorMes) {
+        const [ano, mes] = valorMes.split('-');
+        const ultimoDia = new Date(parseInt(ano, 10), parseInt(mes, 10), 0).getDate();
+        return { inicio: `${ano}-${mes}-01`, fim: `${ano}-${mes}-${String(ultimoDia).padStart(2, '0')}` };
+    }
+
+    async function buscarTodasLinhas(montarConsulta, tamanho = 1000) {
+        let todas = [];
+        let de = 0;
+        while (true) {
+            const { data, error } = await montarConsulta().range(de, de + tamanho - 1);
+            if (error) throw error;
+            const bloco = data || [];
+            todas = todas.concat(bloco);
+            if (bloco.length < tamanho) break;
+            de += tamanho;
+        }
+        return todas;
+    }
+
     // 1. SINCRONIZACAO E LEITURA DE METAS POR MARCA
     let cacheMetasBanco = {};
     async function sincronizarMetasBanco() {
@@ -446,60 +467,71 @@ document.addEventListener('DOMContentLoaded', async function() {
         } catch (e) {}
     }
 
-    async function carregarDados() {
-        const mesSelecionado = isAdmin ? filtroMesAdmin.value : filtroMesConsultor.value;
-
-        if (!isAdmin) {
-            atualizarEstadoVisualMonitoria(mesSelecionado);
-        }
-
-        todosAgendamentosHistorico = [];
+    // Lê os agendamentos (todas as páginas). Filtros opcionais: período (inicio/fim) e usuário.
+    async function lerAgendamentos({ inicio, fim, userId } = {}) {
+        const aplicarFiltros = (q) => {
+            if (inicio) q = q.gte('data_revisao', inicio);
+            if (fim) q = q.lte('data_revisao', fim);
+            if (userId) q = q.eq('user_id', userId);
+            return q.order('data_revisao', { ascending: true }).order('id', { ascending: true });
+        };
 
         try {
-            const { data: dataView, error: errorView } = await supabaseClient
-                .from('vw_agendamentos_completos')
-                .select('*')
-                .order('data_revisao', { ascending: true });
+            const dataView = await buscarTodasLinhas(() =>
+                aplicarFiltros(supabaseClient.from('vw_agendamentos_completos').select('*')));
 
-            if (!errorView && dataView && dataView.length > 0) {
-                todosAgendamentosHistorico = dataView.map(i => ({
+            if (dataView.length > 0) {
+                return dataView.map(i => ({
                     ...i,
                     marca: normalizarNomeMarca(i.marca || i.autor_equipe || 'Toyota')
                 }));
             }
         } catch (e) {}
 
-        if (todosAgendamentosHistorico.length === 0) {
-            try {
-                const { data: dataRaw } = await supabaseClient
-                    .from('agendamentos')
-                    .select('*')
-                    .order('data_revisao', { ascending: true });
+        try {
+            const dataRaw = await buscarTodasLinhas(() =>
+                aplicarFiltros(supabaseClient.from('agendamentos').select('*')));
 
-                const { data: perfisRaw } = await supabaseClient
-                    .from('perfis')
-                    .select('id, nome, equipe');
+            const { data: perfisRaw } = await supabaseClient
+                .from('perfis')
+                .select('id, nome, equipe');
 
-                const mapaPerfis = new Map();
-                (perfisRaw || []).forEach(p => mapaPerfis.set(p.id, p));
+            const mapaPerfis = new Map();
+            (perfisRaw || []).forEach(p => mapaPerfis.set(p.id, p));
 
-                todosAgendamentosHistorico = (dataRaw || []).map(item => {
-                    const perfil = mapaPerfis.get(item.user_id);
-                    return {
-                        ...item,
-                        autor_nome: perfil?.nome || 'Consultor',
-                        autor_equipe: perfil?.equipe || 'Toyota',
-                        marca: normalizarNomeMarca(item.marca || perfil?.equipe || 'Toyota')
-                    };
-                });
-            } catch (err) {
-                console.error('Falha de leitura no Supabase:', err);
-            }
+            return dataRaw.map(item => {
+                const perfil = mapaPerfis.get(item.user_id);
+                return {
+                    ...item,
+                    autor_nome: perfil?.nome || 'Consultor',
+                    autor_equipe: perfil?.equipe || 'Toyota',
+                    marca: normalizarNomeMarca(item.marca || perfil?.equipe || 'Toyota')
+                };
+            });
+        } catch (err) {
+            console.error('Falha de leitura no Supabase:', err);
+            return [];
+        }
+    }
+
+    async function carregarDados() {
+        const mesSelecionado = (isAdmin ? filtroMesAdmin.value : filtroMesConsultor.value) || valorMesPadrao;
+
+        if (!isAdmin) {
+            atualizarEstadoVisualMonitoria(mesSelecionado);
         }
 
-        agendamentosMesAtual = todosAgendamentosHistorico.filter(item =>
+        const { inicio, fim } = intervaloDoMes(mesSelecionado);
+        const doMes = await lerAgendamentos({ inicio, fim });
+
+        agendamentosMesAtual = doMes.filter(item =>
             item.data_revisao && String(item.data_revisao).startsWith(mesSelecionado)
         );
+
+        // Admin só precisa do mês; consultor também carrega o próprio histórico (gráfico de bônus mensal)
+        todosAgendamentosHistorico = isAdmin
+            ? agendamentosMesAtual
+            : await lerAgendamentos({ userId: usuarioAtual.id });
 
         aplicarVisaoRelatorio();
     }
@@ -1299,4 +1331,4 @@ document.addEventListener('DOMContentLoaded', async function() {
             window.print();
         }, 900);
     }
-});
+});

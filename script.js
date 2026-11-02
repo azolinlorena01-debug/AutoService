@@ -121,22 +121,45 @@ document.addEventListener('DOMContentLoaded', async function() {
         return dataString;
     }
 
+    // Último dia real do mês e leitura paginada (o Supabase devolve no máximo 1.000 linhas por consulta)
+    function intervaloDoMes(valorMes) {
+        const [ano, mes] = valorMes.split('-');
+        const ultimoDia = new Date(parseInt(ano, 10), parseInt(mes, 10), 0).getDate();
+        return { inicio: `${ano}-${mes}-01`, fim: `${ano}-${mes}-${String(ultimoDia).padStart(2, '0')}` };
+    }
+
+    async function buscarTodasLinhas(montarConsulta, tamanho = 1000) {
+        let todas = [];
+        let de = 0;
+        while (true) {
+            const { data, error } = await montarConsulta().range(de, de + tamanho - 1);
+            if (error) throw error;
+            const bloco = data || [];
+            todas = todas.concat(bloco);
+            if (bloco.length < tamanho) break;
+            de += tamanho;
+        }
+        return todas;
+    }
+
     // 6. CARREGAR DADOS DO SUPABASE
     async function carregarDados() {
-        const mesSelecionado = filtroMes ? filtroMes.value : valorMesPadrao;
+        const mesSelecionado = (filtroMes && filtroMes.value) ? filtroMes.value : valorMesPadrao;
 
         tabelaCorpo.innerHTML = '<tr><td colspan="9" class="celula-vazia-mensagem">Buscando agendamentos...</td></tr>';
 
         try {
-            // Busca os agendamentos da visualização
-            const { data, error } = await supabaseClient
+            // Busca os agendamentos do mês na visualização (em blocos, sem o limite de 1.000)
+            const { inicio, fim } = intervaloDoMes(mesSelecionado);
+            const data = await buscarTodasLinhas(() => supabaseClient
                 .from('vw_agendamentos_completos')
                 .select('*')
-                .order('data_revisao', { ascending: true });
+                .gte('data_revisao', inicio)
+                .lte('data_revisao', fim)
+                .order('data_revisao', { ascending: true })
+                .order('id', { ascending: true }));
 
-            if (error) throw error;
-
-            const agendamentosGeraisDoMes = (data || []).filter(item =>
+            const agendamentosGeraisDoMes = data.filter(item =>
                 item.data_revisao && item.data_revisao.startsWith(mesSelecionado)
             );
 
@@ -419,4 +442,4 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     await carregarDados();
-});
+});
