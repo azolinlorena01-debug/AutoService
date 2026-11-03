@@ -76,14 +76,22 @@
         const gestao = document.getElementById('link-menu-admin');
         const divergencias = document.getElementById('link-menu-divergencias');
         if (gestao) gestao.classList.remove('oculto');
-        if (divergencias) divergencias.classList.add('oculto');
+        if (divergencias) {
+            if (divergencias.classList.contains('ativo') && gestao) {
+                gestao.classList.add('ativo');
+                divergencias.classList.remove('ativo');
+            }
+            divergencias.classList.add('oculto');
+        }
     };
 
     window.montarMenu = function () {
         const menu = lerMenu();
         const area = document.getElementById('area-autenticacao');
         if (menu && area && !area.innerHTML.trim()) area.innerHTML = menu.html;
-        if (menu && menu.admin) window.mostrarLinksAdmin();
+        if (menu && menu.admin) {
+            window.mostrarLinksAdmin();
+        }
         criarBotaoTema();
     };
 
@@ -96,6 +104,8 @@
     document.addEventListener('DOMContentLoaded', () => {
         if (document.body.classList.contains('corpo-login')) window.limparMenuCache();
         criarBotaoTema();
+        const menuSalvo = lerMenu();
+        if (menuSalvo && menuSalvo.admin) document.querySelectorAll('#abas-gestao.oculto').forEach(e => e.classList.remove('oculto'));
         setTimeout(window.mostrarConteudo, 8000);
     });
 })();

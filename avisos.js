@@ -166,6 +166,34 @@
         } catch (e) {}
     }
 
+    let cacheInativos = null;
+
+    async function carregarInativos(client, forcar) {
+        if (cacheInativos && !forcar) return cacheInativos;
+        const mapa = new Map();
+        try {
+            const { data } = await client.from('operadores_inativos').select('id, dealer, apelido').order('dealer', { ascending: true });
+            (data || []).forEach(i => mapa.set(i.id, { id: i.id, dealer: i.dealer, apelido: i.apelido || '', nome: (i.apelido && i.apelido.trim()) || i.dealer }));
+        } catch (e) {}
+        cacheInativos = mapa;
+        return mapa;
+    }
+
+    async function aplicarInativos(client, linhas) {
+        if (!linhas.some(l => !l.user_id && l.inativo_id)) return linhas;
+        const mapa = await carregarInativos(client);
+        linhas.forEach(l => {
+            if (!l.user_id && l.inativo_id) {
+                const i = mapa.get(l.inativo_id);
+                l.inativo = true;
+                l.autor_nome = i ? i.nome : 'Inativo';
+            }
+        });
+        return linhas;
+    }
+
+    window.carregarInativos = carregarInativos;
+    window.aplicarInativos = aplicarInativos;
     window.definirSeloFechado = definirSeloFechado;
     window.atualizarSeloFechado = atualizarSeloFechado;
     window.pintarBarraMeta = pintarBarraMeta;

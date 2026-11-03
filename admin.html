@@ -40,6 +40,7 @@
                 <button type="button" id="aba-historico" class="btn-filtro-grafico">Histórico</button>
                 <a href="importar.html" class="btn-filtro-grafico">Importar / Exportar</a>
                 <button type="button" id="aba-usuarios" class="btn-filtro-grafico">Usuários</button>
+                <button type="button" id="aba-inativos" class="btn-filtro-grafico">Inativos</button>
             </div>
 
             <section id="secao-fechamento">
@@ -108,6 +109,37 @@
                 </div>
             </section>
 
+            <section id="secao-inativos" class="card-tabela-agendamentos oculto">
+                <div class="tabela-cabecalho-acoes">
+                    <div>
+                        <h2>Funcionários inativos</h2>
+                        <span class="subtitulo-contador" id="inativos-contador">0 cadastrados</span>
+                    </div>
+                </div>
+                <p class="lista-inativos-aviso">Cadastre o código do dealer de quem saiu da equipe. Na importação, os agendamentos desse código entram na meta total e na meta da marca, sem vínculo com um perfil e sem bônus.</p>
+                <div class="form-inativo">
+                    <input type="text" id="inativo-dealer" class="input-busca-padrao" placeholder="Código do dealer (ex.: ANAXYZ)" maxlength="60">
+                    <input type="text" id="inativo-apelido" class="input-busca-padrao" placeholder="Apelido (opcional)" maxlength="60">
+                    <button type="button" id="btn-adicionar-inativo" class="btn-adicionar-agendamento">+ Cadastrar inativo</button>
+                </div>
+                <div class="tabela-container">
+                    <table class="tabela-admin">
+                        <thead>
+                            <tr>
+                                <th>CÓDIGO DO DEALER</th>
+                                <th>APELIDO</th>
+                                <th class="col-centro">AGENDAMENTOS</th>
+                                <th class="col-centro">COMPARECIDOS</th>
+                                <th class="col-centro">AÇÃO</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-inativos">
+                            <tr class="linha-esqueleto"><td colspan="5"><div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
             <section id="secao-historico" class="card-tabela-agendamentos oculto">
                 <div class="tabela-cabecalho-acoes">
                     <div>
@@ -115,6 +147,7 @@
                         <span class="subtitulo-contador" id="historico-contador">0 registros</span>
                     </div>
                     <div class="grupo-filtros-alinhados">
+                        <button type="button" id="btn-historico-selecionar" class="btn-selecionar ico ico-selecao">Selecionar</button>
                         <button type="button" id="btn-historico-excluir" class="btn-excluir-selecionados oculto ico ico-lixeira">Excluir selecionados (0)</button>
                         <button type="button" id="btn-historico-apagar-tudo" class="btn-abrir-config-metas ico ico-lixeira">Apagar tudo</button>
                         <input type="text" id="historico-busca" class="input-busca-padrao" placeholder="Buscar por placa, nome ou campo...">
@@ -155,6 +188,18 @@
                     </div>
                 </div>
             </section>
+            <script>
+                (function () {
+                    var h = window.location.hash.replace('#', '');
+                    if (['historico', 'usuarios', 'inativos'].indexOf(h) === -1) return;
+                    ['fechamento', 'historico', 'usuarios', 'inativos'].forEach(function (n) {
+                        var b = document.getElementById('aba-' + n);
+                        var sec = document.getElementById('secao-' + n);
+                        if (b) b.classList.toggle('ativo', n === h);
+                        if (sec) sec.classList.toggle('oculto', n !== h);
+                    });
+                })();
+            </script>
         </main>
     </div>
 

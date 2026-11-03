@@ -670,6 +670,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 aplicarFiltros(supabaseClient.from('vw_agendamentos_completos').select('*')));
 
             if (dataView.length > 0) {
+                await window.aplicarInativos(supabaseClient, dataView);
                 return dataView.map(i => ({
                     ...i,
                     marca: normalizarNomeMarca(i.marca || i.autor_equipe || 'Toyota')
@@ -923,8 +924,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                         meusPorMarca: agrupar(minhasNaEquipe, i => i.marca, i => ({ marca: i.marca })),
                         colegas: agrupar(
                             agendamentosEquipe.filter(i => i.user_id !== usuarioAtual.id),
-                            i => `${i.user_id}|${i.marca}`,
-                            i => ({ nome: nomeCurtoOperador(i.autor_nome), marca: i.marca })),
+                            i => i.inativo ? `inativos|${i.marca}` : `${i.user_id}|${i.marca}`,
+                            i => ({ nome: i.inativo ? 'Usuários inativos' : nomeCurtoOperador(i.autor_nome), marca: i.marca })),
                         outras: agrupar(outrasMarcasMinhas, i => i.marca, i => ({ marca: i.marca })),
                         metaTotal: agendamentosEquipe.length,
                         metaComp: comparecidosEquipe,
@@ -1150,20 +1151,27 @@ document.addEventListener('DOMContentLoaded', async function() {
         const operadores = {};
 
         agendamentos.forEach(item => {
-            const id = item.user_id || item.autor_nome || 'desconhecido';
+            const id = item.user_id || (item.inativo_id ? 'inativo:' + item.inativo_id : (item.autor_nome || 'desconhecido'));
             if (!operadores[id]) {
                 operadores[id] = {
                     id: id,
                     nome: (item.autor_nome || 'Operador').trim(),
+                    inativo: !!item.inativo,
+                    marcasInativo: new Set(),
                     equipeOficial: item.autor_equipe || item.marca || 'Geral',
                     total: 0,
                     compareceu: 0,
                     faltou: 0
                 };
             }
+            if (item.inativo && item.marca) operadores[id].marcasInativo.add(item.marca);
             operadores[id].total++;
             if (item.status === 'compareceu') operadores[id].compareceu++;
             else if (item.status === 'faltou') operadores[id].faltou++;
+        });
+
+        Object.values(operadores).forEach(op => {
+            if (op.inativo && op.marcasInativo.size > 0) op.equipeOficial = [...op.marcasInativo].join(' | ');
         });
 
         const listaRanking = Object.values(operadores).sort((a, b) => b.compareceu - a.compareceu);
@@ -1191,9 +1199,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             } else if (posicao === 2) {
                 classePos = 'pos-2';
                 textoPos = '🥈';
+                classeItem = 'destaque-segundo';
             } else if (posicao === 3) {
                 classePos = 'pos-3';
                 textoPos = '🥉';
+                classeItem = 'destaque-terceiro';
             }
 
             const itemDiv = document.createElement('div');
@@ -1203,7 +1213,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <div class="ranking-esquerda">
                     <div class="posicao-circulo ${classePos}">${textoPos}</div>
                     <div class="operador-info-bloco">
-                        <strong>${op.nome}</strong>
+                        <strong>${op.nome}${op.inativo ? ' <span class="tag-inativo">Inativo</span>' : ''}</strong>
                         <span>${op.equipeOficial} • ${taxaPresenca}% de presença</span>
                     </div>
                     <div class="ranking-barra-area">
@@ -1343,9 +1353,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             const nomeCompleto = (item.autor_nome || 'Operador').trim();
             const partes = nomeCompleto.split(/\s+/).filter((p, i) => i === 0 || !['DE', 'DA', 'DO', 'DAS', 'DOS', 'E'].includes(p.toUpperCase()));
             const nomeOperador = partes.length >= 2 ? `${partes[0]} ${partes[1]}` : partes[0];
+            const nomeExibido = item.inativo ? (isAdmin ? `${nomeOperador} (inativo)` : 'Usuários inativos') : nomeOperador;
             const nomeCurto = agruparPorMarca
                 ? (item.marca || 'Sem marca')
-                : ((detalharMarcaColegas && item.user_id !== usuarioAtual.id) ? `${nomeOperador} (${item.marca})` : nomeOperador);
+                : ((detalharMarcaColegas && item.user_id !== usuarioAtual.id) ? `${nomeExibido} (${item.marca})` : nomeExibido);
 
             if (!operadores[nomeCurto]) operadores[nomeCurto] = { total: 0, compareceu: 0 };
             operadores[nomeCurto].total++;
@@ -1557,10 +1568,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const operadores = {};
         agendamentos.forEach(item => {
-            const chave = item.user_id || item.autor_nome || 'desconhecido';
+            const chave = item.user_id || (item.inativo_id ? 'inativo:' + item.inativo_id : (item.autor_nome || 'desconhecido'));
             if (!operadores[chave]) {
                 operadores[chave] = {
-                    nome: item.autor_nome || 'Operador',
+                    nome: (item.autor_nome || 'Operador') + (item.inativo ? ' (inativo)' : ''),
                     total: 0,
                     compareceu: 0,
                     pendente: 0,

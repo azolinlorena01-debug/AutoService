@@ -2862,6 +2862,10 @@ html body .dd-operador.dd-filtro-marca .dd-operador-trigger {
 }
 
 html body .conteudo-carregando {
+    visibility: visible;
+}
+
+html body .conteudo-carregando > :not(#abas-gestao) {
     visibility: hidden;
 }
 
@@ -4066,8 +4070,8 @@ html body .tabela-admin .input-valor-facilitada:focus {
 }
 
 html body .tabela-admin .input-valor-facilitada[data-campo="pago"] {
-    border-color: #bfdbfe;
-    background: #f8fbff;
+    border-color: #b3bfce;
+    background: #fbfcfe;
 }
 
 html body .tabela-admin .input-valor-facilitada:disabled {
@@ -4201,6 +4205,260 @@ html body #btn-historico-apagar-tudo {
 html body #btn-historico-apagar-tudo:hover {
     background: #fee2e2;
     border-color: #fca5a5;
+}
+
+html body .tabela-container table th.col-selecao,
+html body .tabela-container table td.col-selecao {
+    display: none;
+}
+
+html body .tabela-container table.modo-selecao th.col-selecao,
+html body .tabela-container table.modo-selecao td.col-selecao {
+    display: table-cell;
+}
+
+html body .btn-selecionar {
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+html body .btn-selecionar:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+html body .btn-selecionar.ativo {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+}
+
+html body .ico-selecao::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.7%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Crect x=%223%22 y=%223%22 width=%2214%22 height=%2214%22 rx=%223%22/%3E%3Cpath d=%22M7 10.2l2.2 2.2L13.2 7.6%22/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.7%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Crect x=%223%22 y=%223%22 width=%2214%22 height=%2214%22 rx=%223%22/%3E%3Cpath d=%22M7 10.2l2.2 2.2L13.2 7.6%22/%3E%3C/svg%3E");
+}
+
+html body .input-valor-facilitada[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+html body .input-valor-facilitada[type="number"]::-webkit-inner-spin-button,
+html body .input-valor-facilitada[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+html body .campo-sufixo {
+    position: relative;
+    display: inline-block;
+}
+
+html body .campo-sufixo .input-valor-facilitada {
+    padding-right: 24px;
+}
+
+html body .campo-sufixo .sufixo-campo {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    pointer-events: none;
+}
+
+html body .celula-pago {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+html body .btn-usar-calculado {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: transparent;
+    color: #16a34a;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+html body .btn-usar-calculado:hover {
+    background: #f0fdf4;
+    border-color: #86efac;
+}
+
+html body .ranking-item.destaque-segundo {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+html body .ranking-item.destaque-terceiro {
+    background: #fff7ed;
+    border-color: #fed7aa;
+}
+
+html body .input-valor-facilitada::placeholder {
+    color: #64748b;
+}
+
+html body .celula-valor-bonus .input-valor-facilitada {
+    height: 34px;
+    background: #fbfcfe;
+    border: 1px solid #b3bfce;
+    border-radius: 8px;
+    color: #0f172a;
+    font-weight: 500;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+html body .celula-valor-bonus .input-valor-facilitada:hover {
+    border-color: #2563eb;
+    background: #ffffff;
+}
+
+html body .celula-valor-bonus .input-valor-facilitada:focus {
+    border-color: #2563eb;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+html body .tag-inativo {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 20px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    vertical-align: 1px;
+}
+
+html body .form-inativo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+html body .form-inativo .input-busca-padrao {
+    width: 240px;
+}
+
+html body .btn-remover-inativo {
+    color: #dc2626;
+}
+
+html body .lista-inativos-aviso {
+    margin: 0 0 14px;
+    font-size: 13px;
+    color: var(--texto-secundario);
+}
+
+html body .aviso-resumo li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+html body .btn-cadastrar-inativo {
+    padding: 3px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: transparent;
+    color: #475569;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+html body .btn-cadastrar-inativo:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+html body .btn-cadastrar-inativo:disabled {
+    cursor: default;
+    color: #15803d;
+    border-color: #bbf7d0;
+}
+
+html body .aviso-resumo-nota {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: var(--texto-secundario);
+}
+
+html body .input-mes-estilizado,
+html body .filtro-admin-mes-select,
+html body .input-mes-padrao {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+html body .dd-operador.dd-filtro-marca .dd-operador-trigger {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+html body .input-busca-padrao,
+html body .input-mes-padrao,
+html body .input-mes-estilizado,
+html body .filtro-admin-mes-select,
+html body input.custom-select,
+html body .custom-dropdown-trigger,
+html body .dd-operador:not(.dd-pilula):not(.dd-login) .dd-operador-trigger {
+    background: #fbfcfe;
+    border: 1px solid #b3bfce;
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+html body .input-busca-padrao:hover,
+html body .input-mes-padrao:hover,
+html body .input-mes-estilizado:hover,
+html body .filtro-admin-mes-select:hover,
+html body input.custom-select:hover,
+html body .custom-dropdown-trigger:hover,
+html body .dd-operador:not(.dd-pilula):not(.dd-login) .dd-operador-trigger:hover,
+html body .input-busca-padrao:focus,
+html body .input-mes-padrao:focus,
+html body .input-mes-estilizado:focus,
+html body .filtro-admin-mes-select:focus,
+html body input.custom-select:focus,
+html body .custom-dropdown-trigger:focus,
+html body .dd-operador:not(.dd-pilula):not(.dd-login) .dd-operador-trigger:focus,
+html body .dd-operador:not(.dd-pilula):not(.dd-login) .dd-operador-trigger.aberto {
+    border-color: #2563eb;
+    background: #ffffff;
+}
+
+html body .dd-operador:not(.dd-login) .dd-operador-trigger.vazio .dd-operador-label {
+    color: inherit;
 }
 
 html[data-tema="escuro"] {
@@ -6084,8 +6342,8 @@ html[data-tema="escuro"] body .tabela-admin .input-valor-facilitada:focus {
 }
 
 html[data-tema="escuro"] body .tabela-admin .input-valor-facilitada[data-campo="pago"] {
-    border-color: #1e40af;
-    background: #f8fbff;
+    border-color: #b3bfce;
+    background: #fbfcfe;
 }
 
 html[data-tema="escuro"] body .tabela-admin .input-valor-facilitada:disabled {
@@ -6187,6 +6445,125 @@ html[data-tema="escuro"] body #btn-historico-apagar-tudo:hover {
     border-color: #991b1b;
 }
 
+html[data-tema="escuro"] body .btn-selecionar {
+    border: 1px solid #334155;
+    border-radius: 8px;
+    background: #131c2e;
+    color: #e2e8f0;
+}
+
+html[data-tema="escuro"] body .btn-selecionar:hover {
+    background: #1a2438;
+    border-color: #475569;
+}
+
+html[data-tema="escuro"] body .btn-selecionar.ativo {
+    background: #1b2845;
+    border-color: #93c5fd;
+    color: #93c5fd;
+}
+
+html[data-tema="escuro"] body .campo-sufixo .sufixo-campo {
+    color: #a3b1c6;
+}
+
+html[data-tema="escuro"] body .btn-usar-calculado {
+    border: 1px solid #334155;
+    border-radius: 8px;
+    background: transparent;
+    color: #4ade80;
+}
+
+html[data-tema="escuro"] body .btn-usar-calculado:hover {
+    background: #f0fdf4;
+    border-color: #166534;
+}
+
+html[data-tema="escuro"] body .ranking-item.destaque-segundo {
+    background: #1a2438;
+    border-color: #334155;
+}
+
+html[data-tema="escuro"] body .ranking-item.destaque-terceiro {
+    background: #fff7ed;
+    border-color: #9a3412;
+}
+
+html[data-tema="escuro"] body .input-valor-facilitada::placeholder {
+    color: #a3b1c6;
+}
+
+html[data-tema="escuro"] body .celula-valor-bonus .input-valor-facilitada {
+    background: #fbfcfe;
+    border: 1px solid #b3bfce;
+    border-radius: 8px;
+    color: #e2e8f0;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+html[data-tema="escuro"] body .celula-valor-bonus .input-valor-facilitada:hover {
+    border-color: #2563eb;
+    background: #131c2e;
+}
+
+html[data-tema="escuro"] body .celula-valor-bonus .input-valor-facilitada:focus {
+    border-color: #2563eb;
+    background: #131c2e;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+html[data-tema="escuro"] body .tag-inativo {
+    border: 1px solid #334155;
+    border-radius: 20px;
+    background: #1a2438;
+    color: #a3b1c6;
+}
+
+html[data-tema="escuro"] body .btn-remover-inativo {
+    color: #f87171;
+}
+
+html[data-tema="escuro"] body .lista-inativos-aviso {
+    color: var(--texto-secundario);
+}
+
+html[data-tema="escuro"] body .btn-cadastrar-inativo {
+    border: 1px solid #334155;
+    border-radius: 6px;
+    background: transparent;
+    color: #cbd5e1;
+}
+
+html[data-tema="escuro"] body .btn-cadastrar-inativo:hover:not(:disabled) {
+    background: #1a2438;
+    border-color: #475569;
+}
+
+html[data-tema="escuro"] body .btn-cadastrar-inativo:disabled {
+    color: #4ade80;
+    border-color: #166534;
+}
+
+html[data-tema="escuro"] body .aviso-resumo-nota {
+    color: var(--texto-secundario);
+}
+
+html[data-tema="escuro"] body .input-busca-padrao, html[data-tema="escuro"] body .input-mes-padrao, html[data-tema="escuro"] body .input-mes-estilizado, html[data-tema="escuro"] body .filtro-admin-mes-select, html[data-tema="escuro"] body input.custom-select, html[data-tema="escuro"] body .custom-dropdown-trigger, html[data-tema="escuro"] body .dd-operador:not(.dd-pilula):not(.dd-login) .dd-operador-trigger {
+    background: #fbfcfe;
+    border: 1px solid #b3bfce;
+    color: #e2e8f0;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+html[data-tema="escuro"] body .input-busca-padrao:hover, html[data-tema="escuro"] body .input-mes-padrao:hover, html[data-tema="escuro"] body .input-mes-estilizado:hover, html[data-tema="escuro"] body .filtro-admin-mes-select:hover, html[data-tema="escuro"] body input.custom-select:hover, html[data-tema="escuro"] body .custom-dropdown-trigger:hover, html[data-tema="escuro"] body .dd-operador:not(.dd-pilula):not(.dd-login) .dd-operador-trigger:hover, html[data-tema="escuro"] body .input-busca-padrao:focus, html[data-tema="escuro"] body .input-mes-padrao:focus, html[data-tema="escuro"] body .input-mes-estilizado:focus, html[data-tema="escuro"] body .filtro-admin-mes-select:focus, html[data-tema="escuro"] body input.custom-select:focus, html[data-tema="escuro"] body .custom-dropdown-trigger:focus, html[data-tema="escuro"] body .dd-operador:not(.dd-pilula):not(.dd-login) .dd-operador-trigger:focus, html[data-tema="escuro"] body .dd-operador:not(.dd-pilula):not(.dd-login) .dd-operador-trigger.aberto {
+    border-color: #2563eb;
+    background: #131c2e;
+}
+
+html[data-tema="escuro"] body .dd-operador:not(.dd-login) .dd-operador-trigger.vazio .dd-operador-label {
+    color: inherit;
+}
+
 @media print {
     html[data-tema="escuro"] body {
         background: #131c2e !important;
@@ -6232,8 +6609,8 @@ html[data-tema="escuro"] body .tabela-admin .input-valor-facilitada::placeholder
 }
 
 html[data-tema="escuro"] body .tabela-admin .input-valor-facilitada[data-campo="pago"] {
-    background: rgba(59, 130, 246, 0.08);
-    border-color: #2f5fb3;
+    background: #0f1a30;
+    border-color: #475569;
 }
 
 html[data-tema="escuro"] body .tabela-admin .input-valor-facilitada:hover:not(:disabled),
@@ -6343,6 +6720,90 @@ html[data-tema="escuro"] body #btn-historico-apagar-tudo:hover {
     border-color: #f87171;
 }
 
+html[data-tema="escuro"] body .btn-selecionar {
+    background: transparent;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+html[data-tema="escuro"] body .btn-selecionar:hover {
+    background: #1e293b;
+    border-color: #475569;
+}
+
+html[data-tema="escuro"] body .btn-selecionar.ativo {
+    background: rgba(59, 130, 246, 0.16);
+    border-color: rgba(96, 165, 250, 0.55);
+    color: #93c5fd;
+}
+
+html[data-tema="escuro"] body .campo-sufixo .sufixo-campo {
+    color: #94a3b8;
+}
+
+html[data-tema="escuro"] body .btn-usar-calculado {
+    background: transparent;
+    border-color: #334155;
+    color: #4ade80;
+}
+
+html[data-tema="escuro"] body .btn-usar-calculado:hover {
+    background: rgba(16, 185, 129, 0.16);
+    border-color: #34d399;
+}
+
+html[data-tema="escuro"] body .ranking-item.destaque-segundo {
+    background: #18243a;
+    border-color: #475569;
+}
+
+html[data-tema="escuro"] body .ranking-item.destaque-terceiro {
+    background: #2a1a10;
+    border-color: #7c4a22;
+}
+
+html[data-tema="escuro"] body .input-valor-facilitada::placeholder {
+    color: #94a3b8;
+}
+
+html[data-tema="escuro"] body .celula-valor-bonus .input-valor-facilitada {
+    background: #0f1a30;
+    border-color: #475569;
+    color: #f1f5f9;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+html[data-tema="escuro"] body .celula-valor-bonus .input-valor-facilitada:hover,
+html[data-tema="escuro"] body .celula-valor-bonus .input-valor-facilitada:focus {
+    border-color: #60a5fa;
+    background: #13203a;
+}
+
+html[data-tema="escuro"] body .celula-valor-bonus .input-valor-facilitada:focus {
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25);
+}
+
+html[data-tema="escuro"] body .tag-inativo {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+html[data-tema="escuro"] body .btn-cadastrar-inativo {
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+html[data-tema="escuro"] body .btn-cadastrar-inativo:hover:not(:disabled) {
+    background: #1e293b;
+    border-color: #475569;
+}
+
+html[data-tema="escuro"] body .btn-cadastrar-inativo:disabled {
+    color: #4ade80;
+    border-color: rgba(74, 222, 128, 0.4);
+}
+
 html[data-tema="escuro"] .custom-file-input::file-selector-button {
     margin-right: 12px;
     padding: 6px 12px;
@@ -6365,4 +6826,40 @@ html[data-tema="escuro"] input[type="date"] {
 
 html[data-tema="escuro"] .dd-operador.dd-filtro-marca .dd-operador-trigger {
     background-color: #0f1729;
+}
+
+html[data-tema="escuro"] body .input-busca-padrao,
+html[data-tema="escuro"] body .input-mes-padrao,
+html[data-tema="escuro"] body .input-mes-estilizado,
+html[data-tema="escuro"] body .filtro-admin-mes-select,
+html[data-tema="escuro"] body input.custom-select,
+html[data-tema="escuro"] body .custom-dropdown-trigger,
+html[data-tema="escuro"] body .dd-operador:not(.dd-pilula):not(.dd-login) .dd-operador-trigger {
+    background: #0f1a30;
+    border: 1px solid #475569;
+    color: #f1f5f9;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+html[data-tema="escuro"] body .input-busca-padrao:hover,
+html[data-tema="escuro"] body .input-mes-padrao:hover,
+html[data-tema="escuro"] body .input-mes-estilizado:hover,
+html[data-tema="escuro"] body .filtro-admin-mes-select:hover,
+html[data-tema="escuro"] body input.custom-select:hover,
+html[data-tema="escuro"] body .custom-dropdown-trigger:hover,
+html[data-tema="escuro"] body .dd-operador:not(.dd-pilula):not(.dd-login) .dd-operador-trigger:hover,
+html[data-tema="escuro"] body .input-busca-padrao:focus,
+html[data-tema="escuro"] body .input-mes-padrao:focus,
+html[data-tema="escuro"] body .input-mes-estilizado:focus,
+html[data-tema="escuro"] body .filtro-admin-mes-select:focus,
+html[data-tema="escuro"] body input.custom-select:focus,
+html[data-tema="escuro"] body .custom-dropdown-trigger:focus,
+html[data-tema="escuro"] body .dd-operador:not(.dd-pilula):not(.dd-login) .dd-operador-trigger:focus,
+html[data-tema="escuro"] body .dd-operador:not(.dd-pilula):not(.dd-login) .dd-operador-trigger.aberto {
+    border-color: #60a5fa;
+    background: #13203a;
+}
+
+html[data-tema="escuro"] body .dd-operador:not(.dd-login) .dd-operador-trigger.vazio .dd-operador-label {
+    color: inherit;
 }

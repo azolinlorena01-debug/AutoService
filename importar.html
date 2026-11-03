@@ -40,6 +40,7 @@
                 <a href="admin.html#historico" class="btn-filtro-grafico">Histórico</a>
                 <a href="importar.html" class="btn-filtro-grafico ativo">Importar / Exportar</a>
                 <a href="admin.html#usuarios" class="btn-filtro-grafico">Usuários</a>
+                <a href="admin.html#inativos" class="btn-filtro-grafico">Inativos</a>
             </div>
 
             <div class="painel-duplo">
@@ -439,7 +440,7 @@
                     const linhas = resumo.linhas.map(([rotulo, valor]) => `<div class="linha-resumo"><span>${esc(rotulo)}</span><strong>${esc(valor)}</strong></div>`).join('');
                     const nomes = resumo.naoReconhecidos;
                     const avisoNomes = nomes.length > 0
-                        ? `<details class="aviso-resumo"><summary>${nomes.length} ${nomes.length === 1 ? 'nome da planilha sem usuário correspondente' : 'nomes da planilha sem usuário correspondente'} (essas linhas não entram). Ver lista</summary><ul>${nomes.map(([n, q]) => `<li>${esc(n)} (${q} ${q === 1 ? 'linha' : 'linhas'})</li>`).join('')}</ul></details>`
+                        ? `<details class="aviso-resumo"><summary>${nomes.length} ${nomes.length === 1 ? 'nome da planilha sem usuário correspondente' : 'nomes da planilha sem usuário correspondente'} (essas linhas não entram). Ver lista</summary><ul>${nomes.map(([n, info]) => `<li><span>${esc(n)} (${info.q} ${info.q === 1 ? 'linha' : 'linhas'}${info.codigo ? ', ' + esc(info.codigo) : ''})</span> <button type="button" class="btn-cadastrar-inativo" data-nome="${esc(n)}">Cadastrar como inativo</button></li>`).join('')}</ul><p class="aviso-resumo-nota">Depois de cadastrar, cancele e importe a planilha novamente para incluir esses agendamentos.</p></details>`
                         : '';
                     overlay.innerHTML = `
                         <div class="modal-card-metas">
@@ -455,6 +456,19 @@
                             </div>
                         </div>`;
                     const fechar = (resposta) => { overlay.style.display = 'none'; resolve(resposta); };
+                    overlay.querySelectorAll('.btn-cadastrar-inativo').forEach(botao => {
+                        botao.addEventListener('click', async () => {
+                            const dealer = String(botao.dataset.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+                            botao.disabled = true;
+                            const { error } = await supabaseClient.from('operadores_inativos').insert({ dealer });
+                            if (error && !/duplicate|unique/i.test(error.message)) {
+                                botao.disabled = false;
+                                avisar('Não foi possível cadastrar: ' + error.message);
+                                return;
+                            }
+                            botao.textContent = 'Cadastrado';
+                        });
+                    });
                     overlay.querySelector('#btnImportarCancelar').addEventListener('click', () => fechar(false));
                     overlay.querySelector('#btnImportarConfirmar').addEventListener('click', () => fechar(true));
                     overlay.style.display = 'flex';
@@ -470,6 +484,18 @@
                     if (txt === op.dealer || op.match(txt)) {
                         return { id: op.id, nome: op.nome, dealer: op.dealer, toyota: !!op.toyota };
                     }
+                }
+                return null;
+            }
+
+            function identificarInativo(textoAgendador, lista, codigoLinha) {
+                const txt = String(textoAgendador || '').normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+                const codigo = String(codigoLinha || '').toUpperCase().replace(/\s/g, '');
+                if (!txt && !codigo) return null;
+                for (const i of lista) {
+                    const d = String(i.dealer || '').toUpperCase().trim();
+                    const dCodigo = d.replace(/\s/g, '');
+                    if (d && (txt === d || (d.length >= 6 && txt.includes(d)) || (codigo && codigo === dCodigo))) return { id: i.id, nome: i.nome, dealer: i.dealer, inativo: true };
                 }
                 return null;
             }
@@ -682,6 +708,9 @@
                         }
                     });
 
+                    const mapaInativos = await window.carregarInativos(supabaseClient, true);
+                    const listaInativos = [...mapaInativos.values()];
+
                     log(`Lendo arquivo: ${file.name}...`);
                     const reader = new FileReader();
 
@@ -707,7 +736,7 @@
                             }
 
                             let colEmpresa = -1, colDataContato = -1, colDataRevisao = -1, colPlaca = -1, colChassi = -1;
-                            let colServico = -1, colServicoCorreto = -1, colAgendador = -1, colOS = -1, colComparecido = -1, colStatusPlanilha = -1;
+                            let colCodigo = -1, colServico = -1, colServicoCorreto = -1, colAgendador = -1, colOS = -1, colComparecido = -1, colStatusPlanilha = -1;
 
                             const cabecalho = (linhasMatriz[0] || []).map(c => String(c).toUpperCase().trim());
 
@@ -721,6 +750,7 @@
                                     if (colServico === -1 || colNome === 'TIPO DE SERVIÇO' || colNome === 'TMO') colServico = idx;
                                 }
                                 if (colNome === 'AGENDADOR' || colNome === 'OPERADOR') colAgendador = idx;
+                                if (colNome.normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'CODIGO OPERADOR') colCodigo = idx;
                                 if (colNome === 'OS' || colNome === 'O.S.' || colNome === 'ORDEM') colOS = idx;
                                 if (colNome === 'COMPARECIDO') colComparecido = idx;
                                 if (colNome === 'STATUS') colStatusPlanilha = idx;
@@ -757,6 +787,8 @@
 
                             const registrosParaSalvar = [];
                             let totalIgnoradosOutroGrupo = 0;
+                            let totalInativos = 0;
+                            let totalExternos = 0;
                             let totalReagendados = 0;
                             let totalFacilitadas = 0;
                             let totalFacilitadasComValor = 0;
@@ -772,18 +804,27 @@
                                 if (!row || row.length === 0) continue;
 
                                 const textoAgendador = row[colAgendador] || '';
+                                const codigoLinha = colCodigo !== -1 ? String(row[colCodigo] || '').toUpperCase().replace(/\s/g, '') : '';
+                                const ehExterno = /^OP-?0*20$/.test(codigoLinha);
                                 let consultorAlvo = null;
 
                                 if (destinoEscolhido !== 'auto') {
                                     const cOp = OPERADORES_MESTRE.find(o => o.id === destinoEscolhido);
                                     consultorAlvo = { id: destinoEscolhido, nome: cOp ? cOp.nome : 'Manual', dealer: cOp ? cOp.dealer : 'MANUAL' };
                                 } else {
-                                    consultorAlvo = identificarConsultor(textoAgendador);
+                                    consultorAlvo = identificarConsultor(textoAgendador) || identificarInativo(textoAgendador, listaInativos, codigoLinha);
                                 }
 
                                 if (!consultorAlvo) {
                                     const nomeBruto = String(textoAgendador || '').trim();
-                                    if (nomeBruto && !nomeIgnoravel(nomeBruto)) naoReconhecidos[nomeBruto] = (naoReconhecidos[nomeBruto] || 0) + 1;
+                                    if (nomeBruto && !nomeIgnoravel(nomeBruto)) {
+                                        if (ehExterno) {
+                                            totalExternos++;
+                                        } else {
+                                            if (!naoReconhecidos[nomeBruto]) naoReconhecidos[nomeBruto] = { q: 0, codigo: codigoLinha };
+                                            naoReconhecidos[nomeBruto].q++;
+                                        }
+                                    }
                                     continue;
                                 }
 
@@ -791,7 +832,7 @@
                                 const numRevisao = extrairNumeroRevisaoTMO(textoServico);
                                 if (!numRevisao) continue;
 
-                                if (destinoEscolhido === 'auto') {
+                                if (destinoEscolhido === 'auto' && !consultorAlvo.inativo) {
                                     if (modoPlanilha === 'outras' && consultorAlvo.toyota) { totalIgnoradosOutroGrupo++; continue; }
                                     if (modoPlanilha === 'toyota' && !consultorAlvo.toyota) { totalIgnoradosOutroGrupo++; continue; }
                                 }
@@ -860,8 +901,10 @@
                                     }
                                 }
 
+                                if (consultorAlvo.inativo) totalInativos++;
+
                                 registrosParaSalvar.push({
-                                    user_id: consultorAlvo.id,
+                                    user_id: consultorAlvo.inativo ? null : consultorAlvo.id,
                                     data_contato: dataContatoFormatada,
                                     data_revisao: dataRevisaoFormatada,
                                     status: statusCalculado,
@@ -873,6 +916,7 @@
                                     observacao: obs,
                                     marca: marcaDetectada
                                 });
+                                if (consultorAlvo.inativo) registrosParaSalvar[registrosParaSalvar.length - 1].inativo_id = consultorAlvo.id;
 
                                 const rotuloDealer = consultorAlvo.dealer ? ` [${consultorAlvo.dealer}]` : '';
                                 const chaveResumo = `${consultorAlvo.nome}${rotuloDealer} (${marcaDetectada})`;
@@ -944,8 +988,10 @@
                             ];
                             if (qtdExistentes === null || qtdExistentes > 0) linhasConfirmacao.push(['Serão substituídos', qtdExistentes === null ? 'não foi possível contar' : String(qtdExistentes)]);
                             if (qtdManuais === null || qtdManuais > 0) linhasConfirmacao.push(['Lançamentos manuais preservados', qtdManuais === null ? 'não foi possível contar' : String(qtdManuais)]);
+                            if (totalInativos > 0) linhasConfirmacao.push(['De funcionários inativos', String(totalInativos)]);
+                            if (totalExternos > 0) linhasConfirmacao.push(['Ignorados (código OP-20, agendam fora)', String(totalExternos)]);
                             if (totalIgnoradosOutroGrupo > 0) linhasConfirmacao.push(['Ignorados (outro grupo de marcas)', String(totalIgnoradosOutroGrupo)]);
-                            const confirmado = await confirmarImportacao({ linhas: linhasConfirmacao, naoReconhecidos: Object.entries(naoReconhecidos).sort((x, y) => y[1] - x[1]) });
+                            const confirmado = await confirmarImportacao({ linhas: linhasConfirmacao, naoReconhecidos: Object.entries(naoReconhecidos).sort((x, y) => y[1].q - x[1].q) });
                             if (!confirmado) {
                                 log('Importação cancelada. Nada foi alterado.');
                                 return;

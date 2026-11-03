@@ -150,6 +150,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 .order('data_revisao', { ascending: true })
                 .order('id', { ascending: true }));
 
+            await window.aplicarInativos(supabaseClient, data);
+
             const agendamentosGeraisDoMes = data.filter(item =>
                 item.data_revisao && item.data_revisao.startsWith(mesSelecionado)
             );
@@ -287,6 +289,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         todosAgendamentosMes.forEach(item => {
             if (item.user_id && !operadores.has(item.user_id)) {
                 operadores.set(item.user_id, (item.autor_nome || 'Operador').trim());
+            } else if (!item.user_id && item.inativo_id) {
+                const chave = 'inativo:' + item.inativo_id;
+                if (!operadores.has(chave)) operadores.set(chave, `${(item.autor_nome || 'Inativo').trim()} (inativo)`);
             }
         });
 
@@ -306,7 +311,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     function aplicarFiltroOperador(lista) {
         const escolhido = filtroOperador ? filtroOperador.value : '';
-        return escolhido ? lista.filter(item => item.user_id === escolhido) : lista;
+        return escolhido ? lista.filter(item => (item.user_id || ('inativo:' + item.inativo_id)) === escolhido) : lista;
     }
 
     function aplicarFiltrosTabela() {
@@ -391,7 +396,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     function totalColunas() {
-        const cabecalho = tabelaCorpo.closest('table').querySelectorAll('thead th');
+        const cabecalho = Array.from(tabelaCorpo.closest('table').querySelectorAll('thead th'))
+            .filter(th => getComputedStyle(th).display !== 'none');
         return cabecalho.length || 9;
     }
 
@@ -410,6 +416,20 @@ document.addEventListener('DOMContentLoaded', async function() {
             tabelaCorpo.querySelectorAll('.chk-agendamento').forEach(c => { c.checked = e.target.checked; });
             sincronizarSelecao();
         });
+    }
+
+    function definirModoSelecao(ativo) {
+        const botao = document.getElementById('btn-modo-selecao');
+        tabelaCorpo.closest('table').classList.toggle('modo-selecao', ativo);
+        if (botao) {
+            botao.classList.toggle('ativo', ativo);
+            botao.textContent = ativo ? 'Cancelar seleção' : 'Selecionar';
+        }
+        if (!ativo) {
+            selecionados.clear();
+            tabelaCorpo.querySelectorAll('.chk-agendamento').forEach(c => { c.checked = false; });
+        }
+        sincronizarSelecao();
     }
 
     async function excluirSelecionados() {
@@ -431,7 +451,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         ocupado(false);
 
-        selecionados.clear();
+        definirModoSelecao(false);
         if (mensagemErro) avisar('Não foi possível excluir: ' + mensagemErro);
         else if (removidos < ids.length) avisar(`Foram excluídos ${removidos} de ${ids.length}. Os demais estão em mês fechado ou sem permissão.`, 'aviso');
         else avisar(removidos === 1 ? 'Agendamento excluído.' : `${removidos} agendamentos excluídos.`, 'sucesso');
@@ -931,6 +951,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         aviso.className = 'aviso-agendamento oculto';
 
         if (isAdmin) {
+            const botaoSelecionar = document.createElement('button');
+            botaoSelecionar.type = 'button';
+            botaoSelecionar.id = 'btn-modo-selecao';
+            botaoSelecionar.className = 'btn-selecionar ico ico-selecao';
+            botaoSelecionar.textContent = 'Selecionar';
+            botaoSelecionar.addEventListener('click', () => definirModoSelecao(!tabelaCorpo.closest('table').classList.contains('modo-selecao')));
+            cabecalho.appendChild(botaoSelecionar);
+
             const botaoExcluir = document.createElement('button');
             botaoExcluir.type = 'button';
             botaoExcluir.id = 'btn-excluir-selecionados';

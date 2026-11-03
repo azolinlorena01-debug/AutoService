@@ -102,6 +102,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const abas = {
         fechamento: { botao: document.getElementById('aba-fechamento'), secao: document.getElementById('secao-fechamento') },
         usuarios: { botao: document.getElementById('aba-usuarios'), secao: document.getElementById('secao-usuarios') },
+        inativos: { botao: document.getElementById('aba-inativos'), secao: document.getElementById('secao-inativos') },
         historico: { botao: document.getElementById('aba-historico'), secao: document.getElementById('secao-historico') }
     };
 
@@ -111,6 +112,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             aba.secao.classList.toggle('oculto', chave !== nome);
         });
         if (nome === 'historico' && !historicoCarregado) carregarHistorico(true);
+        if (nome === 'inativos') carregarInativosAdmin();
     }
 
     Object.entries(abas).forEach(([chave, aba]) => aba.botao.addEventListener('click', () => trocarAba(chave)));
@@ -202,9 +204,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                     <td class="col-centro" data-campo="comparecidos">${l.calculo.comparecidos} / ${l.calculo.agendados}</td>
                     <td class="col-centro" data-campo="individual">${moeda(l.calculo.individual)}</td>
                     <td class="col-centro" data-campo="equipe">${moeda(l.calculo.equipe)}</td>
-                    <td class="col-centro"><input type="number" class="input-valor-facilitada input-curto" data-campo="nota" min="0" max="100" step="1" value="${l.nota !== null ? l.nota : ''}" placeholder="Aguardando" ${desabilitado}></td>
+                    <td class="col-centro"><div class="campo-sufixo"><input type="number" class="input-valor-facilitada input-curto" data-campo="nota" min="0" max="100" step="1" value="${l.nota !== null ? l.nota : ''}" placeholder="Aguardando" ${desabilitado}><span class="sufixo-campo">%</span></div></td>
                     <td class="col-centro"><strong data-campo="calculado">${moeda(l.calculo.total)}</strong></td>
-                    <td class="col-centro"><input type="number" class="input-valor-facilitada" data-campo="pago" min="0" step="0.01" value="${l.pago !== null ? l.pago.toFixed(2) : ''}" placeholder="Valor pago" ${desabilitado}></td>
+                    <td class="col-centro"><div class="celula-pago"><input type="number" class="input-valor-facilitada" data-campo="pago" min="0" step="0.01" value="${l.pago !== null ? l.pago.toFixed(2) : ''}" placeholder="Valor pago" ${desabilitado}>${estado.fechado ? '' : '<button type="button" class="btn-usar-calculado ico ico-check" title="Usar o valor calculado" aria-label="Usar o valor calculado"></button>'}</div></td>
                     <td class="col-centro" data-campo="diferenca">-</td>
                     <td class="col-centro"><input type="text" class="input-valor-facilitada input-largo" data-campo="obs" value="${escaparHtml(l.observacao)}" placeholder="Motivo do ajuste" ${desabilitado}></td>
                 </tr>
@@ -219,6 +221,16 @@ document.addEventListener('DOMContentLoaded', async function () {
                     atualizarDiferenca(tr);
                 });
                 input.addEventListener('change', () => salvarLinha(tr));
+            });
+        });
+
+        corpoFechamento.querySelectorAll('.btn-usar-calculado').forEach(botao => {
+            botao.addEventListener('click', () => {
+                const tr = botao.closest('tr');
+                const linha = linhaDoElemento(tr);
+                tr.querySelector('[data-campo="pago"]').value = linha.calculo.total.toFixed(2);
+                atualizarDiferenca(tr);
+                salvarLinha(tr);
             });
         });
 
@@ -459,6 +471,100 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     buscaUsuarios.addEventListener('input', renderizarUsuarios);
 
+    const corpoInativos = document.getElementById('corpo-inativos');
+    const campoDealerInativo = document.getElementById('inativo-dealer');
+    const campoApelidoInativo = document.getElementById('inativo-apelido');
+
+    function normalizarDealer(texto) {
+        return String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+    }
+
+    async function carregarInativosAdmin() {
+        corpoInativos.innerHTML = linhaCarregando(5, 3);
+        try {
+            const { data: lista, error } = await supabaseClient.from('operadores_inativos').select('id, dealer, apelido').order('dealer', { ascending: true });
+            if (error) throw error;
+            const linhas = await buscarTodasLinhas(() => supabaseClient.from('agendamentos').select('id, inativo_id, status').not('inativo_id', 'is', null).order('id', { ascending: true }));
+            const contagem = new Map();
+            linhas.forEach(l => {
+                const c = contagem.get(l.inativo_id) || { total: 0, comp: 0 };
+                c.total++;
+                if (l.status === 'compareceu') c.comp++;
+                contagem.set(l.inativo_id, c);
+            });
+            document.getElementById('inativos-contador').textContent = `${lista.length} ${lista.length === 1 ? 'cadastrado' : 'cadastrados'}`;
+            if (lista.length === 0) {
+                corpoInativos.innerHTML = linhaVazia(5, 'Nenhum funcionário inativo cadastrado.', 'Cadastre o código do dealer acima para que a importação o reconheça.');
+                return;
+            }
+            corpoInativos.innerHTML = lista.map(i => {
+                const c = contagem.get(i.id) || { total: 0, comp: 0 };
+                return `
+                    <tr data-id="${escaparHtml(i.id)}">
+                        <td><strong>${escaparHtml(i.dealer)}</strong> <span class="tag-inativo">Inativo</span></td>
+                        <td><input type="text" class="input-valor-facilitada input-largo input-apelido-inativo" maxlength="60" value="${escaparHtml(i.apelido || '')}" placeholder="Apelido (opcional)"></td>
+                        <td class="col-centro">${c.total}</td>
+                        <td class="col-centro">${c.comp}</td>
+                        <td class="col-centro">
+                            <button type="button" class="btn-abrir-config-metas btn-salvar-inativo">Salvar</button>
+                            <button type="button" class="btn-abrir-config-metas btn-remover-inativo">Remover</button>
+                        </td>
+                    </tr>`;
+            }).join('');
+            corpoInativos.querySelectorAll('tr[data-id]').forEach(tr => {
+                const id = tr.dataset.id;
+                tr.querySelector('.btn-salvar-inativo').addEventListener('click', async () => {
+                    const apelido = tr.querySelector('.input-apelido-inativo').value.trim();
+                    const { data, error: erro } = await supabaseClient.from('operadores_inativos').update({ apelido: apelido || null }).eq('id', id).select('id');
+                    if (erro || !data || data.length === 0) {
+                        avisar('Não foi possível salvar: ' + (erro ? erro.message : 'sem permissão.'));
+                        return;
+                    }
+                    window.carregarInativos(supabaseClient, true);
+                    const botao = tr.querySelector('.btn-salvar-inativo');
+                    botao.textContent = 'Salvo';
+                    setTimeout(() => { botao.textContent = 'Salvar'; }, 1500);
+                });
+                tr.querySelector('.btn-remover-inativo').addEventListener('click', async () => {
+                    const dealer = tr.querySelector('strong').textContent;
+                    if (!(await confirmar(`Remover ${dealer} da lista de inativos? Só é possível se não houver agendamentos vinculados a ele.`, { titulo: 'Remover inativo', confirmar: 'Remover', perigo: true }))) return;
+                    const { data, error: erro } = await supabaseClient.from('operadores_inativos').delete().eq('id', id).select('id');
+                    if (erro) {
+                        avisar(/foreign key|violates/i.test(erro.message) ? 'Não foi possível remover: existem agendamentos vinculados a este código.' : 'Não foi possível remover: ' + erro.message);
+                        return;
+                    }
+                    if (!data || data.length === 0) {
+                        avisar('Não foi possível remover: sem permissão.');
+                        return;
+                    }
+                    window.carregarInativos(supabaseClient, true);
+                    carregarInativosAdmin();
+                });
+            });
+        } catch (e) {
+            corpoInativos.innerHTML = `<tr><td colspan="5" class="celula-vazia-mensagem">Não foi possível carregar os inativos. Execute o script SQL dos inativos no Supabase. (${escaparHtml(e.message || e)})</td></tr>`;
+        }
+    }
+
+    document.getElementById('btn-adicionar-inativo').addEventListener('click', async () => {
+        const dealer = normalizarDealer(campoDealerInativo.value);
+        const apelido = campoApelidoInativo.value.trim();
+        if (dealer.length < 3) {
+            avisar('Informe o código do dealer.');
+            return;
+        }
+        const { error } = await supabaseClient.from('operadores_inativos').insert({ dealer, apelido: apelido || null });
+        if (error) {
+            avisar(/duplicate|unique/i.test(error.message) ? 'Este código já está cadastrado.' : 'Não foi possível cadastrar: ' + error.message);
+            return;
+        }
+        campoDealerInativo.value = '';
+        campoApelidoInativo.value = '';
+        avisar('Inativo cadastrado. Importe a planilha novamente para incluir os agendamentos dele.', 'sucesso');
+        window.carregarInativos(supabaseClient, true);
+        carregarInativosAdmin();
+    });
+
     function abrirModalMarcas(equipeAtual, aoConfirmar) {
         let overlay = document.getElementById('modalMarcas');
         if (!overlay) {
@@ -637,8 +743,26 @@ document.addEventListener('DOMContentLoaded', async function () {
         sincronizarSelecaoHistorico();
     });
 
+    const btnSelecionarHistorico = document.getElementById('btn-historico-selecionar');
+
+    function definirModoSelecaoHistorico(ativo) {
+        corpoHistorico.closest('table').classList.toggle('modo-selecao', ativo);
+        btnSelecionarHistorico.classList.toggle('ativo', ativo);
+        btnSelecionarHistorico.textContent = ativo ? 'Cancelar seleção' : 'Selecionar';
+        if (!ativo) {
+            historicoSelecionados.clear();
+            corpoHistorico.querySelectorAll('.chk-historico').forEach(c => { c.checked = false; });
+        }
+        sincronizarSelecaoHistorico();
+    }
+
+    btnSelecionarHistorico.addEventListener('click', () => {
+        definirModoSelecaoHistorico(!corpoHistorico.closest('table').classList.contains('modo-selecao'));
+    });
+
     async function concluirExclusaoHistorico(erro, quantidade, esperado) {
         historicoSelecionados.clear();
+        definirModoSelecaoHistorico(false);
         if (erro) avisar('Não foi possível excluir: ' + erro.message);
         else if (!quantidade && esperado) avisar('Não foi possível excluir: sem permissão. Execute o SQL de limpeza do histórico no Supabase.');
         else avisar(quantidade === 1 ? 'Registro excluído.' : `${quantidade} registros excluídos.`, 'sucesso');
