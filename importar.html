@@ -4,277 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Bônus - Importar e Exportar</title>
-    <link rel="icon" type="image/jpeg" href="imagens/icone-sem-fundo.png">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .painel-duplo {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-            gap: 28px;
-            max-width: 960px;
-            margin: 40px auto 24px auto;
-            align-items: stretch;
-        }
-        .import-wrapper {
-            background: #ffffff;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            min-height: 520px;
-            box-sizing: border-box;
-        }
-        .import-header { margin-bottom: 20px; }
-        .import-header h2 { font-size: 18px; font-weight: 700; color: #1e293b; margin: 0 0 6px 0; }
-        .import-header p { font-size: 13px; color: #64748b; margin: 0; }
-        .grupo-campo { margin-bottom: 18px; }
-        .grupo-campo label {
-            display: block;
-            font-size: 12px;
-            font-weight: 700;
-            color: #475569;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-        .custom-file-input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px dashed #cbd5e1;
-            border-radius: 8px;
-            background: #f8fafc;
-            box-sizing: border-box;
-            font-size: 13px;
-            color: #334155;
-            cursor: pointer;
-            transition: border-color 0.2s ease;
-        }
-        .custom-file-input:hover { border-color: #2563eb; }
-        .custom-select {
-            width: 100%;
-            height: 42px;
-            padding: 0 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            background: #ffffff;
-            font-size: 14px;
-            color: #1e293b;
-            outline: none;
-            box-sizing: border-box;
-        }
-        .btn-enviar-dados {
-            width: 100%;
-            height: 44px;
-            background: #2563eb;
-            color: #ffffff;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-        .btn-enviar-dados:hover { background: #1d4ed8; }
-        .btn-enviar-dados:disabled { background: #94a3b8; cursor: not-allowed; }
-        .btn-secundario-acao {
-            width: 100%;
-            height: 44px;
-            background: #ffffff;
-            color: #1e293b;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            margin-bottom: 12px;
-        }
-        .btn-secundario-acao:hover { background: #f8fafc; border-color: #94a3b8; }
-        .status-box {
-            margin-top: 14px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 12px 14px;
-            font-size: 12px;
-            line-height: 1.5;
-            color: #334155;
-            height: 165px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            font-family: monospace;
-            box-sizing: border-box;
-        }
-        .box-info-export {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 14px;
-            font-size: 12px;
-            line-height: 1.5;
-            color: #475569;
-            margin-bottom: 18px;
-        }
-        .box-info-export strong { color: #1e293b; display: block; margin-bottom: 4px; }
-        .historico-secao {
-            max-width: 960px;
-            margin: 0 auto 50px auto;
-            background: #ffffff;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            padding: 26px 30px;
-            box-sizing: border-box;
-        }
-        .historico-cabecalho { margin-bottom: 18px; }
-        .historico-cabecalho h2 { font-size: 18px; font-weight: 700; color: #1e293b; margin: 0 0 4px 0; }
-        .historico-cabecalho p { font-size: 13px; color: #64748b; margin: 0; }
-        .historico-tabela-container { width: 100%; overflow-x: auto; }
-        .historico-tabela { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .historico-tabela th {
-            padding: 12px 14px;
-            background: #f8fafc;
-            color: #64748b;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            border-bottom: 1px solid #e2e8f0;
-            text-align: left;
-        }
-        .historico-tabela td {
-            padding: 14px;
-            border-bottom: 1px solid #f1f5f9;
-            vertical-align: middle;
-            color: #334155;
-        }
-        .btn-ver-detalhes-log {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            padding: 5px 12px;
-            font-size: 11px;
-            font-weight: 600;
-            color: #2563eb;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .btn-ver-detalhes-log:hover { background: #eff6ff; border-color: #bfdbfe; }
-        .btn-excluir-historico {
-            background: none;
-            border: none;
-            color: #ef4444;
-            font-size: 15px;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 6px;
-            transition: background 0.2s;
-        }
-        .btn-excluir-historico:hover { background: #fee2e2; }
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(2px);
-            z-index: 9999;
-            justify-content: center; align-items: center;
-            padding: 20px; box-sizing: border-box;
-        }
-        .modal-card {
-            background: #0f172a;
-            color: #f8fafc;
-            border-radius: 12px;
-            width: 100%; max-width: 580px; max-height: 80vh;
-            display: flex; flex-direction: column;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-            border: 1px solid #334155;
-            overflow: hidden;
-        }
-        .modal-topo {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 16px 20px; border-bottom: 1px solid #1e293b;
-        }
-        .modal-topo h3 { font-size: 15px; font-weight: 700; margin: 0; color: #ffffff; }
-        .btn-fechar-modal { background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; font-weight: 700; }
-        .btn-fechar-modal:hover { color: #ffffff; }
-        .modal-corpo {
-            padding: 20px; overflow-y: auto; font-family: monospace;
-            font-size: 12.5px; line-height: 1.6; white-space: pre-wrap; color: #cbd5e1;
-        }
-        /* DROPDOWN CUSTOMIZADO (mesmo padrão do modal de metas: altura máxima e rolagem) */
-        .custom-dropdown-container { position: relative; width: 100%; }
-        .custom-dropdown-trigger {
-            width: 100%;
-            height: 42px;
-            padding: 0 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 14px;
-            color: #1e293b;
-            background: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            cursor: pointer;
-            box-sizing: border-box;
-            user-select: none;
-            outline: none;
-            transition: all 0.2s ease;
-        }
-        .custom-dropdown-trigger:hover { border-color: #94a3b8; }
-        .custom-dropdown-trigger.aberto,
-        .custom-dropdown-trigger:focus-visible {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-        }
-        .custom-dropdown-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .custom-dropdown-arrow { font-size: 11px; color: #64748b; transition: transform 0.2s ease; flex-shrink: 0; }
-        .custom-dropdown-trigger.aberto .custom-dropdown-arrow { transform: rotate(180deg); }
-        .custom-dropdown-menu {
-            display: none;
-            position: absolute;
-            top: calc(100% + 4px);
-            left: 0;
-            width: 100%;
-            max-height: 175px;
-            overflow-y: auto;
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            z-index: 10000;
-            box-sizing: border-box;
-            padding: 4px 0;
-        }
-        .custom-dropdown-menu.visivel { display: block; }
-        .custom-dropdown-group-title {
-            padding: 6px 12px 2px 12px;
-            font-size: 10.5px;
-            font-weight: 700;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            user-select: none;
-        }
-        .custom-dropdown-item {
-            padding: 8px 14px;
-            font-size: 13.5px;
-            color: #1e293b;
-            cursor: pointer;
-            transition: background 0.15s ease;
-        }
-        .custom-dropdown-item:hover { background: #eff6ff; color: #2563eb; }
-        .custom-dropdown-item.selecionado { background: #2563eb; color: #ffffff; font-weight: 600; }
-    </style>
+    <link rel="icon" type="image/png" href="imagens/logo-painel.png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <script src="tema.js?v=20261102u"></script>
+    <script src="avisos.js?v=20261102u"></script>
+    <script src="seletor-mes.js?v=20261102u" defer></script>
+    <script src="dropdown.js?v=20261102u" defer></script>
+    <link rel="stylesheet" href="style.css?v=20261102u">
 </head>
-<body>
+<body class="pagina-importar">
     <div class="container">
         <header class="cabecalho-principal">
             <div class="logo-area">
@@ -284,19 +24,30 @@
             <nav class="navegacao-menu">
                 <div class="links-paginas">
                     <a href="index.html" class="link-nav">Agendamentos</a>
+                    <a href="divergencias.html" id="link-menu-divergencias" class="link-nav">Divergências</a>
+                    <a href="admin.html" id="link-menu-admin" class="link-nav ativo oculto">Gestão</a>
                     <a href="relatorios.html" class="link-nav">Relatórios & Gráficos</a>
-                    <a href="importar.html" id="link-menu-importar" class="link-nav ativo">Importar / Exportar</a>
                 </div>
+                <div id="area-autenticacao" class="auth-area"></div>
             </nav>
         </header>
+        <script>window.montarMenu();</script>
 
-        <main>
+        <main class="conteudo-carregando">
+            <div class="barra-filtros-graficos" id="abas-gestao">
+                <a href="divergencias.html" class="btn-filtro-grafico">Divergências</a>
+                <a href="admin.html" class="btn-filtro-grafico">Fechamento</a>
+                <a href="admin.html#historico" class="btn-filtro-grafico">Histórico</a>
+                <a href="importar.html" class="btn-filtro-grafico ativo">Importar / Exportar</a>
+                <a href="admin.html#usuarios" class="btn-filtro-grafico">Usuários</a>
+            </div>
+
             <div class="painel-duplo">
                 <div class="import-wrapper">
                     <div>
                         <div class="import-header">
-                            <h2>Importar Planilha do Dealer</h2>
-                            <p>Envie novos agendamentos da Toyota ou Outras Marcas para o banco de dados.</p>
+                            <h2>Importar Planilha</h2>
+                            <p>Envie a planilha para salvar novos agendamentos.</p>
                         </div>
                         <div class="grupo-campo">
                             <label for="arquivoPlanilha">Arquivo do Mês (.xlsx ou .csv)</label>
@@ -304,20 +55,7 @@
                         </div>
                         <div class="grupo-campo">
                             <label for="mesRef">Mês de Referência</label>
-                            <select id="mesRef" class="custom-select">
-                                <option value="01">Janeiro (01/2026)</option>
-                                <option value="02">Fevereiro (02/2026)</option>
-                                <option value="03">Março (03/2026)</option>
-                                <option value="04">Abril (04/2026)</option>
-                                <option value="05">Maio (05/2026)</option>
-                                <option value="06">Junho (06/2026)</option>
-                                <option value="07">Julho (07/2026)</option>
-                                <option value="08">Agosto (08/2026)</option>
-                                <option value="09">Setembro (09/2026)</option>
-                                <option value="10" selected>Outubro (10/2026)</option>
-                                <option value="11">Novembro (11/2026)</option>
-                                <option value="12">Dezembro (12/2026)</option>
-                            </select>
+                            <input type="month" id="mesRef" class="custom-select">
                         </div>
                         <div class="grupo-campo">
                             <label for="consultorDestino">Atribuir agendamentos a:</label>
@@ -355,7 +93,7 @@
                     </div>
 
                     <div>
-                        <button type="button" id="btnEnviar" class="btn-enviar-dados">
+                        <button type="button" id="btnEnviar" class="btn-enviar-dados ico ico-upload">
                             Fazer Upload dos Agendamentos
                         </button>
                         <div id="log" class="status-box">Aguardando arquivo para importação...</div>
@@ -370,20 +108,7 @@
                         </div>
                         <div class="grupo-campo">
                             <label for="mesExport">Mês para Exportação</label>
-                            <select id="mesExport" class="custom-select">
-                                <option value="01">Janeiro (01/2026)</option>
-                                <option value="02">Fevereiro (02/2026)</option>
-                                <option value="03">Março (03/2026)</option>
-                                <option value="04">Abril (04/2026)</option>
-                                <option value="05">Maio (05/2026)</option>
-                                <option value="06">Junho (06/2026)</option>
-                                <option value="07">Julho (07/2026)</option>
-                                <option value="08">Agosto (08/2026)</option>
-                                <option value="09">Setembro (09/2026)</option>
-                                <option value="10" selected>Outubro (10/2026)</option>
-                                <option value="11">Novembro (11/2026)</option>
-                                <option value="12">Dezembro (12/2026)</option>
-                            </select>
+                            <input type="month" id="mesExport" class="custom-select">
                         </div>
                         <div class="grupo-campo">
                             <label for="equipeExport">Filtrar por Equipe</label>
@@ -403,6 +128,7 @@
                                 <option value="Citroen">Citroën</option>
                                 <option value="Kia">Kia</option>
                                 <option value="Omoda">Omoda</option>
+                                <option value="Jeep">Jeep</option>
                             </select>
                         </div>
                         <div class="box-info-export">
@@ -411,8 +137,8 @@
                         </div>
                     </div>
                     <div>
-                        <button type="button" id="btnExportarCsv" class="btn-secundario-acao">Exportar Planilha (Excel/CSV)</button>
-                        <button type="button" id="btnIrParaPdf" class="btn-secundario-acao" style="margin-bottom: 0;">Ver e Gerar Relatório (PDF)</button>
+                        <button type="button" id="btnExportarCsv" class="btn-secundario-acao ico ico-download">Exportar Planilha (Excel/CSV)</button>
+                        <button type="button" id="btnIrParaPdf" class="btn-secundario-acao btn-sem-margem ico ico-documento">Ver e Gerar Relatório (PDF)</button>
                     </div>
                 </div>
             </div>
@@ -431,12 +157,12 @@
                                 <th>ENVIADO POR</th>
                                 <th>MÊS REF.</th>
                                 <th>TOTAL VÁLIDO</th>
-                                <th style="text-align: center;">DETALHES</th>
-                                <th style="text-align: center;">AÇÕES</th>
+                                <th class="th-centro">DETALHES</th>
+                                <th class="th-centro">AÇÕES</th>
                             </tr>
                         </thead>
                         <tbody id="tabela-corpo-historico">
-                            <tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Carregando histórico...</td></tr>
+                            <tr class="linha-esqueleto"><td colspan="8"><div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -447,7 +173,7 @@
     <div id="modalAuditoria" class="modal-overlay">
         <div class="modal-card">
             <div class="modal-topo">
-                <h3 id="modalTituloArquivo">Auditoria da Importação</h3>
+                <h3 id="modalTituloArquivo">Detalhes da Importação</h3>
                 <button type="button" id="btnFecharModal" class="btn-fechar-modal">&times;</button>
             </div>
             <div id="modalConteudoTexto" class="modal-corpo"></div>
@@ -455,8 +181,6 @@
     </div>
 
     <script>
-        // Transforma os <select class="custom-select"> no dropdown customizado (mesmo padrão do modal de metas).
-        // O <select> original continua na página (oculto) e é quem guarda o valor, então o restante do código não muda.
         document.addEventListener('DOMContentLoaded', function() {
             const fecharTodos = () => {
                 document.querySelectorAll('.custom-dropdown-menu.visivel').forEach(m => m.classList.remove('visivel'));
@@ -561,6 +285,7 @@
             const SUPABASE_URL = 'https://potvtrepcoswvzmkewic.supabase.co';
             const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
             const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            window.atualizarContadorDivergencias(supabaseClient);
 
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session || !session.user) {
@@ -584,9 +309,26 @@
                 isAdmin = true;
             }
             if (!isAdmin) {
-                alert('Acesso restrito!');
+                avisar('Acesso restrito!');
                 window.location.href = 'relatorios.html';
                 return;
+            }
+
+            window.mostrarConteudo();
+            window.mostrarLinksAdmin();
+            const areaAuth = document.getElementById('area-autenticacao');
+            if (areaAuth) {
+                const nomeSeguro = String(nomeOperadorLogado).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+                areaAuth.innerHTML = `
+                    <span class="usuario-logado-tag">Olá, <strong>${nomeSeguro}</strong><span class="tag-badge-admin">Admin</span></span>
+                    <button id="btn-sair-header" class="botao-sair-header">Sair</button>
+                `;
+                window.salvarMenuCache(areaAuth.innerHTML, true);
+                document.getElementById('btn-sair-header').addEventListener('click', async () => {
+                    window.limparMenuCache();
+                    await supabaseClient.auth.signOut();
+                    window.location.href = 'login.html';
+                });
             }
 
             const input = document.getElementById('arquivoPlanilha');
@@ -595,6 +337,15 @@
             const btn = document.getElementById('btnEnviar');
             const logBox = document.getElementById('log');
             const mesExport = document.getElementById('mesExport');
+
+            (function definirMesPadrao() {
+                const d = new Date();
+                d.setDate(1);
+                d.setMonth(d.getMonth() - 1);
+                const valor = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                mesSelect.value = valor;
+                mesExport.value = valor;
+            })();
             const equipeExport = document.getElementById('equipeExport');
             const btnExportarCsv = document.getElementById('btnExportarCsv');
             const btnIrParaPdf = document.getElementById('btnIrParaPdf');
@@ -615,8 +366,6 @@
                 logBox.scrollTop = logBox.scrollHeight;
             }
 
-            // Último dia real do mês (evita datas inválidas como 31/11) e leitura paginada:
-            // o Supabase devolve no máximo 1.000 linhas por consulta, então buscamos em blocos.
             function intervaloDoMes(mm, ano = 2026) {
                 const ultimoDia = new Date(ano, parseInt(mm, 10), 0).getDate();
                 return { inicio: `${ano}-${mm}-01`, fim: `${ano}-${mm}-${String(ultimoDia).padStart(2, '0')}` };
@@ -644,9 +393,7 @@
                 else return 10.00;
             }
 
-            // LISTA MESTRE BLINDADA (SEM FALSOS POSITIVOS DE NOMES)
             const OPERADORES_MESTRE = [
-                // Toyota (As 6 consultoras oficiais - marcadas com toyota: true; só entram na planilha da Toyota)
                 { id: 'b5167b50-fe5e-429f-b2fe-7bf861190f30', dealer: 'NICOLYMOSANG', nome: 'Nicoly Moreira', toyota: true, match: (t) => t.includes('NICOLYMOSANG') || t.includes('NICOLY') || t.includes('SANGA') },
                 { id: '58267673-516d-4b01-9d27-c60a8a6c39b6', dealer: 'ALLANASAL', nome: 'Allana Thaina', toyota: true, match: (t) => t.includes('ALLANASAL') || (t.includes('ALLANA') && (t.includes('VAZ') || t.includes('THAINA'))) },
                 { id: '45ac2ad5-cce7-4d0a-9cf8-58c2a5690777', dealer: 'CRISTIANESZT', nome: 'Cristiane da Silva', toyota: true, match: (t) => t.includes('CRISTIANESZT') || (t.includes('CRISTIANE') && t.includes('SILVA')) },
@@ -654,19 +401,16 @@
                 { id: '70b40aa8-8b9c-4219-acd1-3f16647558fa', dealer: 'ALANYNI', nome: 'Alany Benato', toyota: true, match: (t) => t.includes('ALANYNI') || t.includes('ALANY') || t.includes('BENATO') || t.includes('WEIGERT') },
                 { id: 'b3bc63cd-c783-482d-a2d8-c978bbd32703', dealer: 'LORENAAZ', nome: 'Lorena Mendes', toyota: true, match: (t) => t.includes('LORENAAZ') || t.includes('LORENA') || t.includes('AZOLIN') },
 
-                // Multimarcas
                 { id: '6ecc4207-4078-46ca-9719-83e26cb7f87c', dealer: 'GUILHERMEHENP', nome: 'Guilherme Meira', match: (t) => t.includes('GUILHERMEHENP') || (t.includes('GUILHERME') && (t.includes('MEIRA') || t.includes('PINTO'))) },
                 { id: '0145aff1-9805-40ec-811c-f40dac682576', dealer: 'ANITAH', nome: 'Anita Henrique', match: (t) => t.includes('ANITAH') || (t.includes('ANITA') && (t.includes('ZANOSO') || t.includes('HENRIQUE'))) },
                 { id: '0a574cb7-71aa-493e-8d4f-7949c71abec4', dealer: 'TALITANSO', nome: 'Talita Soares', match: (t) => t.includes('TALITANSO') || (t.includes('TALITA') && (t.includes('SOARES') || t.includes('NASCIMENTO'))) },
 
-                // Marcas Individuais
                 { id: '1eab4622-a0ef-445c-9002-36dd49a05736', dealer: 'CAMILAMAC', nome: 'Camila Macioszki', match: (t) => t.includes('CAMILAMAC') || t.includes('MACIOSZKI') || (t.includes('CAMILA') && t.includes('RIBEIRO')) },
                 { id: 'f239082b-2cec-440b-b530-c59d5b19b7b7', dealer: 'LUCASORO', nome: 'Lucas Oliveira', match: (t) => t.includes('LUCASORO') || (t.includes('LUCAS') && (t.includes('OLIVEIRA') || t.includes('ROCHA'))) },
                 { id: '3f7bf777-f5d4-4041-9dd1-b3fddf83b6a7', dealer: 'LARISSABTRG', nome: 'Larissa Rodrigues', match: (t) => t.includes('LARISSABTRG') || (t.includes('LARISSA') && (t.includes('RODRIGUES') || t.includes('BATALHA'))) },
                 { id: 'be200c79-0a05-439a-8575-8f88a1eb60c0', dealer: 'FRANCINEDLS', nome: 'Francine Silva', match: (t) => t.includes('FRANCINEDLS') || (t.includes('FRANCINE') && (t.includes('DIOVANA') || t.includes('LEAL'))) },
                 { id: '613c5992-4e73-4f7b-9506-8c589da86899', dealer: 'EMILIALM', nome: 'Emili Almeida', match: (t) => t.includes('EMILIALM') || (t.includes('EMILI') && (t.includes('ALVES') || t.includes('ALMEIDA'))) },
                 
-                // Ana Eliza (Restrito estritamente a Ana Eliza Lopes, sem pegar nomes com Rangel avulsos)
                 { id: '973837fa-77b7-402b-b8b6-90569e73d26c', dealer: 'ANAERLPS', nome: 'Ana Eliza Lopes', match: (t) => t.includes('ANAERLPS') || (t.includes('ANA') && t.includes('ELIZA')) || (t.includes('ELIZA') && t.includes('LOPES')) },
 
                 { id: '24ba66ba-1a58-4263-95c8-eea8fed14ac1', dealer: 'NICOLLYGFP', nome: 'Nicolly Prado', match: (t) => t.includes('NICOLLYGFP') || (t.includes('NICOLLY') && (t.includes('PRADO') || t.includes('FRAGOZO'))) },
@@ -676,6 +420,46 @@
                 { id: '13f5b203-b846-482e-b322-b607ff16d3c3', dealer: 'GUILHERMEAAL', nome: 'Guilherme Araujo', match: (t) => t.includes('GUILHERMEAAL') || (t.includes('GUILHERME') && (t.includes('ARAUJO') || t.includes('ALMEIDA'))) },
                 { id: '13e2c547-9af5-43a5-9870-94c4b66575a9', dealer: 'MAYARAS', nome: 'Mayara Santos', match: (t) => t.includes('MAYARAS') || (t.includes('MAYARA') && (t.includes('SANTOS') || t.includes('BARBOSA'))) }
             ];
+
+            function nomeIgnoravel(texto) {
+                const txt = String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+                return txt === 'MASTER' || txt.includes('SUPORTE') || txt.includes('PESQUISA') || txt.includes('BACKUP');
+            }
+
+            function confirmarImportacao(resumo) {
+                return new Promise(resolve => {
+                    let overlay = document.getElementById('modalConfirmarImportacao');
+                    if (!overlay) {
+                        overlay = document.createElement('div');
+                        overlay.id = 'modalConfirmarImportacao';
+                        overlay.className = 'modal-overlay';
+                        document.body.appendChild(overlay);
+                    }
+                    const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+                    const linhas = resumo.linhas.map(([rotulo, valor]) => `<div class="linha-resumo"><span>${esc(rotulo)}</span><strong>${esc(valor)}</strong></div>`).join('');
+                    const nomes = resumo.naoReconhecidos;
+                    const avisoNomes = nomes.length > 0
+                        ? `<details class="aviso-resumo"><summary>${nomes.length} ${nomes.length === 1 ? 'nome da planilha sem usuário correspondente' : 'nomes da planilha sem usuário correspondente'} (essas linhas não entram). Ver lista</summary><ul>${nomes.map(([n, q]) => `<li>${esc(n)} (${q} ${q === 1 ? 'linha' : 'linhas'})</li>`).join('')}</ul></details>`
+                        : '';
+                    overlay.innerHTML = `
+                        <div class="modal-card-metas">
+                            <div class="modal-topo-metas">
+                                <h3>Confirmar importação</h3>
+                            </div>
+                            <div class="modal-corpo-metas">
+                                <div class="resumo-confirmacao">${linhas}${avisoNomes}</div>
+                            </div>
+                            <div class="modal-rodape-metas">
+                                <button type="button" id="btnImportarCancelar" class="btn-cancelar-modal">Cancelar</button>
+                                <button type="button" id="btnImportarConfirmar" class="btn-salvar-modal">Confirmar e gravar</button>
+                            </div>
+                        </div>`;
+                    const fechar = (resposta) => { overlay.style.display = 'none'; resolve(resposta); };
+                    overlay.querySelector('#btnImportarCancelar').addEventListener('click', () => fechar(false));
+                    overlay.querySelector('#btnImportarConfirmar').addEventListener('click', () => fechar(true));
+                    overlay.style.display = 'flex';
+                });
+            }
 
             function identificarConsultor(textoAgendador) {
                 if (!textoAgendador) return null;
@@ -771,7 +555,7 @@
                     tabelaHistoricoCorpo.innerHTML = '';
 
                     if (historicoCache.length === 0) {
-                        tabelaHistoricoCorpo.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Nenhuma importação gravada até o momento.</td></tr>';
+                        tabelaHistoricoCorpo.innerHTML = linhaVazia(8, 'Nenhuma importação gravada até o momento.', 'As planilhas importadas aparecem aqui.');
                         return;
                     }
 
@@ -784,12 +568,12 @@
                             <td><strong>${dataHoraFormatada}</strong></td>
                             <td>📁 ${item.nome_arquivo}</td>
                             <td><strong>${item.usuario_nome || 'Admin'}</strong></td>
-                            <td>${item.mes_referencia}/2026</td>
-                            <td><strong style="color: #2563eb; font-size: 14px;">${item.total_revisoes}</strong></td>
-                            <td style="text-align: center;">
+                            <td>${item.mes_referencia}/${(function() { const mm = parseInt(item.mes_referencia, 10); let a = dataHoraObj.getFullYear(); if (mm > dataHoraObj.getMonth() + 1) a--; return a; })()}</td>
+                            <td><strong class="total-historico">${item.total_revisoes}</strong></td>
+                            <td class="col-centro">
                                 <button type="button" class="btn-ver-detalhes-log" data-id="${item.id}">Ver Detalhes</button>
                             </td>
-                            <td style="text-align: center;">
+                            <td class="col-centro">
                                 <button type="button" class="btn-excluir-historico" data-id="${item.id}" title="Excluir este histórico e os agendamentos dele">🗑️</button>
                             </td>
                         `;
@@ -801,7 +585,7 @@
                             const id = parseInt(e.currentTarget.dataset.id, 10);
                             const item = historicoCache.find(h => h.id === id);
                             if (item) {
-                                modalTituloArquivo.textContent = `Auditoria: ${item.nome_arquivo}`;
+                                modalTituloArquivo.textContent = `Detalhes: ${item.nome_arquivo}`;
                                 modalConteudoTexto.textContent = item.detalhes_log || 'Sem detalhes adicionais.';
                                 modalAuditoria.style.display = 'flex';
                             }
@@ -814,7 +598,7 @@
                             const itemHist = historicoCache.find(h => h.id === idHistorico);
                             const nomeArq = itemHist ? itemHist.nome_arquivo : 'este arquivo';
 
-                            if (confirm(`Atenção:\nDeseja excluir o registro de "${nomeArq}" e também REMOVER todos os agendamentos que foram importados por ele?`)) {
+                            if (await confirmar(`Deseja excluir o registro de "${nomeArq}" e também REMOVER todos os agendamentos que foram importados por ele?`, { titulo: 'Excluir importação', confirmar: 'Excluir', perigo: true })) {
                                 try {
                                     await supabaseClient
                                         .from('agendamentos')
@@ -826,33 +610,37 @@
                                         .delete()
                                         .eq('id', idHistorico);
 
-                                    alert('Histórico e agendamentos do arquivo removidos com sucesso!');
+                                    avisar('Histórico e agendamentos do arquivo removidos com sucesso!');
                                     carregarHistorico();
                                 } catch (errEx) {
-                                    alert('Erro ao excluir: ' + errEx.message);
+                                    avisar('Erro ao excluir: ' + errEx.message);
                                 }
                             }
                         });
                     });
 
                 } catch (e) {
-                    tabelaHistoricoCorpo.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #64748b; padding: 15px;">Pronto para registrar o histórico.</td></tr>`;
+                    tabelaHistoricoCorpo.innerHTML = `<tr><td colspan="8" class="msg-historico msg-historico-info">Pronto para registrar o histórico.</td></tr>`;
                 }
             }
 
-            // UPLOAD E PROCESSAMENTO
             btn.addEventListener('click', async function() {
                 try {
                     if (!input.files || input.files.length === 0) {
-                        alert('Selecione a planilha Excel ou CSV primeiro!');
+                        avisar('Selecione a planilha Excel ou CSV primeiro!');
                         return;
                     }
 
-                    const mesPadrao = mesSelect.value;
+                    if (!/^\d{4}-\d{2}$/.test(mesSelect.value)) {
+                        avisar('Selecione o mês de referência!');
+                        return;
+                    }
+                    const [anoRef, mesPadrao] = mesSelect.value.split('-');
                     const destinoEscolhido = consultorDestinoSelect.value;
                     const file = input.files[0];
 
                     btn.disabled = true;
+                    ocupado(true);
                     btn.innerText = 'Processando...';
 
                     const agora = new Date();
@@ -862,17 +650,28 @@
                     const dataHojeISO = `${hojeAno}-${hojeMes}-${hojeDia}`;
 
                     log(`Lendo histórico atual no banco para conferência de reagendados...`);
-                    const { inicio: periodoInicio, fim: periodoFim } = intervaloDoMes(mesPadrao);
+                    const { inicio: periodoInicio, fim: periodoFim } = intervaloDoMes(mesPadrao, parseInt(anoRef, 10));
 
                     const agendamentosBanco = await buscarTodasLinhas(() => supabaseClient
                         .from('agendamentos')
-                        .select('id, placa, revisao, data_revisao, observacao, marca')
+                        .select('id, user_id, placa, revisao, data_revisao, observacao, marca, valor_unitario, evento')
                         .gte('data_revisao', periodoInicio)
                         .lte('data_revisao', periodoFim)
                         .order('id', { ascending: true }));
 
                     const mapaHistoricoPlacas = new Map();
+                    const valoresFacilitadaSalvos = new Map();
+                    const valoresFacilitadaPorPlaca = new Map();
                     (agendamentosBanco || []).forEach(item => {
+                        if (item.evento === 'MANUAL') return;
+
+                        if (String(item.revisao || '').toUpperCase().includes('FACILITADA') && parseFloat(item.valor_unitario) > 0) {
+                            const chavePlaca = `${item.user_id}_${String(item.placa).toUpperCase().trim()}`;
+                            const chaveExata = `${chavePlaca}_${item.data_revisao}`;
+                            if (!valoresFacilitadaSalvos.has(chaveExata)) valoresFacilitadaSalvos.set(chaveExata, parseFloat(item.valor_unitario));
+                            if (!valoresFacilitadaPorPlaca.has(chavePlaca)) valoresFacilitadaPorPlaca.set(chavePlaca, parseFloat(item.valor_unitario));
+                        }
+
                         const chave = `${String(item.placa).toUpperCase().trim()}_${item.revisao}`;
                         if (!mapaHistoricoPlacas.has(chave)) {
                             mapaHistoricoPlacas.set(chave, {
@@ -928,8 +727,6 @@
                                 if (colNome === 'SERVIÇO CORRETO' || colNome === 'SERVICO CORRETO') colServicoCorreto = idx;
                             });
 
-                            // Se a planilha tem a coluna "Serviço Correto", ela é a fonte oficial da revisão
-                            // (a coluna "Tipo de Serviço" pode vir vazia ou genérica, ex.: "REVISAO" sem número).
                             if (colServicoCorreto !== -1) colServico = colServicoCorreto;
 
                             if (colEmpresa === -1) colEmpresa = 0;
@@ -941,8 +738,6 @@
                             if (colAgendador === -1) colAgendador = 15;
                             if (colOS === -1) colOS = 18;
 
-                            // Tipo da planilha: cada importação só aceita as operadoras do seu próprio grupo.
-                            // Aba TOYOTA -> só as 6 da Toyota. Aba OUTRAS MARCAS -> todas, menos as 6 da Toyota.
                             let modoPlanilha;
                             if (sheetName === 'TOYOTA') {
                                 modoPlanilha = 'toyota';
@@ -964,11 +759,13 @@
                             let totalIgnoradosOutroGrupo = 0;
                             let totalReagendados = 0;
                             let totalFacilitadas = 0;
+                            let totalFacilitadasComValor = 0;
                             let totalCompareceu = 0;
                             let totalNoShow = 0;
                             let totalPendente = 0;
 
                             const resumoPorConsultor = {};
+                            const naoReconhecidos = {};
 
                             for (let i = 1; i < linhasMatriz.length; i++) {
                                 const row = linhasMatriz[i];
@@ -984,13 +781,16 @@
                                     consultorAlvo = identificarConsultor(textoAgendador);
                                 }
 
-                                if (!consultorAlvo) continue;
+                                if (!consultorAlvo) {
+                                    const nomeBruto = String(textoAgendador || '').trim();
+                                    if (nomeBruto && !nomeIgnoravel(nomeBruto)) naoReconhecidos[nomeBruto] = (naoReconhecidos[nomeBruto] || 0) + 1;
+                                    continue;
+                                }
 
                                 const textoServico = row[colServico] || row[1] || '';
                                 const numRevisao = extrairNumeroRevisaoTMO(textoServico);
                                 if (!numRevisao) continue;
 
-                                // Na atribuição automática, ignora operadoras do outro grupo (Toyota x Outras Marcas)
                                 if (destinoEscolhido === 'auto') {
                                     if (modoPlanilha === 'outras' && consultorAlvo.toyota) { totalIgnoradosOutroGrupo++; continue; }
                                     if (modoPlanilha === 'toyota' && !consultorAlvo.toyota) { totalIgnoradosOutroGrupo++; continue; }
@@ -999,7 +799,7 @@
                                 if (numRevisao === 'FACILITADA') totalFacilitadas++;
 
                                 const marcaDetectada = extrairMarcaEmpresa(row[colEmpresa]);
-                                const dataRevisaoFormatada = formatarDataSemHorario(row[colDataRevisao]) || `2026-${mesPadrao}-01`;
+                                const dataRevisaoFormatada = formatarDataSemHorario(row[colDataRevisao]) || `${anoRef}-${mesPadrao}-01`;
                                 const dataContatoFormatada = formatarDataSemHorario(row[colDataContato]) || dataRevisaoFormatada;
 
                                 let placaBruta = String(row[colPlaca] || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -1048,7 +848,17 @@
                                     }
                                 }
 
-                                const valorUnitario = calcularValorPorRevisao(numRevisao);
+                                let valorUnitario = calcularValorPorRevisao(numRevisao);
+                                if (numRevisao === 'FACILITADA') {
+                                    const chavePlacaNova = `${consultorAlvo.id}_${placaBruta}`;
+                                    const valorSalvo = valoresFacilitadaSalvos.has(`${chavePlacaNova}_${dataRevisaoFormatada}`)
+                                        ? valoresFacilitadaSalvos.get(`${chavePlacaNova}_${dataRevisaoFormatada}`)
+                                        : valoresFacilitadaPorPlaca.get(chavePlacaNova);
+                                    if (valorSalvo !== undefined) {
+                                        valorUnitario = valorSalvo;
+                                        totalFacilitadasComValor++;
+                                    }
+                                }
 
                                 registrosParaSalvar.push({
                                     user_id: consultorAlvo.id,
@@ -1084,7 +894,7 @@
                             log(`Comparecidos: ${totalCompareceu}`);
                             log(`No-Show: ${totalNoShow}`);
                             log(`Pendentes: ${totalPendente}`);
-                            log(`Revisões Facilitadas: ${totalFacilitadas}`);
+                            log(`Revisões Facilitadas: ${totalFacilitadas}` + (totalFacilitadasComValor > 0 ? ` (${totalFacilitadasComValor} com valor já definido pelo admin, mantido)` : ''));
                             log(`Reagendados: ${totalReagendados}`);
                             if (totalIgnoradosOutroGrupo > 0) {
                                 log(`Ignorados (operadoras do outro grupo, ${modoPlanilha === 'outras' ? 'Toyota' : 'Outras Marcas'}): ${totalIgnoradosOutroGrupo}`);
@@ -1099,16 +909,57 @@
                                 blocoConsultorasTexto += linha;
                             });
 
-                            log(`-----------------------------------`);
-                            log(`Atualizando banco de dados com segurança...`);
+                            const mesesNoArquivo = [...new Set(registrosParaSalvar.map(r => String(r.data_revisao || '').slice(0, 7)).filter(Boolean))];
+                            try {
+                                const { data: fechados } = await supabaseClient.from('meses_fechados').select('mes').in('mes', mesesNoArquivo);
+                                if (fechados && fechados.length > 0) {
+                                    const lista = fechados.map(f => f.mes).join(', ');
+                                    log(`❌ Importação cancelada: o mês ${lista} está fechado. Reabra o mês na página Gestão para importar.`);
+                                    avisar(`O mês ${lista} está fechado. Reabra o mês na página Gestão para importar.`);
+                                    return;
+                                }
+                            } catch (e) {}
 
                             const marcasNoArquivo = [...new Set(registrosParaSalvar.map(r => r.marca || 'Toyota'))];
+
+                            let qtdExistentes = null;
+                            let qtdManuais = null;
+                            try {
+                                const base = () => supabaseClient.from('agendamentos').select('id', { count: 'exact', head: true })
+                                    .gte('data_revisao', periodoInicio).lte('data_revisao', periodoFim);
+                                const porMarca = q => (marcasNoArquivo.length === 1 && marcasNoArquivo[0] === 'Toyota') ? q.eq('marca', 'Toyota') : q.in('marca', marcasNoArquivo);
+                                const existentes = await porMarca(base().or('evento.is.null,evento.neq.MANUAL'));
+                                const manuais = await porMarca(base().eq('evento', 'MANUAL'));
+                                if (!existentes.error) qtdExistentes = existentes.count ?? null;
+                                if (!manuais.error) qtdManuais = manuais.count ?? null;
+                            } catch (e) {}
+
+                            const resumoMarcas = {};
+                            registrosParaSalvar.forEach(r => { const m = r.marca || 'Toyota'; resumoMarcas[m] = (resumoMarcas[m] || 0) + 1; });
+                            const periodoTexto = `${periodoInicio.split('-').reverse().join('/')} a ${periodoFim.split('-').reverse().join('/')}`;
+                            const linhasConfirmacao = [
+                                ['Período', periodoTexto],
+                                ['Marcas', Object.keys(resumoMarcas).join(', ')],
+                                ['Agendamentos no arquivo', `${totalGeral} (${totalCompareceu} comparecidos, ${totalNoShow} no-show${totalPendente > 0 ? `, ${totalPendente} pendentes` : ''})`]
+                            ];
+                            if (qtdExistentes === null || qtdExistentes > 0) linhasConfirmacao.push(['Serão substituídos', qtdExistentes === null ? 'não foi possível contar' : String(qtdExistentes)]);
+                            if (qtdManuais === null || qtdManuais > 0) linhasConfirmacao.push(['Lançamentos manuais preservados', qtdManuais === null ? 'não foi possível contar' : String(qtdManuais)]);
+                            if (totalIgnoradosOutroGrupo > 0) linhasConfirmacao.push(['Ignorados (outro grupo de marcas)', String(totalIgnoradosOutroGrupo)]);
+                            const confirmado = await confirmarImportacao({ linhas: linhasConfirmacao, naoReconhecidos: Object.entries(naoReconhecidos).sort((x, y) => y[1] - x[1]) });
+                            if (!confirmado) {
+                                log('Importação cancelada. Nada foi alterado.');
+                                return;
+                            }
+
+                            log(`-----------------------------------`);
+                            log(`Atualizando banco de dados com segurança...`);
 
                             let queryDelete = supabaseClient
                                 .from('agendamentos')
                                 .delete()
                                 .gte('data_revisao', periodoInicio)
-                                .lte('data_revisao', periodoFim);
+                                .lte('data_revisao', periodoFim)
+                                .or('evento.is.null,evento.neq.MANUAL');
 
                             if (marcasNoArquivo.length === 1 && marcasNoArquivo[0] === 'Toyota') {
                                 queryDelete = queryDelete.eq('marca', 'Toyota');
@@ -1155,8 +1006,6 @@
                                 r.importacao_id = importacaoIdGerado;
                             });
 
-                            // Grava em lotes de 100. Se um lote falhar, divide ao meio até isolar a(s) linha(s) com problema,
-                            // grava todas as outras e mostra o motivo no log (em vez de parar a importação no meio).
                             const falhasGravacao = [];
                             const motivosFalha = new Set();
                             async function gravarLote(lote) {
@@ -1181,7 +1030,6 @@
                                 }
                             }
 
-                            // Confere no banco quantos registros desta importação realmente ficaram gravados
                             let totalNoBanco = null;
                             if (importacaoIdGerado) {
                                 const { count } = await supabaseClient
@@ -1190,6 +1038,16 @@
                                     .eq('importacao_id', importacaoIdGerado);
                                 if (typeof count === 'number') totalNoBanco = count;
                             }
+
+                            try {
+                                await supabaseClient.from('historico_alteracoes').insert({
+                                    usuario_id: USER_ID,
+                                    tabela: 'importacoes',
+                                    operacao: 'IMPORTACAO',
+                                    registro_id: String(importacaoIdGerado || ''),
+                                    dados_depois: { arquivo: file.name, periodo: periodoTexto, total: totalGravados, comparecidos: totalCompareceu, no_show: totalNoShow, marcas: marcasNoArquivo.join(', ') }
+                                });
+                            } catch (e) {}
 
                             carregarHistorico();
 
@@ -1206,6 +1064,7 @@
                             console.error(err);
                         } finally {
                             btn.disabled = false;
+                            ocupado(false);
                             btn.innerText = 'Fazer Upload dos Agendamentos';
                         }
                     };
@@ -1214,20 +1073,26 @@
                 } catch (e) {
                     log(`Erro: ${e.message}`);
                     btn.disabled = false;
+                    ocupado(false);
                     btn.innerText = 'Fazer Upload dos Agendamentos';
                 }
             });
 
             btnExportarCsv.addEventListener('click', async function() {
-                const mes = mesExport.value;
+                if (!/^\d{4}-\d{2}$/.test(mesExport.value)) {
+                    avisar('Selecione o mês para exportação!');
+                    return;
+                }
+                const [anoExp, mes] = mesExport.value.split('-');
                 const equipe = equipeExport.value;
-                const periodoAnoMes = `2026-${mes}`;
+                const periodoAnoMes = mesExport.value;
 
                 btnExportarCsv.disabled = true;
+                ocupado(true);
                 btnExportarCsv.innerText = 'Baixando...';
 
                 try {
-                    const { inicio, fim } = intervaloDoMes(mes);
+                    const { inicio, fim } = intervaloDoMes(mes, parseInt(anoExp, 10));
                     const data = await buscarTodasLinhas(() => {
                         let q = supabaseClient
                             .from('vw_agendamentos_completos')
@@ -1240,7 +1105,7 @@
 
                     const filtrados = data.filter(item => item.data_revisao && item.data_revisao.startsWith(periodoAnoMes));
                     if (filtrados.length === 0) {
-                        alert(`Nenhum registro encontrado para o mês ${mes}/2026.`);
+                        avisar(`Nenhum registro encontrado para o mês ${mes}/${anoExp}.`);
                         return;
                     }
 
@@ -1273,21 +1138,25 @@
                     document.body.removeChild(link);
 
                 } catch (err) {
-                    alert('Erro ao exportar dados: ' + err.message);
+                    avisar('Erro ao exportar dados: ' + err.message);
                 } finally {
                     btnExportarCsv.disabled = false;
+                    ocupado(false);
                     btnExportarCsv.innerText = 'Exportar Planilha (Excel/CSV)';
                 }
             });
 
             btnIrParaPdf.addEventListener('click', function() {
-                const mes = mesExport.value;
+                if (!/^\d{4}-\d{2}$/.test(mesExport.value)) {
+                    avisar('Selecione o mês para exportação!');
+                    return;
+                }
                 const equipe = encodeURIComponent(equipeExport.value);
-                window.location.href = `relatorios.html?mes=2026-${mes}&equipe=${equipe}&imprimir=true`;
+                window.location.href = `relatorios.html?mes=${mesExport.value}&equipe=${equipe}&imprimir=true`;
             });
 
             carregarHistorico();
         });
     </script>
 </body>
-</html>
+</html>

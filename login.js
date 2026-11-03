@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         campoEquipe.setAttribute('required', 'required');
         
         btnSubmit.textContent = 'Cadastrar Conta';
-        subtituloLogin.textContent = 'Crie seu perfil profissional no sistema';
+        subtituloLogin.textContent = 'Crie seu perfil no sistema';
         mensagemStatus.textContent = '';
     });
 
@@ -158,5 +158,15 @@ document.addEventListener('DOMContentLoaded', async function() {
             btnSubmit.disabled = false;
             btnSubmit.textContent = modoAtual === 'entrar' ? 'Acessar Painel' : 'Cadastrar Conta';
         }
+    });
+
+    document.querySelectorAll('.campo-olho').forEach(botao => {
+        botao.addEventListener('click', () => {
+            const alvo = document.getElementById(botao.dataset.alvo);
+            const mostrar = alvo.type === 'password';
+            alvo.type = mostrar ? 'text' : 'password';
+            botao.classList.toggle('ativo', mostrar);
+            botao.setAttribute('aria-label', mostrar ? 'Ocultar senha' : 'Mostrar senha');
+        });
     });
 });

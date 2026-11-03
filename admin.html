@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Bônus - Gestão</title>
+    <link rel="icon" type="image/png" href="imagens/logo-painel.png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="bonus.js?v=20261102u" defer></script>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <script src="tema.js?v=20261102u"></script>
+    <script src="avisos.js?v=20261102u"></script>
+    <script src="seletor-mes.js?v=20261102u" defer></script>
+    <script src="dropdown.js?v=20261102u" defer></script>
+    <link rel="stylesheet" href="style.css?v=20261102u">
+</head>
+<body class="pagina-admin">
+    <div class="container">
+        <header class="cabecalho-principal">
+            <div class="logo-area">
+                <h1>Painel de Bônus</h1>
+                <span class="subtitulo-toyota">AutoService</span>
+            </div>
+            <nav class="navegacao-menu">
+                <div class="links-paginas">
+                    <a href="index.html" class="link-nav">Agendamentos</a>
+                    <a href="divergencias.html" id="link-menu-divergencias" class="link-nav">Divergências</a>
+                    <a href="admin.html" id="link-menu-admin" class="link-nav ativo oculto">Gestão</a>
+                    <a href="relatorios.html" class="link-nav">Relatórios & Gráficos</a>
+                </div>
+                <div id="area-autenticacao" class="auth-area"></div>
+            </nav>
+        </header>
+        <script>window.montarMenu();</script>
+
+        <main class="conteudo-carregando">
+            <div class="barra-filtros-graficos" id="abas-gestao">
+                <a href="divergencias.html" class="btn-filtro-grafico">Divergências</a>
+                <button type="button" id="aba-fechamento" class="btn-filtro-grafico ativo">Fechamento</button>
+                <button type="button" id="aba-historico" class="btn-filtro-grafico">Histórico</button>
+                <a href="importar.html" class="btn-filtro-grafico">Importar / Exportar</a>
+                <button type="button" id="aba-usuarios" class="btn-filtro-grafico">Usuários</button>
+            </div>
+
+            <section id="secao-fechamento">
+                <section class="card-tabela-agendamentos">
+                    <div class="tabela-cabecalho-acoes">
+                        <div>
+                            <h2>Fechamento do mês</h2>
+                            <span class="subtitulo-contador" id="fechamento-subtitulo">Informe o valor pago a cada operador e feche o mês.</span>
+                            <span class="selo-fechado oculto"></span>
+                        </div>
+                        <div class="admin-acoes">
+                            <input type="month" id="admin-mes" class="input-mes-padrao">
+                            <button type="button" id="btn-preencher-pagos" class="btn-abrir-config-metas ico ico-check">Preencher com o calculado</button>
+                            <button type="button" id="btn-limpar-lancamentos" class="btn-abrir-config-metas ico ico-lixeira">Limpar lançamentos</button>
+                            <button type="button" id="btn-exportar-fechamento" class="btn-abrir-config-metas ico ico-download">Exportar</button>
+                            <button type="button" id="btn-fechar-mes" class="btn-adicionar-agendamento ico ico-cadeado">Fechar mês</button>
+                            <button type="button" id="btn-reabrir-mes" class="btn-abrir-config-metas oculto ico ico-cadeado-aberto">Reabrir mês</button>
+                        </div>
+                    </div>
+                    <div class="tabela-container">
+                        <table class="tabela-admin">
+                            <thead>
+                                <tr>
+                                    <th>OPERADOR</th>
+                                    <th class="col-centro">MARCAS</th>
+                                    <th class="col-centro">COMPARECIDOS</th>
+                                    <th class="col-centro">INDIVIDUAL</th>
+                                    <th class="col-centro">EQUIPE</th>
+                                    <th class="col-centro">MONITORIA</th>
+                                    <th class="col-centro">CALCULADO</th>
+                                    <th class="col-centro">VALOR PAGO</th>
+                                    <th class="col-centro">DIFERENÇA</th>
+                                    <th class="col-centro">OBSERVAÇÃO</th>
+                                </tr>
+                            </thead>
+                            <tbody id="corpo-fechamento">
+                                <tr class="linha-esqueleto"><td colspan="10"><div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <section id="secao-usuarios" class="card-tabela-agendamentos oculto">
+                <div class="tabela-cabecalho-acoes">
+                    <div>
+                        <h2>Usuários</h2>
+                        <span class="subtitulo-contador" id="usuarios-contador">0 usuários</span>
+                    </div>
+                    <input type="text" id="usuarios-busca" class="input-busca-padrao" placeholder="Buscar por nome...">
+                </div>
+                <div class="tabela-container">
+                    <table class="tabela-admin">
+                        <thead>
+                            <tr>
+                                <th>NOME</th>
+                                <th class="col-centro">MARCAS</th>
+                                <th class="col-centro">FUNÇÃO</th>
+                                <th class="col-centro">AÇÃO</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-usuarios">
+                            <tr class="linha-esqueleto"><td colspan="4"><div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="secao-historico" class="card-tabela-agendamentos oculto">
+                <div class="tabela-cabecalho-acoes">
+                    <div>
+                        <h2>Histórico de alterações</h2>
+                        <span class="subtitulo-contador" id="historico-contador">0 registros</span>
+                    </div>
+                    <div class="grupo-filtros-alinhados">
+                        <button type="button" id="btn-historico-excluir" class="btn-excluir-selecionados oculto ico ico-lixeira">Excluir selecionados (0)</button>
+                        <button type="button" id="btn-historico-apagar-tudo" class="btn-abrir-config-metas ico ico-lixeira">Apagar tudo</button>
+                        <input type="text" id="historico-busca" class="input-busca-padrao" placeholder="Buscar por placa, nome ou campo...">
+                        <select id="historico-tabela" class="select-filtro-status">
+                            <option value="">Todas as áreas</option>
+                            <option value="agendamentos">Agendamentos</option>
+                            <option value="fechamentos">Fechamentos</option>
+                            <option value="meses_fechados">Meses fechados</option>
+                            <option value="perfis">Usuários</option>
+                            <option value="metas_mensais">Metas</option>
+                            <option value="divergencias">Divergências</option>
+                            <option value="importacoes">Importações</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="tabela-container">
+                    <table class="tabela-admin">
+                        <thead>
+                            <tr>
+                                <th class="col-selecao"><input type="checkbox" id="historico-selecionar-todos" aria-label="Selecionar todos"></th>
+                                <th>DATA / HORA</th>
+                                <th>QUEM</th>
+                                <th class="col-centro">ÁREA</th>
+                                <th class="col-centro">AÇÃO</th>
+                                <th>REGISTRO</th>
+                                <th>O QUE MUDOU</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-historico">
+                            <tr class="linha-esqueleto"><td colspan="7"><div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="paginacao-area">
+                    <span class="paginacao-info" id="historico-info"></span>
+                    <div class="paginacao-botoes">
+                        <button type="button" id="btn-historico-mais" class="btn-paginacao">Carregar mais</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="admin.js?v=20261102u" defer></script>
+</body>
+</html>

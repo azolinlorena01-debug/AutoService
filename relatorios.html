@@ -4,641 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Bônus - Relatórios & Gráficos</title>
-    <link rel="icon" type="image/jpeg" href="imagens/icone-sem-fundo.png">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .oculto { display: none !important; }
-
-        .card .input-mes-card {
-            width: 100%;
-            height: 38px;
-            padding: 0 10px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            background-color: #f8fafc;
-            color: #1e293b;
-            font-size: 13px;
-            font-weight: 500;
-            outline: none;
-            transition: border-color 0.2s ease, background-color 0.2s ease;
-            box-sizing: border-box;
-            margin-top: 6px;
-        }
-        .card .input-mes-card:focus {
-            border-color: #2563eb;
-            background-color: #ffffff;
-        }
-
-        .select-marca-embutido {
-            width: 100%;
-            height: 34px;
-            padding: 0 8px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            background-color: #ffffff;
-            color: #1e293b;
-            font-size: 12.5px;
-            font-weight: 600;
-            outline: none;
-            margin-top: 6px;
-            box-sizing: border-box;
-        }
-
-        .grupo-input-monitoria {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 6px;
-            flex-wrap: wrap;
-        }
-        .grupo-input-monitoria input[type="number"] {
-            width: 65px;
-            height: 36px;
-            padding: 0 6px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            background-color: #f8fafc;
-            color: #1e293b;
-            font-size: 14px;
-            font-weight: 700;
-            outline: none;
-            text-align: center;
-            box-sizing: border-box;
-            transition: all 0.2s ease;
-        }
-        .grupo-input-monitoria input[type="number"]:disabled {
-            background-color: #e2e8f0;
-            color: #475569;
-            cursor: not-allowed;
-            border-color: #cbd5e1;
-        }
-        .grupo-input-monitoria input[type="number"]:focus:not(:disabled) {
-            border-color: #2563eb;
-            background-color: #ffffff;
-        }
-        .grupo-input-monitoria .sufixo-porcentagem {
-            font-weight: 700;
-            color: #475569;
-            font-size: 14px;
-        }
-        .btn-acao-monitoria {
-            background: #2563eb;
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
-            padding: 0 10px;
-            height: 36px;
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-        .btn-acao-monitoria:hover {
-            background: #1d4ed8;
-        }
-        .btn-acao-monitoria.btn-modo-editar {
-            background: #ffffff;
-            color: #475569;
-            border: 1px solid #cbd5e1;
-        }
-        .btn-acao-monitoria.btn-modo-editar:hover {
-            background: #f1f5f9;
-            color: #0f172a;
-        }
-        .badge-ajuste-monitoria {
-            background-color: #dcfce7;
-            color: #15803d;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 4px 8px;
-            border-radius: 20px;
-            white-space: nowrap;
-        }
-        .badge-ajuste-monitoria-reducao {
-            background-color: #fee2e2;
-            color: #b91c1c;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 4px 8px;
-            border-radius: 20px;
-            white-space: nowrap;
-        }
-
-        .card-meta-equipe {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 20px 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-            box-sizing: border-box;
-        }
-        .meta-equipe-cabecalho {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .meta-equipe-cabecalho h3 {
-            margin: 4px 0 0 0;
-            font-size: 18px;
-            font-weight: 700;
-            color: #1e293b;
-        }
-        .area-badges-meta {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .meta-badge-restante {
-            background-color: #eff6ff;
-            color: #2563eb;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 20px;
-            border: 1px solid #bfdbfe;
-        }
-        .meta-badge-sucesso {
-            background-color: #dcfce7;
-            color: #166534;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 20px;
-            border: 1px solid #bbf7d0;
-        }
-        .meta-badge-bonus-equipe {
-            background-color: #dcfce7;
-            color: #15803d;
-            font-size: 12px;
-            font-weight: 700;
-            padding: 4px 12px;
-            border-radius: 20px;
-            border: 1px solid #86efac;
-        }
-        .meta-badge-bonus-equipe.bloqueado {
-            background-color: #f1f5f9;
-            color: #64748b;
-            border: 1px solid #cbd5e1;
-        }
-
-        .barra-progresso-container {
-            width: 100%;
-            height: 10px;
-            background-color: #e2e8f0;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        .barra-progresso-preenchimento {
-            height: 100%;
-            background-color: #2563eb;
-            border-radius: 5px;
-            transition: width 0.4s ease;
-        }
-
-        .barra-filtros-graficos {
-            display: flex;
-            gap: 10px;
-            margin: 20px 0;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .btn-filtro-grafico {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            color: #475569;
-            padding: 9px 18px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .btn-filtro-grafico:hover {
-            background: #f8fafc;
-            border-color: #94a3b8;
-            color: #1e293b;
-        }
-        .btn-filtro-grafico.ativo {
-            background: #2563eb;
-            color: #ffffff;
-            border-color: #2563eb;
-            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
-        }
-
-        .btn-abrir-config-metas {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            color: #1e293b;
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            height: 40px;
-            margin-top: 18px;
-        }
-        .btn-abrir-config-metas:hover {
-            background: #f1f5f9;
-            border-color: #94a3b8;
-        }
-
-        /* MODAL COM DESIGN RESPONSIVO E SEGURO */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(2px);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .modal-card-metas {
-            background: #ffffff;
-            color: #1e293b;
-            border-radius: 12px;
-            width: 100%;
-            max-width: 460px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
-            border: 1px solid #e2e8f0;
-            position: relative;
-        }
-        .modal-topo-metas {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        .modal-topo-metas h3 {
-            font-size: 16px;
-            font-weight: 700;
-            margin: 0;
-            color: #0f172a;
-        }
-        .modal-corpo-metas {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-        .modal-campo-label {
-            font-size: 11px;
-            font-weight: 700;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-            display: block;
-        }
-        .modal-input-metas {
-            width: 100%;
-            height: 40px;
-            padding: 0 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 14px;
-            color: #1e293b;
-            background: #f8fafc;
-            outline: none;
-            box-sizing: border-box;
-            transition: border-color 0.2s;
-        }
-        .modal-input-metas:focus {
-            border-color: #2563eb;
-            background: #ffffff;
-        }
-
-        /* DROPDOWN CUSTOMIZADO COM ALTURA MÁXIMA CONTROLADA */
-        .custom-dropdown-container {
-            position: relative;
-            width: 100%;
-        }
-        .custom-dropdown-trigger {
-            width: 100%;
-            height: 40px;
-            padding: 0 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 14px;
-            color: #1e293b;
-            background: #f8fafc;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            box-sizing: border-box;
-            user-select: none;
-            transition: all 0.2s ease;
-        }
-        .custom-dropdown-trigger:hover {
-            border-color: #94a3b8;
-            background: #ffffff;
-        }
-        .custom-dropdown-trigger.aberto {
-            border-color: #2563eb;
-            background: #ffffff;
-            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-        }
-        .custom-dropdown-arrow {
-            font-size: 11px;
-            color: #64748b;
-            transition: transform 0.2s ease;
-        }
-        .custom-dropdown-trigger.aberto .custom-dropdown-arrow {
-            transform: rotate(180deg);
-        }
-        .custom-dropdown-menu {
-            display: none;
-            position: absolute;
-            top: calc(100% + 4px);
-            left: 0;
-            width: 100%;
-            max-height: 175px; /* Altura controlada para nunca cortar nem descer até a barra de tarefas */
-            overflow-y: auto;
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            z-index: 10000;
-            box-sizing: border-box;
-            padding: 4px 0;
-        }
-        .custom-dropdown-menu.visivel {
-            display: block;
-        }
-        .custom-dropdown-group-title {
-            padding: 6px 12px 2px 12px;
-            font-size: 10.5px;
-            font-weight: 700;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            user-select: none;
-        }
-        .custom-dropdown-item {
-            padding: 8px 14px;
-            font-size: 13.5px;
-            color: #1e293b;
-            cursor: pointer;
-            transition: background 0.15s ease;
-        }
-        .custom-dropdown-item:hover {
-            background: #eff6ff;
-            color: #2563eb;
-        }
-        .custom-dropdown-item.selecionado {
-            background: #2563eb;
-            color: #ffffff;
-            font-weight: 600;
-        }
-
-        .modal-rodape-metas {
-            padding: 14px 20px;
-            background: #f8fafc;
-            border-top: 1px solid #f1f5f9;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-        .btn-cancelar-modal {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            color: #475569;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-        }
-        .btn-salvar-modal {
-            background: #2563eb;
-            color: #ffffff;
-            border: none;
-            padding: 8px 18px;
-            border-radius: 6px;
-            font-weight: 700;
-            font-size: 13px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-salvar-modal:hover {
-            background: #1d4ed8;
-        }
-
-        .grade-graficos-lado-a-lado {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            width: 100%;
-            box-sizing: border-box;
-            margin-bottom: 24px;
-        }
-        .grade-graficos-lado-a-lado.coluna-unica {
-            grid-template-columns: 1fr !important;
-        }
-
-        .faixas-revisao-container {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            padding: 6px 12px;
-            border-radius: 8px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-            transition: all 0.2s ease;
-        }
-        .faixa-item {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: default;
-        }
-        .faixa-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-        .faixa-azul .faixa-dot { background-color: #2563eb; }
-        .faixa-azul { color: #1e40af; }
-        .faixa-roxa .faixa-dot { background-color: #8b5cf6; }
-        .faixa-roxa { color: #6d28d9; }
-        .faixa-verde .faixa-dot { background-color: #10b981; }
-        .faixa-verde { color: #047857; }
-        .faixa-divisor {
-            color: #cbd5e1;
-            font-size: 12px;
-            user-select: none;
-        }
-
-        #tabela-cabecalho-admin th:nth-child(6),
-        #tabela-corpo-admin td:nth-child(6) {
-            text-align: center !important;
-            padding-left: 20px !important;
-            padding-right: 20px !important;
-            min-width: 250px;
-        }
-        #tabela-cabecalho-admin th:last-child,
-        #tabela-corpo-admin td:last-child {
-            padding-right: 28px !important;
-            min-width: 120px;
-        }
-
-        .tabela-container table {
-            width: 100%;
-            table-layout: auto;
-        }
-
-        #btn-voltar-admin {
-            background: #ffffff !important;
-            color: #1e293b !important;
-            border: 1px solid #cbd5e1 !important;
-            border-radius: 8px !important;
-            padding: 8px 16px !important;
-            font-size: 13px !important;
-            font-weight: 600 !important;
-            cursor: pointer !important;
-            transition: all 0.2s ease !important;
-            align-items: center;
-            gap: 6px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-        }
-        #btn-voltar-admin:hover {
-            background: #f8fafc !important;
-            border-color: #94a3b8 !important;
-            color: #0f172a !important;
-        }
-
-        .ranking-card-wrapper {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            margin-bottom: 24px;
-        }
-        .ranking-lista {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 18px;
-        }
-        .ranking-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 18px;
-            border-radius: 10px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            transition: all 0.2s ease;
-        }
-        .ranking-item:hover {
-            border-color: #cbd5e1;
-            background: #ffffff;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-        }
-        .ranking-item.destaque-primeiro {
-            background: #fffbeb;
-            border-color: #fde68a;
-        }
-        .ranking-esquerda {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            flex: 1;
-        }
-        .posicao-circulo {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 14px;
-            flex-shrink: 0;
-        }
-        .pos-1 { background-color: #fef08a; color: #854d0e; border: 2px solid #facc15; }
-        .pos-2 { background-color: #e2e8f0; color: #334155; border: 2px solid #cbd5e1; }
-        .pos-3 { background-color: #fed7aa; color: #9a3412; border: 2px solid #fb923c; }
-        .pos-padrao { background-color: #f1f5f9; color: #64748b; font-size: 13px; font-weight: 700; }
-
-        .operador-info-bloco {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            min-width: 170px;
-        }
-        .operador-info-bloco strong {
-            font-size: 14px;
-            color: #1e293b;
-        }
-        .operador-info-bloco span {
-            font-size: 12px;
-            color: #64748b;
-        }
-        .ranking-barra-area {
-            flex: 1;
-            max-width: 320px;
-            margin: 0 20px;
-        }
-        .ranking-trilho {
-            width: 100%;
-            height: 8px;
-            background-color: #e2e8f0;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .ranking-preenchimento {
-            height: 100%;
-            background-color: #22c55e;
-            border-radius: 4px;
-            transition: width 0.4s ease;
-        }
-        .ranking-direita {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            text-align: right;
-        }
-        .num-comparecidos {
-            font-size: 16px;
-            font-weight: 800;
-            color: #15803d;
-        }
-        .num-comparecidos-sub {
-            font-size: 11px;
-            color: #64748b;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-    </style>
+    <link rel="icon" type="image/png" href="imagens/logo-painel.png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="dropdown.js?v=20261102u" defer></script>
+    <script src="bonus.js?v=20261102u" defer></script>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <script src="tema.js?v=20261102u"></script>
+    <script src="avisos.js?v=20261102u"></script>
+    <script src="seletor-mes.js?v=20261102u" defer></script>
+    <link rel="stylesheet" href="style.css?v=20261102u">
 </head>
-<body>
+<body class="pagina-relatorios">
     <div class="container">
         <header class="cabecalho-principal">
             <div class="logo-area">
@@ -648,19 +26,20 @@
             <nav class="navegacao-menu">
                 <div class="links-paginas">
                     <a href="index.html" class="link-nav">Agendamentos</a>
+                    <a href="divergencias.html" id="link-menu-divergencias" class="link-nav">Divergências</a>
+                    <a href="admin.html" id="link-menu-admin" class="link-nav oculto">Gestão</a>
                     <a href="relatorios.html" class="link-nav ativo">Relatórios & Gráficos</a>
-                    <a href="importar.html" id="link-menu-importar" class="link-nav oculto">Importar / Exportar</a>
                 </div>
                 <div id="area-autenticacao" class="auth-area"></div>
             </nav>
         </header>
+        <script>window.montarMenu();</script>
 
-        <main>
-            <!-- FILTROS ADMINISTRADOR -->
+        <main class="conteudo-carregando">
             <section id="secao-filtros-admin" class="painel-filtros-admin oculto">
                 <div class="info-titulos">
                     <h2>Visão Administrador</h2>
-                    <p>Filtre o período e a marca de atuação ou configure as metas</p>
+                    <span class="selo-fechado oculto"></span>
                 </div>
                 <div class="controles-filtros-admin">
                     <div>
@@ -673,17 +52,10 @@
                             <option value="todas">Todas as Marcas</option>
                         </select>
                     </div>
-                    <div>
-                        <button type="button" id="btn-abrir-modal-metas" class="btn-abrir-config-metas">
-                            ⚙️ Configurar Metas
-                        </button>
-                    </div>
                 </div>
             </section>
 
-            <!-- CARDS DE MÉTRICAS DO CONSULTOR (SEMPRE 4 CARDS EM UMA LINHA HARMONIOSA) -->
             <section id="secao-metricas-consultor" class="barra-metricas-topo oculto">
-                <!-- Card 1: Período e Seletor de Marca (embutido se for multimarca) -->
                 <div class="card" id="card-periodo-consultor">
                     <span class="card-titulo">PERÍODO & ATUAÇÃO</span>
                     <input type="month" id="filtro-mes-consultor" class="input-mes-card">
@@ -693,40 +65,41 @@
                         </select>
                     </div>
                     <span id="legenda-card-periodo" class="card-detalhe">Filtre o período de apuração</span>
+                    <span class="selo-fechado oculto"></span>
                 </div>
 
-                <!-- Card 2: Bônus Realizado -->
                 <div class="card">
                     <span class="card-titulo">BÔNUS REALIZADO</span>
                     <h2 class="bonus-confirmado">R$ 0,00</h2>
                     <span class="card-detalhe">0 presenças confirmadas</span>
                 </div>
 
-                <!-- Card 3: Previsão Máxima -->
                 <div class="card">
                     <span class="card-titulo">PREVISÃO MÁXIMA</span>
                     <h2 class="bonus-previsto">R$ 0,00</h2>
                     <span class="card-detalhe">Se todos os agendados comparecerem</span>
                 </div>
 
-                <!-- Card 4: Nota de Monitoria (visível para marcas únicas ou na visão global) -->
+                <div class="card oculto" id="card-valor-final">
+                    <span class="card-titulo">VALOR FINAL DO MÊS</span>
+                    <h2 class="bonus-confirmado" id="valor-final-mes">R$ 0,00</h2>
+                    <span class="card-detalhe" id="detalhe-valor-final"></span>
+                </div>
+
                 <div class="card" id="card-monitoria-consultor">
                     <span class="card-titulo">NOTA DE MONITORIA</span>
                     <div class="grupo-input-monitoria">
-                        <input type="number" id="input-monitoria" value="100" min="0" max="100">
-                        <span class="sufixo-porcentagem">%</span>
-                        <button type="button" id="btn-acao-monitoria" class="btn-acao-monitoria" title="Salvar nota deste mês">Salvar</button>
-                        <span id="badge-ajuste-monitoria" class="badge-ajuste-monitoria">+10% Bônus</span>
+                        <h2 id="nota-monitoria-valor" class="nota-monitoria-valor">Aguardando</h2>
+                        <span id="badge-ajuste-monitoria" class="badge-ajuste-monitoria oculto">+10% Bônus</span>
                     </div>
-                    <span class="card-detalhe">≥90% (+10%) | &lt;90% (-10%)</span>
+                    <span class="card-detalhe" id="detalhe-nota-monitoria">Lançada pela gestão no fechamento do mês</span>
                 </div>
             </section>
 
-            <!-- BARRA DE META COM BÔNUS DE EQUIPE INTEGRADO -->
             <section id="secao-meta-equipe" class="card-meta-equipe">
                 <div class="meta-equipe-cabecalho">
                     <div>
-                        <span id="titulo-meta-equipe" class="card-titulo" style="font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">META DA EQUIPE (TOYOTA)</span>
+                        <span id="titulo-meta-equipe" class="card-titulo titulo-barra-meta">META DA EQUIPE (TOYOTA)</span>
                         <h3 id="texto-progresso-meta">0 / 900 agendamentos (0%)</h3>
                     </div>
                     <div class="area-badges-meta">
@@ -739,8 +112,10 @@
                 </div>
             </section>
 
-            <!-- ABAS DOS GRÁFICOS -->
             <div class="barra-filtros-graficos">
+                <button type="button" id="btn-aba-admin" class="btn-filtro-grafico oculto">
+                    Configurações
+                </button>
                 <button type="button" id="btn-aba-visao-geral" class="btn-filtro-grafico ativo">
                     Efetividade
                 </button>
@@ -755,14 +130,13 @@
                 </button>
             </div>
 
-            <!-- GRADE DE GRÁFICOS -->
             <section id="grade-graficos" class="grade-graficos-lado-a-lado">
                 <div class="card-grafico" id="card-grafico-volume-wrapper">
                     <div class="grafico-cabecalho">
                         <h3 id="titulo-grafico-volume">Efetividade Geral</h3>
                         <p id="subtitulo-grafico-volume">Taxa de presença de todas as marcas</p>
                     </div>
-                    <div class="grafico-container" style="height: 270px;">
+                    <div class="grafico-container altura-270">
                         <canvas id="graficoVolume"></canvas>
                     </div>
                 </div>
@@ -770,9 +144,9 @@
                 <div id="card-grafico-bonus-mensal" class="card-grafico">
                     <div class="grafico-cabecalho">
                         <h3>Comparativo de Bônus Mensal</h3>
-                        <p>Evolução dos valores confirmados por mês</p>
+                        <p>Bônus base de cada mês e valor final pago nos meses fechados</p>
                     </div>
-                    <div class="grafico-container" style="height: 270px;">
+                    <div class="grafico-container altura-270">
                         <canvas id="graficoBonusMensal"></canvas>
                     </div>
                 </div>
@@ -782,45 +156,54 @@
                         <h3 id="titulo-grafico-equipe-admin">Operadores da Marca</h3>
                         <p id="subtitulo-grafico-equipe-admin">Volume por operador desta marca</p>
                     </div>
-                    <div class="grafico-container" style="height: 270px;">
+                    <div class="grafico-container altura-270">
                         <canvas id="graficoEquipeAdmin"></canvas>
                     </div>
                 </div>
             </section>
 
-            <!-- GRÁFICO REVISÕES POR CATEGORIA -->
-            <section id="secao-grafico-revisoes-tipo" class="card-grafico oculto" style="margin-bottom: 24px;">
+            <section id="secao-grafico-revisoes-tipo" class="card-grafico oculto espaco-abaixo-24">
                 <div class="grafico-cabecalho">
                     <h3 id="titulo-grafico-revisoes-tipo">Distribuição por Categoria de Revisão</h3>
                     <p id="subtitulo-grafico-revisoes-tipo">Quantidade de agendamentos por faixa de revisão</p>
                 </div>
-                <div class="grafico-container" style="height: 300px;">
+                <div class="grafico-container altura-300">
                     <canvas id="graficoRevisoesTipo"></canvas>
                 </div>
             </section>
 
-            <!-- RANKING -->
             <section id="secao-ranking-operadores" class="ranking-card-wrapper oculto">
                 <div class="grafico-cabecalho">
-                    <h3 style="font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 4px;">🏆 Ranking Geral dos Operadores</h3>
-                    <p style="font-size: 13px; color: #64748b; margin: 0;">Classificação de todos os operadores por agendamentos confirmados.</p>
+                    <h3 class="ranking-titulo-geral">🏆 Ranking Geral dos Operadores</h3>
+                    <p class="ranking-subtitulo-geral">Classificação de todos os operadores por agendamentos confirmados.</p>
                 </div>
                 <div id="container-ranking-lista" class="ranking-lista"></div>
             </section>
 
-            <!-- VOLUME EQUIPE CONSULTOR -->
-            <section id="secao-volume-equipe-consultor" class="card-grafico oculto" style="margin-bottom: 24px;">
+            <section id="secao-config-admin" class="grade-config-admin oculto">
+                <div class="card-config-admin">
+                    <h3>Metas do mês</h3>
+                    <p>Defina a meta de agendamentos de cada marca para o mês selecionado.</p>
+                    <button type="button" id="btn-abrir-modal-metas" class="btn-abrir-config-metas">⚙️ Configurar Metas</button>
+                </div>
+                <div class="card-config-admin">
+                    <h3>Lançamentos manuais</h3>
+                    <p>Agendamentos adicionados fora da planilha no mês selecionado.</p>
+                    <button type="button" id="btn-ver-manuais" class="btn-abrir-config-metas">📝 Manuais (0)</button>
+                </div>
+            </section>
+
+            <section id="secao-volume-equipe-consultor" class="card-grafico oculto espaco-abaixo-24">
                 <div class="grafico-cabecalho">
                     <h3 id="titulo-grafico-equipe-consultor">Volume da Equipe</h3>
                     <p id="subtitulo-grafico-equipe-consultor">Volume por operador desta marca</p>
                 </div>
-                <div class="grafico-container" style="height: 300px;">
+                <div class="grafico-container altura-300">
                     <canvas id="graficoEquipeConsultor"></canvas>
                 </div>
             </section>
 
-            <!-- TABELA DO ADMINISTRADOR -->
-            <section id="secao-admin-ranking" class="card-tabela-agendamentos oculto" style="margin-top: 24px;">
+            <section id="secao-admin-ranking" class="card-tabela-agendamentos oculto espaco-acima-24">
                 <div class="tabela-cabecalho-acoes">
                     <div>
                         <h2 id="titulo-tabela-admin">Desempenho por Marca</h2>
@@ -841,7 +224,7 @@
                             </tr>
                         </thead>
                         <tbody id="tabela-corpo-admin">
-                            <tr><td colspan="6" class="celula-vazia-mensagem">Carregando dados...</td></tr>
+                            <tr class="linha-esqueleto"><td colspan="6"><div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -849,12 +232,11 @@
         </main>
     </div>
 
-    <!-- MODAL DE CONFIGURAÇÃO DE METAS (ADMIN) - COM DROPDOWN CONTROLADO QUE NUNCA CORTA -->
     <div id="modalConfigMetas" class="modal-overlay">
         <div class="modal-card-metas">
             <div class="modal-topo-metas">
                 <h3>Definir Meta do Mês</h3>
-                <button type="button" id="btnFecharModalMetas" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">&times;</button>
+                <button type="button" id="btnFecharModalMetas" class="btn-fechar-modal-metas">&times;</button>
             </div>
             <div class="modal-corpo-metas">
                 <div>
@@ -864,8 +246,7 @@
                 <div>
                     <label class="modal-campo-label">Marca / Montadora</label>
                     
-                    <!-- Select original mantido para compatibilidade total com JS -->
-                    <select id="modal-meta-equipe" style="display: none;">
+                    <select id="modal-meta-equipe" class="select-nativo-oculto">
                         <option value="Geral">Central Geral (Todas as Marcas)</option>
                         <option value="Toyota" selected>Toyota</option>
                         <option value="Chery">Chery</option>
@@ -881,9 +262,9 @@
                         <option value="Citroen">Citroën</option>
                         <option value="Kia">Kia</option>
                         <option value="Omoda">Omoda</option>
+                        <option value="Jeep">Jeep</option>
                     </select>
 
-                    <!-- Dropdown Customizado com limite de altura e rolagem suave -->
                     <div class="custom-dropdown-container" id="custom-marca-dropdown">
                         <div class="custom-dropdown-trigger" id="custom-dropdown-trigger">
                             <span id="custom-dropdown-label">Toyota</span>
@@ -909,6 +290,7 @@
                             <div class="custom-dropdown-item" data-value="Citroen">Citroën</div>
                             <div class="custom-dropdown-item" data-value="Kia">Kia</div>
                             <div class="custom-dropdown-item" data-value="Omoda">Omoda</div>
+                            <div class="custom-dropdown-item" data-value="Jeep">Jeep</div>
                         </div>
                     </div>
                 </div>
@@ -924,7 +306,6 @@
         </div>
     </div>
 
-    <!-- Script integrado para controlar o dropdown elegante do modal sem estourar limites -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const trigger = document.getElementById('custom-dropdown-trigger');
@@ -935,7 +316,6 @@
 
             if (!trigger || !menu || !selectOriginal) return;
 
-            // Abrir e fechar ao clicar no campo
             trigger.addEventListener('click', function(e) {
                 e.stopPropagation();
                 const estaAberto = menu.classList.contains('visivel');
@@ -948,7 +328,6 @@
                 }
             });
 
-            // Seleção de item
             itens.forEach(function(item) {
                 item.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -959,7 +338,6 @@
                     item.classList.add('selecionado');
                     label.textContent = texto;
 
-                    // Atualiza o select nativo e dispara o evento change do relatorios.js
                     selectOriginal.value = valor;
                     selectOriginal.dispatchEvent(new Event('change'));
 
@@ -968,7 +346,6 @@
                 });
             });
 
-            // Sincroniza se o JS alterar o selectOriginal externamente
             window.sincronizarDropdownModal = function(val) {
                 selectOriginal.value = val;
                 itens.forEach(function(i) {
@@ -980,7 +357,6 @@
                 });
             };
 
-            // Fechar ao clicar fora
             document.addEventListener('click', function(e) {
                 if (!e.target.closest('#custom-marca-dropdown')) {
                     menu.classList.remove('visivel');
@@ -990,6 +366,6 @@
         });
     </script>
 
-    <script src="relatorios.js"></script>
+    <script src="relatorios.js?v=20261102u"></script>
 </body>
 </html>

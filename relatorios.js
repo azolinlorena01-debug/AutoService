@@ -2,8 +2,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     const SUPABASE_URL = 'https://potvtrepcoswvzmkewic.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    window.atualizarContadorDivergencias(supabaseClient);
 
-    // Último dia real do mês e leitura paginada (o Supabase devolve no máximo 1.000 linhas por consulta)
     function intervaloDoMes(valorMes) {
         const [ano, mes] = valorMes.split('-');
         const ultimoDia = new Date(parseInt(ano, 10), parseInt(mes, 10), 0).getDate();
@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         return todas;
     }
 
-    // 1. SINCRONIZACAO E LEITURA DE METAS POR MARCA
     let cacheMetasBanco = {};
     async function sincronizarMetasBanco() {
         try {
@@ -59,6 +58,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (u.includes('AUDI')) return 'Audi';
         if (u.includes('CITROEN')) return 'Citroen';
         if (u.includes('GEELY')) return 'Geely';
+        if (u.includes('JEEP')) return 'Jeep';
         return s;
     }
 
@@ -83,10 +83,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         return 2000;
     }
 
-    // ELEMENTOS DO DOM
     const secaoFiltrosAdmin = document.getElementById('secao-filtros-admin');
     const filtroMesAdmin = document.getElementById('filtro-mes-admin');
     const filtroEquipeAdmin = document.getElementById('filtro-equipe-admin');
+    let ddFiltroEquipe = null;
     const btnAbrirModalMetas = document.getElementById('btn-abrir-modal-metas');
 
     const modalConfigMetas = document.getElementById('modalConfigMetas');
@@ -107,11 +107,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     const valorConfirmadoEl = document.querySelector('.bonus-confirmado');
     const valorPrevistoEl = document.querySelector('.bonus-previsto');
     const detalheConfirmadoEl = document.querySelector('.bonus-confirmado')?.parentElement.querySelector('.card-detalhe');
-    const inputMonitoria = document.getElementById('input-monitoria');
+    const elNotaMonitoria = document.getElementById('nota-monitoria-valor');
+    const detalheNotaMonitoria = document.getElementById('detalhe-nota-monitoria');
     const badgeAjusteMonitoria = document.getElementById('badge-ajuste-monitoria');
-    const btnAcaoMonitoria = document.getElementById('btn-acao-monitoria');
 
-    const linkMenuImportar = document.getElementById('link-menu-importar');
 
     const secaoMetaEquipe = document.getElementById('secao-meta-equipe');
     const tituloMetaEquipe = document.getElementById('titulo-meta-equipe');
@@ -124,6 +123,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     const btnAbaCategorias = document.getElementById('btn-aba-categorias');
     const btnAbaRanking = document.getElementById('btn-aba-ranking');
     const btnAbaEquipe = document.getElementById('btn-aba-equipe');
+    const btnAbaAdmin = document.getElementById('btn-aba-admin');
+    const secaoConfigAdmin = document.getElementById('secao-config-admin');
 
     const gradeGraficos = document.getElementById('grade-graficos');
     const cardGraficoBonusMensal = document.getElementById('card-grafico-bonus-mensal');
@@ -191,17 +192,19 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     if (isAdmin) {
-        if (linkMenuImportar) linkMenuImportar.classList.remove('oculto');
+        window.mostrarLinksAdmin();
         if (secaoFiltrosAdmin) secaoFiltrosAdmin.classList.remove('oculto');
         if (secaoMetricasConsultor) secaoMetricasConsultor.classList.add('oculto');
         if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
         if (secaoAdminRanking) secaoAdminRanking.classList.remove('oculto');
         if (badgeBonusEquipe) badgeBonusEquipe.classList.add('oculto');
         if (btnAbaEquipe) btnAbaEquipe.classList.add('oculto');
+        if (btnAbaAdmin) btnAbaAdmin.classList.remove('oculto');
         if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.add('oculto');
         if (btnAbaVisaoGeral) btnAbaVisaoGeral.textContent = 'Efetividade';
     } else {
-        if (linkMenuImportar) linkMenuImportar.classList.add('oculto');
+                const linkGestao = document.getElementById('link-menu-admin');
+        if (linkGestao) linkGestao.classList.add('oculto');
         if (secaoFiltrosAdmin) secaoFiltrosAdmin.classList.add('oculto');
         if (secaoMetricasConsultor) secaoMetricasConsultor.classList.remove('oculto');
         if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
@@ -212,7 +215,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (cardGraficoEquipeAdmin) cardGraficoEquipeAdmin.classList.add('oculto');
         if (btnAbaVisaoGeral) btnAbaVisaoGeral.textContent = 'Efetividade & Bônus';
 
-        // SELETOR EMBUTIDO NO CARD 1 SE O CONSULTOR FOR MULTIMARCA
         if (wrapperSeletorMarca && filtroMarcaConsultor) {
             if (marcasPermitidasUsuario.length > 1) {
                 wrapperSeletorMarca.classList.remove('oculto');
@@ -250,8 +252,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             <span class="usuario-logado-tag">Olá, <strong>${nomeExibicao}</strong>${tagEquipe}${tagAdmin}</span>
             <button id="btn-sair-header" class="botao-sair-header">Sair</button>
         `;
+        window.salvarMenuCache(areaAuth.innerHTML, isAdmin);
 
         document.getElementById('btn-sair-header')?.addEventListener('click', async () => {
+            window.limparMenuCache();
             await supabaseClient.auth.signOut();
             window.location.href = 'login.html';
         });
@@ -312,7 +316,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const val = parseInt(modalMetaValor.value, 10);
 
             if (!mesSel || isNaN(val) || val <= 0) {
-                alert('Preencha um valor de meta válido.');
+                avisar('Preencha um valor de meta válido.');
                 return;
             }
 
@@ -342,68 +346,22 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    function obterChaveMonitoria(mes) {
-        return `nota_monitoria_${usuarioAtual.id}_${mes}`;
-    }
-
-    function atualizarEstadoVisualMonitoria(mes) {
-        if (!inputMonitoria || !btnAcaoMonitoria) return;
-        const valorSalvo = localStorage.getItem(obterChaveMonitoria(mes));
-
-        if (valorSalvo !== null) {
-            inputMonitoria.value = valorSalvo;
-            inputMonitoria.disabled = true;
-            btnAcaoMonitoria.textContent = 'Editar';
-            btnAcaoMonitoria.classList.add('btn-modo-editar');
-            btnAcaoMonitoria.title = 'Clique para editar a nota deste mês';
-        } else {
-            inputMonitoria.disabled = false;
-            btnAcaoMonitoria.textContent = 'Salvar';
-            btnAcaoMonitoria.classList.remove('btn-modo-editar');
-            btnAcaoMonitoria.title = 'Salvar nota deste mês';
-        }
-    }
-
-    if (btnAcaoMonitoria) {
-        btnAcaoMonitoria.addEventListener('click', () => {
-            const mesAtualSel = filtroMesConsultor ? filtroMesConsultor.value : valorMesPadrao;
-            const chave = obterChaveMonitoria(mesAtualSel);
-            const estaSalvo = localStorage.getItem(chave) !== null;
-
-            if (estaSalvo && inputMonitoria.disabled) {
-                inputMonitoria.disabled = false;
-                inputMonitoria.focus();
-                btnAcaoMonitoria.textContent = 'Salvar';
-                btnAcaoMonitoria.classList.remove('btn-modo-editar');
-            } else {
-                let valor = parseFloat(inputMonitoria.value);
-                if (isNaN(valor)) valor = 100;
-                if (valor < 0) valor = 0;
-                if (valor > 100) valor = 100;
-                inputMonitoria.value = valor;
-
-                localStorage.setItem(chave, String(valor));
-                inputMonitoria.disabled = true;
-                btnAcaoMonitoria.textContent = 'Editar';
-                btnAcaoMonitoria.classList.add('btn-modo-editar');
-
-                aplicarVisaoRelatorio();
-            }
-        });
-    }
-
     function aplicarVisibilidadeAbas() {
         btnAbaVisaoGeral.classList.toggle('ativo', abaGraficoAtual === 'visao-geral');
         btnAbaCategorias.classList.toggle('ativo', abaGraficoAtual === 'categorias');
         if (btnAbaRanking) btnAbaRanking.classList.toggle('ativo', abaGraficoAtual === 'ranking');
         if (btnAbaEquipe) btnAbaEquipe.classList.toggle('ativo', abaGraficoAtual === 'equipe');
+        if (btnAbaAdmin) btnAbaAdmin.classList.toggle('ativo', abaGraficoAtual === 'admin');
+        if (secaoConfigAdmin) secaoConfigAdmin.classList.toggle('oculto', abaGraficoAtual !== 'admin');
 
         gradeGraficos.classList.add('oculto');
         secaoGraficoRevisoesTipo.classList.add('oculto');
         if (secaoRankingOperadores) secaoRankingOperadores.classList.add('oculto');
         if (secaoVolumeEquipeConsultor) secaoVolumeEquipeConsultor.classList.add('oculto');
 
-        if (abaGraficoAtual === 'ranking') {
+        if (abaGraficoAtual === 'admin') {
+            if (secaoAdminRanking) secaoAdminRanking.classList.add('oculto');
+        } else if (abaGraficoAtual === 'ranking') {
             if (secaoAdminRanking) secaoAdminRanking.classList.add('oculto');
             if (secaoRankingOperadores) secaoRankingOperadores.classList.remove('oculto');
         } else {
@@ -446,13 +404,239 @@ document.addEventListener('DOMContentLoaded', async function() {
     btnAbaCategorias.addEventListener('click', () => trocarAbaGrafico('categorias'));
     if (btnAbaRanking) btnAbaRanking.addEventListener('click', () => trocarAbaGrafico('ranking'));
     if (btnAbaEquipe) btnAbaEquipe.addEventListener('click', () => trocarAbaGrafico('equipe'));
+    if (btnAbaAdmin) btnAbaAdmin.addEventListener('click', () => trocarAbaGrafico('admin'));
+    document.addEventListener('tema-alterado', () => renderizarGraficosAtivos());
+
+    function sincronizarOpcaoOutrasMarcas(qtdOutras) {
+        if (isAdmin || !filtroMarcaConsultor || !wrapperSeletorMarca) return;
+        let opt = filtroMarcaConsultor.querySelector('option[value="outras"]');
+        if (qtdOutras > 0) {
+            if (!opt) {
+                opt = document.createElement('option');
+                opt.value = 'outras';
+                filtroMarcaConsultor.appendChild(opt);
+            }
+            opt.textContent = `Outras marcas agendadas (${qtdOutras})`;
+            wrapperSeletorMarca.classList.remove('oculto');
+            if (legendaCardPeriodo) legendaCardPeriodo.textContent = 'Mês e marca de atuação';
+        } else {
+            if (opt) {
+                if (filtroMarcaConsultor.value === 'outras') filtroMarcaConsultor.value = 'todas';
+                opt.remove();
+            }
+            if (marcasPermitidasUsuario.length <= 1) {
+                wrapperSeletorMarca.classList.add('oculto');
+                if (legendaCardPeriodo) legendaCardPeriodo.textContent = 'Filtre o período de apuração';
+            }
+        }
+    }
+
+    function mostrarNotaMeta(texto, aoClicarDetalhes) {
+        if (!secaoMetaEquipe) return;
+        let nota = document.getElementById('nota-outras-marcas');
+        if (!texto) {
+            if (nota) nota.style.display = 'none';
+            return;
+        }
+        if (!nota) {
+            nota = document.createElement('div');
+            nota.id = 'nota-outras-marcas';
+            nota.className = 'nota-meta-detalhe';
+            secaoMetaEquipe.appendChild(nota);
+        }
+        nota.textContent = texto + ' ';
+        if (aoClicarDetalhes) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.textContent = 'Ver detalhes';
+            btn.className = 'btn-link-detalhes';
+            btn.addEventListener('click', aoClicarDetalhes);
+            nota.appendChild(btn);
+        }
+        nota.style.display = 'block';
+    }
+
+    function nomeCurtoOperador(nomeCompleto) {
+        const partes = String(nomeCompleto || 'Operador').trim().split(/\s+/)
+            .filter((p, i) => i === 0 || !['DE', 'DA', 'DO', 'DAS', 'DOS', 'E'].includes(p.toUpperCase()));
+        return partes.length >= 2 ? `${partes[0]} ${partes[1]}` : partes[0];
+    }
+
+    function abrirModalDetalhesMeta(d) {
+        const esc = (t) => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        let overlay = document.getElementById('modalDetalhesMeta');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'modalDetalhesMeta';
+            overlay.className = 'modal-overlay';
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.style.display = 'none'; });
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') overlay.style.display = 'none'; });
+            document.body.appendChild(overlay);
+        }
+
+        const linha = (rotulo, ag, comp, negrito) =>
+            `<tr${negrito ? ' class="detalhes-linha-total"' : ''}><td>${rotulo}</td><td>${ag}</td><td>${comp}</td></tr>`;
+        const titulo = (txt) =>
+            `<tr class="detalhes-titulo-grupo"><td colspan="3">${esc(txt)}</td></tr>`;
+
+        let html = titulo('Dentro da meta (marcas da equipe)');
+        d.meusPorMarca.forEach(l => { html += linha(`Você: ${esc(l.marca)}`, l.total, l.comp); });
+        d.colegas.forEach(l => { html += linha(`${esc(l.nome)} (${esc(l.marca)})`, l.total, l.comp); });
+        html += linha('Total da meta', d.metaTotal, d.metaComp, true);
+        if (d.outras.length > 0) {
+            html += titulo('Fora da meta (outras marcas)');
+            d.outras.forEach(l => { html += linha(`Você: ${esc(l.marca)}`, l.total, l.comp); });
+        }
+        html += linha('Total seu (conta no bônus)', d.seuTotal, d.seuComp, true);
+
+        overlay.innerHTML = `
+            <div class="modal-card-metas modal-card-detalhes">
+                <div class="modal-topo-metas"><h3>De onde vêm esses números</h3></div>
+                <div class="detalhes-corpo">
+                    <table class="detalhes-tabela">
+                        <thead><tr>
+                            <th>Origem</th>
+                            <th>Agendados</th>
+                            <th>Compareceram</th>
+                        </tr></thead>
+                        <tbody>${html}</tbody>
+                    </table>
+                    <p class="detalhes-nota">
+                        A barra de meta soma os comparecidos de todos os operadores nas marcas da equipe, inclusive agendamentos feitos por colegas.
+                        Seu bônus considera tudo o que você agendou, em qualquer marca.
+                    </p>
+                </div>
+                <div class="modal-rodape-metas">
+                    <button type="button" class="btn-cancelar-modal" id="btnDetalhesVolume">Ver no Volume da Equipe</button>
+                    <button type="button" class="btn-salvar-modal" id="btnDetalhesFechar">Fechar</button>
+                </div>
+            </div>`;
+        overlay.style.display = 'flex';
+        document.getElementById('btnDetalhesFechar').addEventListener('click', () => { overlay.style.display = 'none'; });
+        document.getElementById('btnDetalhesVolume').addEventListener('click', () => {
+            overlay.style.display = 'none';
+            if (btnAbaEquipe) {
+                btnAbaEquipe.click();
+                btnAbaEquipe.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    }
+
+    function ehLancamentoManual(item) {
+        return /^manual/i.test(String(item.observacao || '').trim());
+    }
+
+    function atualizarBotaoManuais() {
+        const botao = document.getElementById('btn-ver-manuais');
+        if (!botao) return;
+        const qtd = agendamentosMesAtual.filter(ehLancamentoManual).length;
+        botao.textContent = `📝 Manuais (${qtd})`;
+    }
+
+    function formatarDataCurta(dataString) {
+        if (!dataString) return '-';
+        const p = String(dataString).split('-');
+        return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : dataString;
+    }
+
+    function abrirModalLancamentosManuais() {
+        if (!isAdmin) return;
+        const esc = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const nomesStatus = { compareceu: 'Compareceu', pendente: 'Pendente', faltou: 'No-Show' };
+
+        let overlay = document.getElementById('modalLancamentosManuais');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'modalLancamentosManuais';
+            overlay.className = 'modal-overlay';
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.style.display = 'none'; });
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') overlay.style.display = 'none'; });
+            document.body.appendChild(overlay);
+        }
+
+        const mesSel = filtroMesAdmin ? filtroMesAdmin.value : valorMesPadrao;
+        const lista = agendamentosMesAtual
+            .filter(ehLancamentoManual)
+            .sort((a, b) => String(a.data_revisao).localeCompare(String(b.data_revisao)));
+
+        let linhas = '';
+        lista.forEach(item => {
+            const revisaoTxt = String(item.revisao || '').toUpperCase().includes('FACILITADA') ? 'Facilitada' : `${item.revisao}ª`;
+            const valor = (parseFloat(item.valor_unitario) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            const motivo = String(item.observacao || '').replace(/^manual:?\s*/i, '');
+            linhas += `<tr>
+                <td>${esc(item.autor_nome || 'Operador')}</td>
+                <td>${esc(item.marca)}</td>
+                <td>${formatarDataCurta(item.data_revisao)}</td>
+                <td>${esc(item.placa)}</td>
+                <td>${esc(item.os)}</td>
+                <td>${esc(revisaoTxt)}</td>
+                <td>${esc(nomesStatus[item.status] || item.status)}</td>
+                <td>${valor}</td>
+                <td>${esc(motivo) || '-'}</td>
+                <td><button type="button" class="btn-excluir-manual" data-id="${item.id}">Excluir</button></td>
+            </tr>`;
+        });
+
+        const [anoSel, mm] = mesSel.split('-');
+        overlay.innerHTML = `
+            <div class="modal-card-metas modal-card-manuais">
+                <div class="modal-topo-metas">
+                    <h3>Lançamentos manuais - ${mm}/${anoSel}</h3>
+                    <button type="button" id="btnManuaisFechar" class="btn-fechar-modal-metas">&times;</button>
+                </div>
+                <div class="manuais-corpo">
+                    ${lista.length === 0
+                        ? '<p class="manuais-vazio">Nenhum agendamento foi inserido manualmente neste mês.</p>'
+                        : `<table class="tabela-manuais">
+                            <thead><tr>
+                                <th>Operador</th><th>Marca</th><th>Data revisão</th><th>Placa</th><th>O.S</th>
+                                <th>Revisão</th><th>Status</th><th>Valor</th><th>Observação</th><th></th>
+                            </tr></thead>
+                            <tbody>${linhas}</tbody>
+                        </table>`}
+                </div>
+                <div class="modal-rodape-metas">
+                    <button type="button" id="btnManuaisOk" class="btn-salvar-modal">Fechar</button>
+                </div>
+            </div>`;
+
+        const fechar = () => { overlay.style.display = 'none'; };
+        overlay.querySelector('#btnManuaisFechar').addEventListener('click', fechar);
+        overlay.querySelector('#btnManuaisOk').addEventListener('click', fechar);
+
+        overlay.querySelectorAll('.btn-excluir-manual').forEach(botao => {
+            botao.addEventListener('click', async () => {
+                const id = botao.dataset.id;
+                const alvo = agendamentosMesAtual.find(a => a.id == id);
+                if (!alvo || !ehLancamentoManual(alvo)) return;
+                if (!(await confirmar(`Excluir o lançamento manual da placa ${alvo.placa}?`, { titulo: 'Excluir lançamento', confirmar: 'Excluir', perigo: true }))) return;
+
+                botao.disabled = true;
+                const { data, error } = await supabaseClient.from('agendamentos').delete().eq('id', id).select('id');
+                if (error || !data || data.length === 0) {
+                    botao.disabled = false;
+                    avisar('Não foi possível excluir' + (error ? ': ' + error.message : ' (sem permissão).'));
+                    return;
+                }
+
+                agendamentosMesAtual = agendamentosMesAtual.filter(a => a.id != id);
+                todosAgendamentosHistorico = todosAgendamentosHistorico.filter(a => a.id != id);
+                atualizarBotaoManuais();
+                aplicarVisaoRelatorio();
+                abrirModalLancamentosManuais();
+            });
+        });
+
+        overlay.style.display = 'flex';
+    }
 
     async function carregarOpcoesEquipes() {
         if (!isAdmin || !filtroEquipeAdmin) return;
         try {
             const listaMarcas = new Set([
                 'Toyota', 'Chery', 'Fiat', 'Ford', 'Nissan', 'Volkswagen',
-                'Hyundai', 'Renault', 'BYD', 'Geely', 'Audi', 'Citroen', 'Kia', 'Omoda'
+                'Hyundai', 'Renault', 'BYD', 'Geely', 'Audi', 'Citroen', 'Kia', 'Omoda', 'Jeep'
             ]);
             
             filtroEquipeAdmin.innerHTML = '<option value="todas">Todas as Marcas</option>';
@@ -464,10 +648,15 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
 
             filtroEquipeAdmin.value = 'todas';
+            if (!ddFiltroEquipe) {
+                ddFiltroEquipe = transformarEmDropdown(filtroEquipeAdmin, 'dd-filtro-marca');
+                filtroEquipeAdmin.parentNode.appendChild(ddFiltroEquipe.container);
+            } else {
+                ddFiltroEquipe.sincronizar();
+            }
         } catch (e) {}
     }
 
-    // Lê os agendamentos (todas as páginas). Filtros opcionais: período (inicio/fim) e usuário.
     async function lerAgendamentos({ inicio, fim, userId } = {}) {
         const aplicarFiltros = (q) => {
             if (inicio) q = q.gte('data_revisao', inicio);
@@ -516,9 +705,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function carregarDados() {
         const mesSelecionado = (isAdmin ? filtroMesAdmin.value : filtroMesConsultor.value) || valorMesPadrao;
+        window.atualizarSeloFechado(supabaseClient, mesSelecionado);
 
         if (!isAdmin) {
-            atualizarEstadoVisualMonitoria(mesSelecionado);
+            await carregarFechamentoConsultor(mesSelecionado);
         }
 
         const { inicio, fim } = intervaloDoMes(mesSelecionado);
@@ -528,33 +718,74 @@ document.addEventListener('DOMContentLoaded', async function() {
             item.data_revisao && String(item.data_revisao).startsWith(mesSelecionado)
         );
 
-        // Admin só precisa do mês; consultor também carrega o próprio histórico (gráfico de bônus mensal)
         todosAgendamentosHistorico = isAdmin
             ? agendamentosMesAtual
             : await lerAgendamentos({ userId: usuarioAtual.id });
 
+        atualizarBotaoManuais();
         aplicarVisaoRelatorio();
+    }
+
+    let notaMonitoriaMes = null;
+    let registroFinalMes = null;
+
+    async function carregarFechamentoConsultor(mes) {
+        notaMonitoriaMes = null;
+        registroFinalMes = null;
+        if (isAdmin || !mes) return;
+        try {
+            const [resFech, resMes] = await Promise.all([
+                supabaseClient.from('fechamentos').select('valor_pago, observacao, nota_monitoria').eq('mes', mes).eq('user_id', usuarioAtual.id),
+                supabaseClient.from('meses_fechados').select('mes').eq('mes', mes)
+            ]);
+            const data = resFech.data;
+            const mesFechado = ((resMes.data) || []).length > 0;
+            const linha = (data || [])[0];
+            if (linha) {
+                if (linha.nota_monitoria !== null && linha.nota_monitoria !== undefined) notaMonitoriaMes = Number(linha.nota_monitoria);
+                if (mesFechado && linha.valor_pago !== null && linha.valor_pago !== undefined) registroFinalMes = linha;
+            }
+        } catch (e) {}
+    }
+
+    function mostrarValorFinal() {
+        const card = document.getElementById('card-valor-final');
+        const cardPrevisao = document.querySelector('.bonus-previsto')?.closest('.card');
+        if (!card) return;
+        if (!registroFinalMes) {
+            card.classList.add('oculto');
+            if (cardPrevisao) cardPrevisao.classList.remove('oculto');
+            return;
+        }
+        document.getElementById('valor-final-mes').textContent = `R$ ${Number(registroFinalMes.valor_pago).toFixed(2).replace('.', ',')}`;
+        document.getElementById('detalhe-valor-final').textContent = registroFinalMes.observacao || 'Valor confirmado pela administração';
+        card.classList.remove('oculto');
+        if (cardPrevisao) cardPrevisao.classList.add('oculto');
     }
 
     function aplicarVisaoRelatorio() {
         const mesSelecionado = isAdmin ? filtroMesAdmin.value : filtroMesConsultor.value;
 
+        if (!isAdmin) mostrarValorFinal();
+
         if (!isAdmin) {
-            // =============================================================
-            // VISAO DO CONSULTOR
-            // =============================================================
             if (secaoAdminRanking) secaoAdminRanking.classList.add('oculto');
             if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
             if (cardGraficoBonusMensal) cardGraficoBonusMensal.classList.remove('oculto');
             if (cardGraficoEquipeAdmin) cardGraficoEquipeAdmin.classList.add('oculto');
             if (badgeBonusEquipe) badgeBonusEquipe.classList.remove('oculto');
 
-            const marcaFiltroConsultor = filtroMarcaConsultor ? filtroMarcaConsultor.value : 'todas';
+            const outrasMarcasMinhas = agendamentosMesAtual.filter(i =>
+                i.user_id === usuarioAtual.id && !marcasPermitidasUsuario.includes(i.marca));
+            sincronizarOpcaoOutrasMarcas(outrasMarcasMinhas.length);
 
-            // REGRA: Monitoria so aparece se estiver em "Todas as Minhas Marcas" (ou se o usuario so tiver 1 marca)
+            const marcaFiltroConsultor = filtroMarcaConsultor ? filtroMarcaConsultor.value : 'todas';
+            const modoOutras = marcaFiltroConsultor === 'outras';
+
             const ehMultimarca = marcasPermitidasUsuario.length > 1;
+            const ocultaMonitoria = marcaFiltroConsultor !== 'todas' && (ehMultimarca || modoOutras);
             if (cardMonitoriaConsultor) {
-                if (ehMultimarca && marcaFiltroConsultor !== 'todas') {
+                if (ocultaMonitoria) {
                     cardMonitoriaConsultor.classList.add('oculto');
                 } else {
                     cardMonitoriaConsultor.classList.remove('oculto');
@@ -564,20 +795,20 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (tituloGraficoVolume) {
                 tituloGraficoVolume.textContent = (marcaFiltroConsultor === 'todas') 
                     ? 'Minha Efetividade' 
-                    : `Minha Efetividade: ${marcaFiltroConsultor}`;
+                    : (modoOutras ? 'Minha Efetividade: Outras marcas' : `Minha Efetividade: ${marcaFiltroConsultor}`);
             }
             if (subtituloGraficoVolume) subtituloGraficoVolume.textContent = 'Taxa de presença';
 
-            let notaMonitoria = inputMonitoria ? parseFloat(inputMonitoria.value) : 100;
-            if (isNaN(notaMonitoria)) notaMonitoria = 100;
-
-            let fatorMonitoria = (notaMonitoria >= 90) ? 1.10 : 0.90;
+            const notaMonitoria = notaMonitoriaMes;
+            const fatorMonitoria = notaMonitoria === null ? 1.00 : (notaMonitoria >= 90 ? 1.10 : 0.90);
+            if (elNotaMonitoria) elNotaMonitoria.textContent = notaMonitoria === null ? 'Aguardando' : `${notaMonitoria}%`;
+            if (detalheNotaMonitoria) detalheNotaMonitoria.textContent = notaMonitoria === null ? 'Lançada pela gestão no fechamento do mês' : '≥90% (+10%) | <90% (-10%)';
             if (badgeAjusteMonitoria) {
+                badgeAjusteMonitoria.classList.toggle('oculto', notaMonitoria === null);
                 badgeAjusteMonitoria.textContent = notaMonitoria >= 90 ? '+10% Bônus' : '-10% Redução';
-                badgeAjusteMonitoria.className = notaMonitoria >= 90 ? 'badge-ajuste-monitoria' : 'badge-ajuste-monitoria-reducao';
+                badgeAjusteMonitoria.className = (notaMonitoria >= 90 ? 'badge-ajuste-monitoria' : 'badge-ajuste-monitoria-reducao') + (notaMonitoria === null ? ' oculto' : '');
             }
 
-            // 1. Filtragem da Marca Ativa
             let agendamentosEquipe = [];
             let metaEquipeDefinida = 0;
             let rotuloMeta = '';
@@ -586,6 +817,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                 agendamentosEquipe = agendamentosMesAtual.filter(i => marcasPermitidasUsuario.includes(i.marca));
                 metaEquipeDefinida = marcasPermitidasUsuario.reduce((acc, m) => acc + obterMetaEquipe(mesSelecionado, m), 0);
                 rotuloMeta = marcasPermitidasUsuario.join(' | ').toUpperCase();
+            } else if (modoOutras) {
+                agendamentosEquipe = [];
+                metaEquipeDefinida = 0;
+                rotuloMeta = 'OUTRAS MARCAS';
             } else {
                 agendamentosEquipe = agendamentosMesAtual.filter(i => i.marca.toUpperCase() === marcaFiltroConsultor.toUpperCase());
                 metaEquipeDefinida = obterMetaEquipe(mesSelecionado, marcaFiltroConsultor);
@@ -602,9 +837,18 @@ document.addEventListener('DOMContentLoaded', async function() {
                 bonusEquipe = parseFloat(percentualMeta);
             }
 
+            const ehMultimarcaGeral = marcaFiltroConsultor === 'todas' && marcasPermitidasUsuario.length > 1;
+            const obterMetaMarca = marca => obterMetaEquipe(mesSelecionado, marca);
+            let detalheMultimarca = null;
+            if (ehMultimarcaGeral) {
+                detalheMultimarca = window.Bonus.bonusPorMarca(marcasPermitidasUsuario, agendamentosEquipe, obterMetaMarca, true);
+                bonusEquipe = detalheMultimarca.total;
+            }
+
             tituloMetaEquipe.textContent = `META DA MARCA (${rotuloMeta})`;
             textoProgressoMeta.textContent = `${comparecidosEquipe} / ${metaEquipeDefinida} agendamentos (${percentualMeta}%)`;
             barraProgressoMeta.style.width = `${percentualMeta}%`;
+            window.pintarBarraMeta(barraProgressoMeta, percentualMeta);
 
             if (restanteMeta === 0) {
                 textoRestanteMeta.textContent = 'Parabéns! Meta da marca atingida!';
@@ -614,7 +858,16 @@ document.addEventListener('DOMContentLoaded', async function() {
                 textoRestanteMeta.className = 'meta-badge-restante';
             }
 
-            if (badgeBonusEquipe) {
+            if (badgeBonusEquipe && detalheMultimarca) {
+                const resumoMarcas = detalheMultimarca.itens.map(i => `${i.marca} ${i.pct}%`).join(' | ');
+                if (detalheMultimarca.total > 0) {
+                    badgeBonusEquipe.textContent = `Bônus Equipe: + R$ ${detalheMultimarca.total.toFixed(2).replace('.', ',')} (${resumoMarcas})`;
+                    badgeBonusEquipe.className = 'meta-badge-bonus-equipe';
+                } else {
+                    badgeBonusEquipe.textContent = `Bônus Equipe: R$ 0,00 (Mínimo 80% por marca: ${resumoMarcas})`;
+                    badgeBonusEquipe.className = 'meta-badge-bonus-equipe bloqueado';
+                }
+            } else if (badgeBonusEquipe) {
                 if (percentualMeta >= 80) {
                     badgeBonusEquipe.textContent = `Bônus Equipe: + R$ ${bonusEquipe.toFixed(2).replace('.', ',')} (${percentualMeta}%)`;
                     badgeBonusEquipe.className = 'meta-badge-bonus-equipe';
@@ -627,11 +880,63 @@ document.addEventListener('DOMContentLoaded', async function() {
             const totalAgendadosEquipe = agendamentosEquipe.length;
             const percentualPrevistoEquipe = Math.min(100, Math.floor((totalAgendadosEquipe / Math.max(1, metaEquipeDefinida)) * 100));
             let bonusEquipePrevisto = (percentualPrevistoEquipe >= 80) ? parseFloat(percentualPrevistoEquipe) : 0.00;
+            if (ehMultimarcaGeral) {
+                bonusEquipePrevisto = window.Bonus.bonusPorMarca(marcasPermitidasUsuario, agendamentosEquipe, obterMetaMarca, false).total;
+            }
 
-            // 2. Meus Agendamentos
             let meusAgendamentosMes = agendamentosMesAtual.filter(item => item.user_id === usuarioAtual.id);
-            if (marcaFiltroConsultor !== 'todas') {
+            if (modoOutras) {
+                meusAgendamentosMes = outrasMarcasMinhas;
+            } else if (marcaFiltroConsultor !== 'todas') {
                 meusAgendamentosMes = meusAgendamentosMes.filter(item => item.marca.toUpperCase() === marcaFiltroConsultor.toUpperCase());
+            }
+
+            if (secaoMetaEquipe) secaoMetaEquipe.classList.toggle('oculto', modoOutras);
+            if (marcaFiltroConsultor === 'todas') {
+                const minhasNaEquipe = meusAgendamentosMes.filter(i => marcasPermitidasUsuario.includes(i.marca));
+                const compNaEquipe = minhasNaEquipe.filter(i => i.status === 'compareceu').length;
+                const compOutras = outrasMarcasMinhas.filter(i => i.status === 'compareceu').length;
+                const compTotalMeu = compNaEquipe + compOutras;
+                const colegasNaMeta = agendamentosEquipe.length !== minhasNaEquipe.length;
+
+                if (outrasMarcasMinhas.length > 0 || colegasNaMeta) {
+                    const compColegas = Math.max(0, comparecidosEquipe - compNaEquipe);
+                    const partesNota = [];
+                    partesNota.push(compColegas > 0
+                        ? `A meta (${comparecidosEquipe}) soma os ${compNaEquipe} comparecidos seus nas marcas da equipe + ${compColegas} ${compColegas === 1 ? 'agendado' : 'agendados'} por colegas nessas marcas.`
+                        : `A meta (${comparecidosEquipe}) soma os comparecidos das marcas da equipe.`);
+                    if (outrasMarcasMinhas.length > 0) {
+                        partesNota.push(`Além disso, você tem ${compOutras} comparecidos em outras marcas (fora da meta).`);
+                    }
+                    partesNota.push(`Total seu: ${compTotalMeu} comparecidos, todos contam no seu bônus.`);
+                    const agrupar = (lista, chaveFn, rotuloFn) => {
+                        const mapa = {};
+                        lista.forEach(i => {
+                            const k = chaveFn(i);
+                            if (!mapa[k]) mapa[k] = { ...rotuloFn(i), total: 0, comp: 0 };
+                            mapa[k].total++;
+                            if (i.status === 'compareceu') mapa[k].comp++;
+                        });
+                        return Object.values(mapa).sort((a, b) => b.total - a.total);
+                    };
+                    const dadosDetalhe = {
+                        meusPorMarca: agrupar(minhasNaEquipe, i => i.marca, i => ({ marca: i.marca })),
+                        colegas: agrupar(
+                            agendamentosEquipe.filter(i => i.user_id !== usuarioAtual.id),
+                            i => `${i.user_id}|${i.marca}`,
+                            i => ({ nome: nomeCurtoOperador(i.autor_nome), marca: i.marca })),
+                        outras: agrupar(outrasMarcasMinhas, i => i.marca, i => ({ marca: i.marca })),
+                        metaTotal: agendamentosEquipe.length,
+                        metaComp: comparecidosEquipe,
+                        seuTotal: minhasNaEquipe.length + outrasMarcasMinhas.length,
+                        seuComp: compTotalMeu
+                    };
+                    mostrarNotaMeta(partesNota.join(' '), () => abrirModalDetalhesMeta(dadosDetalhe));
+                } else {
+                    mostrarNotaMeta('');
+                }
+            } else {
+                mostrarNotaMeta('');
             }
 
             let totalCompareceu = 0, totalPendente = 0, totalFaltou = 0, somaBonusBaseRealizado = 0, somaBonusBasePrevisto = 0;
@@ -652,11 +957,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
             });
 
-            const fatorAplicado = (ehMultimarca && marcaFiltroConsultor !== 'todas') ? 1.00 : fatorMonitoria;
+            const fatorAplicado = ocultaMonitoria ? 1.00 : fatorMonitoria;
 
-            // REGRA ALINHADA COM O SUPORTE:
-            // Soma o Bônus Individual Base com o Bônus de Equipe primeiro,
-            // e depois incide a Monitoria sobre o valor total conjunto.
             const subtotalRealizado = somaBonusBaseRealizado + bonusEquipe;
             const bonusFinalRealizado = subtotalRealizado * fatorAplicado;
 
@@ -676,7 +978,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
 
         } else {
-            // ADMIN
             if (secaoMetaEquipe) secaoMetaEquipe.classList.remove('oculto');
             if (secaoAdminRanking) secaoAdminRanking.classList.remove('oculto');
             if (badgeBonusEquipe) badgeBonusEquipe.classList.add('oculto');
@@ -697,6 +998,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 tituloMetaEquipe.textContent = 'META TOTAL DA CENTRAL DE AGENDAMENTOS';
                 textoProgressoMeta.textContent = `${comparecidosGeral} / ${metaGeral} agendamentos (${percGeral}%)`;
                 barraProgressoMeta.style.width = `${percGeral}%`;
+            window.pintarBarraMeta(barraProgressoMeta, percGeral);
 
                 if (textoRestanteMeta) {
                     textoRestanteMeta.textContent = restGeral === 0 
@@ -724,6 +1026,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 tituloMetaEquipe.textContent = `META DA MARCA: ${marcaFiltro.toUpperCase()}`;
                 textoProgressoMeta.textContent = `${comparecidosMarca} / ${metaMarca} agendamentos (${percMarca}%)`;
                 barraProgressoMeta.style.width = `${percMarca}%`;
+            window.pintarBarraMeta(barraProgressoMeta, percMarca);
 
                 if (textoRestanteMeta) {
                     textoRestanteMeta.textContent = restMarca === 0 
@@ -744,7 +1047,18 @@ document.addEventListener('DOMContentLoaded', async function() {
         renderizarGraficosAtivos();
     }
 
+    function temaEscuro() {
+        return document.documentElement.getAttribute('data-tema') === 'escuro';
+    }
+
+    function aplicarCoresGraficos() {
+        if (typeof Chart === 'undefined' || !Chart.defaults) return;
+        Chart.defaults.color = temaEscuro() ? '#cbd5e1' : '#666666';
+        Chart.defaults.borderColor = temaEscuro() ? 'rgba(148, 163, 184, 0.2)' : 'rgba(0, 0, 0, 0.1)';
+    }
+
     function renderizarGraficosAtivos() {
+        aplicarCoresGraficos();
         const marcaFiltro = isAdmin 
             ? (filtroEquipeAdmin ? filtroEquipeAdmin.value : 'todas') 
             : (filtroMarcaConsultor ? filtroMarcaConsultor.value : 'todas');
@@ -758,13 +1072,18 @@ document.addEventListener('DOMContentLoaded', async function() {
         } else {
             if (marcaFiltro === 'todas') {
                 dadosFiltrados = agendamentosMesAtual.filter(item => marcasPermitidasUsuario.includes(item.marca));
+            } else if (marcaFiltro === 'outras') {
+                dadosFiltrados = agendamentosMesAtual.filter(item =>
+                    item.user_id === usuarioAtual.id && !marcasPermitidasUsuario.includes(item.marca));
             } else {
                 dadosFiltrados = agendamentosMesAtual.filter(item => item.marca.toUpperCase() === marcaFiltro.toUpperCase());
             }
         }
 
         let meusAgendamentosMes = agendamentosMesAtual.filter(item => item.user_id === usuarioAtual.id);
-        if (!isAdmin && marcaFiltro !== 'todas') {
+        if (!isAdmin && marcaFiltro === 'outras') {
+            meusAgendamentosMes = meusAgendamentosMes.filter(item => !marcasPermitidasUsuario.includes(item.marca));
+        } else if (!isAdmin && marcaFiltro !== 'todas') {
             meusAgendamentosMes = meusAgendamentosMes.filter(item => item.marca.toUpperCase() === marcaFiltro.toUpperCase());
         }
 
@@ -783,7 +1102,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             if (!isAdmin) {
                 let meusHistorico = todosAgendamentosHistorico.filter(item => item.user_id === usuarioAtual.id);
-                if (marcaFiltro !== 'todas') {
+                if (marcaFiltro === 'outras') {
+                    meusHistorico = meusHistorico.filter(item => !marcasPermitidasUsuario.includes(item.marca));
+                } else if (marcaFiltro !== 'todas') {
                     meusHistorico = meusHistorico.filter(item => item.marca.toUpperCase() === marcaFiltro.toUpperCase());
                 }
                 renderizarGraficoBonusMensal(meusHistorico);
@@ -806,14 +1127,22 @@ document.addEventListener('DOMContentLoaded', async function() {
             renderizarRankingOperadores(agendamentosMesAtual);
 
         } else if (abaGraficoAtual === 'equipe') {
+            const ehOutrasMarcas = !isAdmin && marcaFiltro === 'outras';
             const rotulo = (!isAdmin && marcaFiltro !== 'todas') ? marcaFiltro : marcasPermitidasUsuario.join(' | ');
-            if (tituloGraficoEquipeConsultor) tituloGraficoEquipeConsultor.textContent = `Volume da Equipe: ${rotulo}`;
-            if (subtituloGraficoEquipeConsultor) subtituloGraficoEquipeConsultor.textContent = 'Volume por operador desta equipe';
-            renderizarGraficoBarrasHorizontais('graficoEquipeConsultor', dadosFiltrados);
+            if (tituloGraficoEquipeConsultor) {
+                tituloGraficoEquipeConsultor.textContent = ehOutrasMarcas
+                    ? 'Outras Marcas Agendadas'
+                    : `Volume da Equipe: ${rotulo}`;
+            }
+            if (subtituloGraficoEquipeConsultor) {
+                subtituloGraficoEquipeConsultor.textContent = ehOutrasMarcas
+                    ? 'Seus agendamentos em marcas fora da sua equipe (contam no seu bônus)'
+                    : 'Volume por operador desta equipe';
+            }
+            renderizarGraficoBarrasHorizontais('graficoEquipeConsultor', dadosFiltrados, ehOutrasMarcas, !isAdmin && !ehOutrasMarcas && marcasPermitidasUsuario.length > 1);
         }
     }
 
-    // RANKING OFICIAL UNIFICADO POR OPERADOR (PUXA A EQUIPE CADASTRADA NO SUPABASE)
     function renderizarRankingOperadores(agendamentos) {
         if (!containerRankingLista) return;
         containerRankingLista.innerHTML = '';
@@ -840,7 +1169,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const listaRanking = Object.values(operadores).sort((a, b) => b.compareceu - a.compareceu);
 
         if (listaRanking.length === 0) {
-            containerRankingLista.innerHTML = '<div style="text-align: center; color: #64748b; padding: 24px;">Nenhum comparecimento registrado neste mês.</div>';
+            containerRankingLista.innerHTML = '<div class="ranking-vazio">Nenhum comparecimento registrado neste mês.</div>';
             return;
         }
 
@@ -917,7 +1246,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     data: [compareceu, pendente, faltou],
                     backgroundColor: ['#22c55e', '#eab308', '#ef4444'],
                     borderWidth: 2,
-                    borderColor: '#ffffff'
+                    borderColor: temaEscuro() ? '#131c2e' : '#ffffff'
                 }]
             },
             options: {
@@ -928,7 +1257,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    function renderizarGraficoBonusMensal(agendamentosHistorico) {
+    async function renderizarGraficoBonusMensal(agendamentosHistorico) {
         const ctx = document.getElementById('graficoBonusMensal')?.getContext('2d');
         if (!ctx) return;
         if (graficoBonusMensalInstance) graficoBonusMensalInstance.destroy();
@@ -943,12 +1272,28 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
 
-        const chavesOrdenadas = Object.keys(totaisPorMes).sort();
+        const pagosPorMes = {};
+        try {
+            const [resFech, resMeses] = await Promise.all([
+                supabaseClient.from('fechamentos').select('mes, valor_pago').eq('user_id', usuarioAtual.id),
+                supabaseClient.from('meses_fechados').select('mes')
+            ]);
+            const fechados = new Set((resMeses.data || []).map(m => m.mes));
+            (resFech.data || []).forEach(f => {
+                if (fechados.has(f.mes) && f.valor_pago !== null && f.valor_pago !== undefined) pagosPorMes[f.mes] = Number(f.valor_pago);
+            });
+        } catch (e) {}
+
+        if (graficoBonusMensalInstance) graficoBonusMensalInstance.destroy();
+
+        const chavesOrdenadas = Array.from(new Set(Object.keys(totaisPorMes).concat(Object.keys(pagosPorMes)))).sort();
         const labelsFormatados = chavesOrdenadas.map(c => {
             const [ano, mes] = c.split('-');
             return `${mesesNomes[parseInt(mes, 10) - 1]}/${ano.slice(2)}`;
         });
-        const valores = chavesOrdenadas.map(c => totaisPorMes[c]);
+        const valores = chavesOrdenadas.map(c => totaisPorMes[c] || 0);
+        const valoresPagos = chavesOrdenadas.map(c => (c in pagosPorMes ? pagosPorMes[c] : null));
+        const temPagos = valoresPagos.some(v => v !== null);
 
         graficoBonusMensalInstance = new Chart(ctx, {
             type: 'bar',
@@ -960,7 +1305,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                     backgroundColor: '#2563eb',
                     borderRadius: 4,
                     maxBarThickness: 45
-                }]
+                }].concat(temPagos ? [{
+                    label: 'Valor Final Pago (R$)',
+                    data: valoresPagos,
+                    backgroundColor: '#16a34a',
+                    borderRadius: 4,
+                    maxBarThickness: 45
+                }] : [])
             },
             options: {
                 responsive: true,
@@ -980,7 +1331,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    function renderizarGraficoBarrasHorizontais(canvasId, agendamentos) {
+    function renderizarGraficoBarrasHorizontais(canvasId, agendamentos, agruparPorMarca = false, detalharMarcaColegas = false) {
         const ctx = document.getElementById(canvasId)?.getContext('2d');
         if (!ctx) return;
 
@@ -990,8 +1341,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         const operadores = {};
         agendamentos.forEach(item => {
             const nomeCompleto = (item.autor_nome || 'Operador').trim();
-            const partes = nomeCompleto.split(/\s+/);
-            const nomeCurto = partes.length >= 2 ? `${partes[0]} ${partes[1]}` : partes[0];
+            const partes = nomeCompleto.split(/\s+/).filter((p, i) => i === 0 || !['DE', 'DA', 'DO', 'DAS', 'DOS', 'E'].includes(p.toUpperCase()));
+            const nomeOperador = partes.length >= 2 ? `${partes[0]} ${partes[1]}` : partes[0];
+            const nomeCurto = agruparPorMarca
+                ? (item.marca || 'Sem marca')
+                : ((detalharMarcaColegas && item.user_id !== usuarioAtual.id) ? `${nomeOperador} (${item.marca})` : nomeOperador);
 
             if (!operadores[nomeCurto]) operadores[nomeCurto] = { total: 0, compareceu: 0 };
             operadores[nomeCurto].total++;
@@ -1010,7 +1364,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     { 
                         label: 'Total de Agendados', 
                         data: dataTotal, 
-                        backgroundColor: '#cbd5e1', 
+                        backgroundColor: temaEscuro() ? '#475569' : '#cbd5e1',
                         borderRadius: 4,
                         maxBarThickness: 20
                     },
@@ -1139,7 +1493,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         tabelaCorpoAdmin.innerHTML = '';
 
         if (lista.length === 0) {
-            tabelaCorpoAdmin.innerHTML = '<tr><td colspan="6" class="celula-vazia-mensagem">Nenhum agendamento neste mês.</td></tr>';
+            tabelaCorpoAdmin.innerHTML = linhaVazia(6, 'Nenhum agendamento neste mês.', 'Importe a planilha ou escolha outro mês.');
             return;
         }
 
@@ -1169,7 +1523,16 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.querySelectorAll('.btn-ver-equipe').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const marca = e.currentTarget.dataset.equipe;
-                if (filtroEquipeAdmin) filtroEquipeAdmin.value = marca;
+                if (filtroEquipeAdmin) {
+                    if (![...filtroEquipeAdmin.options].some(o => o.value === marca)) {
+                        const opt = document.createElement('option');
+                        opt.value = marca;
+                        opt.textContent = marca;
+                        filtroEquipeAdmin.appendChild(opt);
+                    }
+                    filtroEquipeAdmin.value = marca;
+                    if (ddFiltroEquipe) ddFiltroEquipe.sincronizar();
+                }
                 aplicarVisaoRelatorio();
             });
         });
@@ -1218,7 +1581,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         tabelaCorpoAdmin.innerHTML = '';
 
         if (lista.length === 0) {
-            tabelaCorpoAdmin.innerHTML = '<tr><td colspan="7" class="celula-vazia-mensagem">Nenhum agendamento para esta marca.</td></tr>';
+            tabelaCorpoAdmin.innerHTML = linhaVazia(7, 'Nenhum agendamento para esta marca.', 'Escolha outra marca ou outro mês.');
             return;
         }
 
@@ -1296,11 +1659,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (filtroEquipeAdmin) filtroEquipeAdmin.addEventListener('change', aplicarVisaoRelatorio);
     if (filtroMesConsultor) filtroMesConsultor.addEventListener('change', carregarDados);
     if (filtroMarcaConsultor) filtroMarcaConsultor.addEventListener('change', aplicarVisaoRelatorio);
-    if (inputMonitoria) inputMonitoria.addEventListener('input', aplicarVisaoRelatorio);
 
     if (btnVoltarAdmin) {
         btnVoltarAdmin.addEventListener('click', () => {
             if (filtroEquipeAdmin) filtroEquipeAdmin.value = 'todas';
+            if (ddFiltroEquipe) ddFiltroEquipe.sincronizar();
             btnVoltarAdmin.classList.add('oculto');
             btnVoltarAdmin.style.setProperty('display', 'none', 'important');
             aplicarVisaoRelatorio();
@@ -1319,12 +1682,15 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     await sincronizarMetasBanco();
     await carregarOpcoesEquipes();
+    document.getElementById('btn-ver-manuais')?.addEventListener('click', abrirModalLancamentosManuais);
 
     if (parametroEquipe && filtroEquipeAdmin) {
         filtroEquipeAdmin.value = decodeURIComponent(parametroEquipe);
+        if (ddFiltroEquipe) ddFiltroEquipe.sincronizar();
     }
 
     await carregarDados();
+    window.mostrarConteudo();
 
     if (dispararImpressao) {
         setTimeout(() => {

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Bônus - Divergências</title>
+    <link rel="icon" type="image/png" href="imagens/logo-painel.png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+        <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <script src="tema.js?v=20261102u"></script>
+    <script src="avisos.js?v=20261102u"></script>
+    <script src="seletor-mes.js?v=20261102u" defer></script>
+    <link rel="stylesheet" href="style.css?v=20261102u">
+</head>
+<body class="pagina-divergencias">
+    <div class="container">
+        <header class="cabecalho-principal">
+            <div class="logo-area">
+                <h1>Painel de Bônus</h1>
+                <span class="subtitulo-toyota">AutoService</span>
+            </div>
+            <nav class="navegacao-menu">
+                <div class="links-paginas">
+                    <a href="index.html" class="link-nav">Agendamentos</a>
+                    <a href="divergencias.html" id="link-menu-divergencias" class="link-nav ativo">Divergências</a>
+                    <a href="admin.html" id="link-menu-admin" class="link-nav oculto">Gestão</a>
+                    <a href="relatorios.html" class="link-nav">Relatórios & Gráficos</a>
+                </div>
+                <div id="area-autenticacao" class="auth-area"></div>
+            </nav>
+        </header>
+        <script>window.montarMenu();</script>
+
+        <main class="conteudo-carregando">
+            <div class="barra-filtros-graficos oculto" id="abas-gestao">
+                <a href="divergencias.html" class="btn-filtro-grafico ativo">Divergências</a>
+                <a href="admin.html" class="btn-filtro-grafico">Fechamento</a>
+                <a href="admin.html#historico" class="btn-filtro-grafico">Histórico</a>
+                <a href="importar.html" class="btn-filtro-grafico">Importar / Exportar</a>
+                <a href="admin.html#usuarios" class="btn-filtro-grafico">Usuários</a>
+            </div>
+
+            <section class="card-tabela-agendamentos">
+                <div class="tabela-cabecalho-acoes">
+                    <div>
+                        <h2 id="div-titulo">Divergências</h2>
+                        <span class="subtitulo-contador" id="div-contador">0 solicitações</span>
+                    </div>
+                    <div class="admin-acoes">
+                        <input type="text" id="div-busca" class="input-busca-padrao" placeholder="Buscar por placa, O.S ou descrição...">
+                        <select id="div-filtro-status" class="select-filtro-status">
+                            <option value="todas">Todas</option>
+                            <option value="aberta" selected>Abertas</option>
+                            <option value="resolvida">Resolvidas</option>
+                            <option value="recusada">Recusadas</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="tabela-container">
+                    <table class="tabela-admin tabela-divergencias">
+                        <thead>
+                            <tr>
+                                <th>DATA</th>
+                                <th id="div-th-operador">OPERADOR</th>
+                                <th class="col-centro">MÊS</th>
+                                <th>TIPO</th>
+                                <th>PLACA / O.S</th>
+                                <th>DESCRIÇÃO</th>
+                                <th class="col-centro">STATUS</th>
+                                <th>RESPOSTA</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-divergencias"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="dropdown.js?v=20261102u" defer></script>
+    <script src="divergencias.js?v=20261102u" defer></script>
+</body>
+</html>
