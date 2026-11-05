@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const perfisPorId = new Map();
 
     async function carregarPerfis() {
-        const { data, error } = await supabaseClient.from('perfis').select('id, nome, equipe, role').order('nome', { ascending: true });
+        const { data, error } = await supabaseClient.from('perfis').select('*').order('nome', { ascending: true });
         if (error) throw error;
         perfis = (data || []).filter(p => p.id);
         perfisPorId.clear();
@@ -180,8 +180,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         return Bonus.calcularOperador({ id: perfil.id, equipe: perfil.equipe }, estado.agendamentos, obterMeta, nota);
     }
 
+    function mesDoFechamentoAntesDe(inativoDesde) {
+        return estado.mes < String(inativoDesde).slice(0, 7);
+    }
+
     function renderizarFechamento() {
-        const operadores = perfis.filter(p => p.role !== 'admin');
+        const operadores = perfis.filter(p => p.role !== 'admin' && (!p.inativo_desde || mesDoFechamentoAntesDe(p.inativo_desde)));
         const desabilitado = estado.fechado ? 'disabled' : '';
 
         if (operadores.length === 0) {
@@ -399,7 +403,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     function renderizarUsuarios() {
         const termo = buscaUsuarios.value.trim().toLowerCase();
-        const lista = perfis.filter(p => !termo || (p.nome || '').toLowerCase().includes(termo));
+        const lista = perfis.filter(p => !p.inativo_desde && (!termo || (p.nome || '').toLowerCase().includes(termo)));
         document.getElementById('usuarios-contador').textContent = `${lista.length} ${lista.length === 1 ? 'usuário' : 'usuários'}`;
 
         if (lista.length === 0) {
@@ -412,7 +416,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             const ehEu = p.id === usuarioAtual.id;
             return `
                 <tr data-id="${escaparHtml(p.id)}">
-                    <td class="celula-nome-usuario"><input type="text" class="input-valor-facilitada input-nome-usuario" maxlength="80" value="${escaparHtml(r.nome)}" placeholder="Nome">${ehEu ? ' <span class="tag-badge-equipe">Você</span>' : ''}${(r.role !== 'admin' && !r.equipe) ? ' <span class="tag-sem-marcas">Sem marcas</span>' : ''}</td>
+                    <td class="celula-nome-usuario"><input type="text" class="input-valor-facilitada input-nome-usuario" maxlength="80" value="${escaparHtml(r.nome)}" placeholder="Nome">${ehEu ? ' <span class="tag-badge-equipe">Você</span>' : ''}${(r.role !== 'admin' && !r.equipe) ? ' <span class="tag-sem-marcas">Sem marcas</span>' : ''}${p.inativo_desde ? ' <span class="tag-inativo">Inativo</span>' : ''}</td>
                     <td class="col-centro">
                         <button type="button" class="btn-abrir-config-metas btn-editar-marcas">${escaparHtml(r.equipe || 'Definir marcas')}</button>
                     </td>
@@ -422,7 +426,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                             <option value="admin" ${r.role === 'admin' ? 'selected' : ''}>Administrador</option>
                         </select>
                     </td>
-                    <td class="col-centro"><button type="button" class="btn-adicionar-agendamento btn-salvar-usuario">Salvar</button></td>
+                    <td class="col-centro">
+                        <div class="acoes-usuario">
+                            <button type="button" class="btn-adicionar-agendamento btn-salvar-usuario">Salvar</button>
+                            ${ehEu || p.role === 'admin' ? '' : `<button type="button" class="btn-abrir-config-metas btn-alternar-inativo">${p.inativo_desde ? 'Reativar' : 'Inativar'}</button>`}
+                        </div>
+                    </td>
                 </tr>
             `;
         }).join('');
@@ -442,6 +451,29 @@ document.addEventListener('DOMContentLoaded', async function () {
                     tr.querySelector('.btn-editar-marcas').textContent = nova || 'Definir marcas';
                 });
             });
+            const botaoInativo = tr.querySelector('.btn-alternar-inativo');
+            if (botaoInativo) {
+                botaoInativo.addEventListener('click', async () => {
+                    const reativar = !!perfil.inativo_desde;
+                    const hoje = new Date();
+                    const desde = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`;
+                    const texto = reativar
+                        ? `Reativar ${perfil.nome}? Ela volta para o Fechamento, ranking e filtros.`
+                        : `Inativar ${perfil.nome} a partir de ${desde.slice(5, 7)}/${desde.slice(0, 4)}? Os agendamentos continuam contando nas metas, mas ela sai do Fechamento (a partir desse mês), do ranking, dos filtros e da lista de usuários.`;
+                    if (!(await confirmar(texto, { titulo: reativar ? 'Reativar usuário' : 'Inativar usuário', confirmar: reativar ? 'Reativar' : 'Inativar', perigo: !reativar }))) return;
+                    const { data, error } = await supabaseClient.from('perfis')
+                        .update({ inativo_desde: reativar ? null : desde }).eq('id', id).select('id');
+                    if (error || !data || data.length === 0) {
+                        avisar('Não foi possível alterar: ' + (error ? error.message : 'sem permissão.') + (error && /inativo_desde/.test(error.message) ? ' Execute o SQL de inativação no Supabase.' : ''));
+                        return;
+                    }
+                    perfil.inativo_desde = reativar ? null : desde;
+                    window.carregarPerfisInativos(supabaseClient, true);
+                    avisar(reativar ? 'Usuário reativado.' : 'Usuário inativado.', 'sucesso');
+                    renderizarUsuarios();
+                    if (estado.mes) renderizarFechamento();
+                });
+            }
             tr.querySelector('.btn-salvar-usuario').addEventListener('click', async () => {
                 const r = rascunho();
                 const nomeNovo = String(r.nome || '').trim();
@@ -484,20 +516,50 @@ document.addEventListener('DOMContentLoaded', async function () {
         try {
             const { data: lista, error } = await supabaseClient.from('operadores_inativos').select('id, dealer, apelido').order('dealer', { ascending: true });
             if (error) throw error;
-            const linhas = await buscarTodasLinhas(() => supabaseClient.from('agendamentos').select('id, inativo_id, status').not('inativo_id', 'is', null).order('id', { ascending: true }));
+            const linhas = await buscarTodasLinhas(() => supabaseClient.from('agendamentos').select('id, inativo_id, status, data_revisao, marca').not('inativo_id', 'is', null).order('id', { ascending: true }));
             const contagem = new Map();
+            const detalhes = new Map();
             linhas.forEach(l => {
+                if (!detalhes.has(l.inativo_id)) detalhes.set(l.inativo_id, []);
+                detalhes.get(l.inativo_id).push(l);
                 const c = contagem.get(l.inativo_id) || { total: 0, comp: 0 };
                 c.total++;
                 if (l.status === 'compareceu') c.comp++;
                 contagem.set(l.inativo_id, c);
             });
-            document.getElementById('inativos-contador').textContent = `${lista.length} ${lista.length === 1 ? 'cadastrado' : 'cadastrados'}`;
-            if (lista.length === 0) {
-                corpoInativos.innerHTML = linhaVazia(5, 'Nenhum funcionário inativo cadastrado.', 'Cadastre o código do dealer acima para que a importação o reconheça.');
+            const perfisInativos = perfis.filter(p => p.inativo_desde);
+            const contagemPerfis = new Map();
+            if (perfisInativos.length > 0) {
+                const ids = perfisInativos.map(p => p.id);
+                const linhasPerfis = await buscarTodasLinhas(() => supabaseClient.from('agendamentos').select('id, user_id, status, data_revisao, marca').in('user_id', ids).order('id', { ascending: true }));
+                linhasPerfis.forEach(l => {
+                    if (!detalhes.has(l.user_id)) detalhes.set(l.user_id, []);
+                    detalhes.get(l.user_id).push(l);
+                    const c = contagemPerfis.get(l.user_id) || { total: 0, comp: 0 };
+                    c.total++;
+                    if (l.status === 'compareceu') c.comp++;
+                    contagemPerfis.set(l.user_id, c);
+                });
+            }
+            const totalInativos = lista.length + perfisInativos.length;
+            document.getElementById('inativos-contador').textContent = `${totalInativos} ${totalInativos === 1 ? 'inativo' : 'inativos'}`;
+            if (totalInativos === 0) {
+                corpoInativos.innerHTML = linhaVazia(5, 'Nenhum inativo cadastrado.', 'Inative um usuário na aba Usuários ou cadastre o código do dealer acima.');
                 return;
             }
-            corpoInativos.innerHTML = lista.map(i => {
+            const linhasPerfilHtml = perfisInativos.map(p => {
+                const c = contagemPerfis.get(p.id) || { total: 0, comp: 0 };
+                const desde = String(p.inativo_desde).slice(0, 7).split('-').reverse().join('/');
+                return `
+                    <tr data-perfil="${escaparHtml(p.id)}">
+                        <td><strong>${escaparHtml(p.nome || 'Sem nome')}</strong> <span class="tag-inativo">Inativo</span></td>
+                        <td>Usuário inativado desde ${escaparHtml(desde)}</td>
+                        <td class="col-centro">${c.total}</td>
+                        <td class="col-centro">${c.comp}</td>
+                        <td class="col-centro"><div class="acoes-usuario"><button type="button" class="btn-abrir-config-metas btn-detalhes-inativo">Ver detalhes</button><button type="button" class="btn-abrir-config-metas btn-reativar-perfil">Reativar</button></div></td>
+                    </tr>`;
+            }).join('');
+            corpoInativos.innerHTML = linhasPerfilHtml + lista.map(i => {
                 const c = contagem.get(i.id) || { total: 0, comp: 0 };
                 return `
                     <tr data-id="${escaparHtml(i.id)}">
@@ -506,11 +568,37 @@ document.addEventListener('DOMContentLoaded', async function () {
                         <td class="col-centro">${c.total}</td>
                         <td class="col-centro">${c.comp}</td>
                         <td class="col-centro">
-                            <button type="button" class="btn-abrir-config-metas btn-salvar-inativo">Salvar</button>
-                            <button type="button" class="btn-abrir-config-metas btn-remover-inativo">Remover</button>
+                            <div class="acoes-usuario">
+                                <button type="button" class="btn-abrir-config-metas btn-detalhes-inativo">Ver detalhes</button>
+                                <button type="button" class="btn-abrir-config-metas btn-salvar-inativo">Salvar</button>
+                                <button type="button" class="btn-abrir-config-metas btn-remover-inativo">Remover</button>
+                            </div>
                         </td>
                     </tr>`;
             }).join('');
+            corpoInativos.querySelectorAll('tr[data-perfil], tr[data-id]').forEach(tr => {
+                const chave = tr.dataset.perfil || tr.dataset.id;
+                tr.querySelector('.btn-detalhes-inativo').addEventListener('click', () => {
+                    abrirDetalhesInativo(tr.querySelector('strong').textContent, detalhes.get(chave) || []);
+                });
+            });
+            corpoInativos.querySelectorAll('tr[data-perfil]').forEach(tr => {
+                tr.querySelector('.btn-reativar-perfil').addEventListener('click', async () => {
+                    const perfil = perfisPorId.get(tr.dataset.perfil);
+                    if (!(await confirmar(`Reativar ${perfil.nome}? Ela volta para o Fechamento, ranking e filtros.`, { titulo: 'Reativar usuário', confirmar: 'Reativar' }))) return;
+                    const { data, error: erro } = await supabaseClient.from('perfis').update({ inativo_desde: null }).eq('id', perfil.id).select('id');
+                    if (erro || !data || data.length === 0) {
+                        avisar('Não foi possível reativar: ' + (erro ? erro.message : 'sem permissão.'));
+                        return;
+                    }
+                    perfil.inativo_desde = null;
+                    window.carregarPerfisInativos(supabaseClient, true);
+                    avisar('Usuário reativado.', 'sucesso');
+                    renderizarUsuarios();
+                    if (estado.mes) renderizarFechamento();
+                    carregarInativosAdmin();
+                });
+            });
             corpoInativos.querySelectorAll('tr[data-id]').forEach(tr => {
                 const id = tr.dataset.id;
                 tr.querySelector('.btn-salvar-inativo').addEventListener('click', async () => {
@@ -564,6 +652,86 @@ document.addEventListener('DOMContentLoaded', async function () {
         window.carregarInativos(supabaseClient, true);
         carregarInativosAdmin();
     });
+
+    function abrirDetalhesInativo(titulo, linhas) {
+        let overlay = document.getElementById('modalDetalhesInativo');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'modalDetalhesInativo';
+            overlay.className = 'modal-overlay';
+            overlay.addEventListener('click', e => { if (e.target === overlay) overlay.style.display = 'none'; });
+            document.body.appendChild(overlay);
+        }
+        const hoje = new Date();
+        const mesAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+        const meses = new Map();
+        linhas.forEach(l => {
+            const mes = (l.data_revisao || '').slice(0, 7) || 'sem-data';
+            if (!meses.has(mes)) meses.set(mes, { total: 0, comp: 0, falt: 0, pend: 0, marcas: new Map() });
+            const m = meses.get(mes);
+            m.total++;
+            if (l.status === 'compareceu') m.comp++;
+            else if (l.status === 'faltou') m.falt++;
+            else m.pend++;
+            const marca = l.marca || 'Sem marca';
+            m.marcas.set(marca, (m.marcas.get(marca) || 0) + 1);
+        });
+        const rotuloMes = mes => mes === 'sem-data' ? 'Sem data' : mes.split('-').reverse().join('/');
+        const ordenados = [...meses.entries()].sort((x, y) => x[0].localeCompare(y[0]));
+        const soma = { total: 0, comp: 0, falt: 0, pend: 0 };
+        ordenados.forEach(([, m]) => { soma.total += m.total; soma.comp += m.comp; soma.falt += m.falt; soma.pend += m.pend; });
+        const corpo = ordenados.length === 0
+            ? linhaVazia(6, 'Nenhum agendamento vinculado.', 'Importe a planilha para incluir os agendamentos deste inativo.')
+            : ordenados.map(([mes, m]) => `
+                <tr>
+                    <td><strong>${escaparHtml(rotuloMes(mes))}</strong>${mes > mesAtual ? ' <span class="tag-inativo">Futuro</span>' : ''}</td>
+                    <td class="col-centro">${m.total}</td>
+                    <td class="col-centro">${m.comp}</td>
+                    <td class="col-centro">${m.falt}</td>
+                    <td class="col-centro">${m.pend}</td>
+                    <td>${[...m.marcas.entries()].map(([marca, n]) => `${escaparHtml(marca)} ${n}`).join(' · ')}</td>
+                </tr>`).join('') + `
+                <tr>
+                    <td><strong>Total</strong></td>
+                    <td class="col-centro"><strong>${soma.total}</strong></td>
+                    <td class="col-centro"><strong>${soma.comp}</strong></td>
+                    <td class="col-centro"><strong>${soma.falt}</strong></td>
+                    <td class="col-centro"><strong>${soma.pend}</strong></td>
+                    <td></td>
+                </tr>`;
+        overlay.innerHTML = `
+            <div class="modal-card-metas modal-card-inativo">
+                <div class="modal-topo-metas">
+                    <h3>Detalhes de ${escaparHtml(titulo)}</h3>
+                    <button type="button" id="btnDetInativoFechar" class="btn-fechar-modal-metas">&times;</button>
+                </div>
+                <div class="modal-corpo-metas">
+                    <p class="lista-inativos-aviso">Agendamentos por mês de revisão. A coluna Pendentes mostra o que ainda deve entrar na meta.</p>
+                    <div class="tabela-container">
+                        <table class="tabela-admin">
+                            <thead>
+                                <tr>
+                                    <th>MÊS</th>
+                                    <th class="col-centro">AGENDAMENTOS</th>
+                                    <th class="col-centro">COMPARECERAM</th>
+                                    <th class="col-centro">NO-SHOW</th>
+                                    <th class="col-centro">PENDENTES</th>
+                                    <th>MARCAS</th>
+                                </tr>
+                            </thead>
+                            <tbody>${corpo}</tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-rodape-metas">
+                    <button type="button" id="btnDetInativoOk" class="btn-cancelar-modal">Fechar</button>
+                </div>
+            </div>`;
+        const fechar = () => { overlay.style.display = 'none'; };
+        overlay.querySelector('#btnDetInativoFechar').addEventListener('click', fechar);
+        overlay.querySelector('#btnDetInativoOk').addEventListener('click', fechar);
+        overlay.style.display = 'flex';
+    }
 
     function abrirModalMarcas(equipeAtual, aoConfirmar) {
         let overlay = document.getElementById('modalMarcas');

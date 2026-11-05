@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Bônus - Almoço</title>
+    <link rel="icon" type="image/png" href="imagens/logo-painel.png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+        <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <script src="tema.js?v=20261102u"></script>
+    <script src="avisos.js?v=20261102u"></script>
+    <script src="seletor-mes.js?v=20261102u" defer></script>
+    <link rel="stylesheet" href="style.css?v=20261102u">
+</head>
+<body class="pagina-almoco">
+    <div class="container">
+        <header class="cabecalho-principal">
+            <div class="logo-area">
+                <h1>Painel de Bônus</h1>
+                <span class="subtitulo-toyota">AutoService</span>
+            </div>
+            <nav class="navegacao-menu">
+                <div class="links-paginas">
+                    <a href="index.html" class="link-nav">Agendamentos</a>
+                    <a href="almoco.html" id="link-menu-almoco" class="link-nav ativo oculto">Almoço</a>
+                    <a href="divergencias.html" id="link-menu-divergencias" class="link-nav">Divergências</a>
+                    <a href="admin.html" id="link-menu-admin" class="link-nav oculto">Gestão</a>
+                    <a href="relatorios.html" class="link-nav">Relatórios & Gráficos</a>
+                </div>
+                <div id="area-autenticacao" class="auth-area"></div>
+            </nav>
+        </header>
+        <script>window.montarMenu();</script>
+
+        <main class="conteudo-carregando">
+            <section class="card-tabela-agendamentos">
+                <div class="tabela-cabecalho-acoes">
+                    <div>
+                        <h2>Almoço Toyota</h2>
+                        <span class="subtitulo-contador" id="almoco-contador">0 eventos</span>
+                    </div>
+                    <div class="admin-acoes oculto" id="almoco-filtros-admin">
+                        <input type="date" id="almoco-data" class="input-busca-padrao">
+                        <select id="almoco-filtro-status" class="select-filtro-status">
+                            <option value="todos">Todos os status</option>
+                            <option value="pendente">Pendente</option>
+                            <option value="finalizado">Finalizado</option>
+                            <option value="nao_finalizado">Não finalizado</option>
+                        </select>
+                    </div>
+                </div>
+                <p class="lista-inativos-aviso" id="almoco-aviso">Antes de sair para o almoço, registre o número do evento e a O.S (se houver). Quem for cobrir assume o evento escolhendo o próprio nome em Responsável.</p>
+                <form class="form-inativo" id="almoco-form" autocomplete="off">
+                    <input type="text" id="almoco-evento" class="input-busca-padrao" placeholder="Número do evento" maxlength="40" required>
+                    <input type="text" id="almoco-os" class="input-busca-padrao" placeholder="O.S (opcional)" maxlength="40">
+                    <button type="submit" class="btn-adicionar-agendamento">+ Registrar evento</button>
+                </form>
+                <div class="tabela-container">
+                    <table class="tabela-admin tabela-almoco">
+                        <thead>
+                            <tr>
+                                <th class="col-almoco-data oculto">DATA</th>
+                                <th>EVENTO</th>
+                                <th>O.S</th>
+                                <th>DEIXADO POR</th>
+                                <th>RESPONSÁVEL</th>
+                                <th class="col-centro">STATUS</th>
+                                <th class="col-centro">AÇÃO</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-almoco"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="dropdown.js?v=20261102u" defer></script>
+    <script src="almoco.js?v=20261102u" defer></script>
+</body>
+</html>

@@ -29,7 +29,7 @@ function transformarEmDropdown(select, classeExtra) {
         label.textContent = selecionada ? selecionada.textContent : '';
         trigger.classList.toggle('vazio', !select.value);
         if (container.classList.contains('dd-pilula')) {
-            ['pendente', 'compareceu', 'faltou'].forEach(s => trigger.classList.toggle('status-' + s, select.value === s));
+            ['pendente', 'compareceu', 'faltou', 'finalizado', 'nao_finalizado'].forEach(s => trigger.classList.toggle('status-' + s, select.value === s));
         }
 
         const criarItem = (opt) => {

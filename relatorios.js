@@ -1150,7 +1150,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const operadores = {};
 
-        agendamentos.forEach(item => {
+        agendamentos.filter(item => !item.inativo).forEach(item => {
             const id = item.user_id || (item.inativo_id ? 'inativo:' + item.inativo_id : (item.autor_nome || 'desconhecido'));
             if (!operadores[id]) {
                 operadores[id] = {

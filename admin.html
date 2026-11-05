@@ -24,6 +24,7 @@
             <nav class="navegacao-menu">
                 <div class="links-paginas">
                     <a href="index.html" class="link-nav">Agendamentos</a>
+                    <a href="almoco.html" id="link-menu-almoco" class="link-nav oculto">Almoço</a>
                     <a href="divergencias.html" id="link-menu-divergencias" class="link-nav">Divergências</a>
                     <a href="admin.html" id="link-menu-admin" class="link-nav ativo oculto">Gestão</a>
                     <a href="relatorios.html" class="link-nav">Relatórios & Gráficos</a>
@@ -112,11 +113,11 @@
             <section id="secao-inativos" class="card-tabela-agendamentos oculto">
                 <div class="tabela-cabecalho-acoes">
                     <div>
-                        <h2>Funcionários inativos</h2>
-                        <span class="subtitulo-contador" id="inativos-contador">0 cadastrados</span>
+                        <h2>Inativos</h2>
+                        <span class="subtitulo-contador" id="inativos-contador">0 inativos</span>
                     </div>
                 </div>
-                <p class="lista-inativos-aviso">Cadastre o código do dealer de quem saiu da equipe. Na importação, os agendamentos desse código entram na meta total e na meta da marca, sem vínculo com um perfil e sem bônus.</p>
+                <p class="lista-inativos-aviso">Aqui ficam os usuários inativados e os códigos de dealer de quem saiu da equipe. Os agendamentos de todos continuam contando na meta total e na meta da marca, sem bônus. Para inativar um usuário com login, use o botão Inativar na aba Usuários. Para cadastrar um código sem login, preencha abaixo; na importação, os agendamentos desse código entram na meta total e na meta da marca, sem vínculo com um perfil e sem bônus.</p>
                 <div class="form-inativo">
                     <input type="text" id="inativo-dealer" class="input-busca-padrao" placeholder="Código do dealer (ex.: ANAXYZ)" maxlength="60">
                     <input type="text" id="inativo-apelido" class="input-busca-padrao" placeholder="Apelido (opcional)" maxlength="60">
@@ -126,8 +127,8 @@
                     <table class="tabela-admin">
                         <thead>
                             <tr>
-                                <th>CÓDIGO DO DEALER</th>
-                                <th>APELIDO</th>
+                                <th>NOME / CÓDIGO DO DEALER</th>
+                                <th>APELIDO / SITUAÇÃO</th>
                                 <th class="col-centro">AGENDAMENTOS</th>
                                 <th class="col-centro">COMPARECIDOS</th>
                                 <th class="col-centro">AÇÃO</th>

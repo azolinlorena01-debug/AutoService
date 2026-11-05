@@ -252,10 +252,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (operadoresCadastrados !== null) return operadoresCadastrados;
         operadoresCadastrados = [];
         try {
-            const { data: perfisTodos } = await supabaseClient.from('perfis').select('id, nome, equipe');
+            const { data: perfisTodos } = await supabaseClient.from('perfis').select('*');
             (perfisTodos || []).forEach(p => {
                 if (p.id && p.nome && p.nome.trim()) {
-                    operadoresCadastrados.push([p.id, p.nome.trim()]);
+                    if (!p.inativo_desde) operadoresCadastrados.push([p.id, p.nome.trim()]);
                     perfisPorId.set(p.id, p);
                 }
             });
@@ -287,11 +287,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         const anterior = filtroOperador.value;
         const operadores = new Map(operadoresCadastrados);
         todosAgendamentosMes.forEach(item => {
-            if (item.user_id && !operadores.has(item.user_id)) {
+            if (item.user_id && !item.inativo && !operadores.has(item.user_id)) {
                 operadores.set(item.user_id, (item.autor_nome || 'Operador').trim());
-            } else if (!item.user_id && item.inativo_id) {
-                const chave = 'inativo:' + item.inativo_id;
-                if (!operadores.has(chave)) operadores.set(chave, `${(item.autor_nome || 'Inativo').trim()} (inativo)`);
             }
         });
 

@@ -139,13 +139,54 @@
         marca.textContent = quantidade > 99 ? '99+' : String(quantidade);
     }
 
+    const CHAVE_ALMOCO = 'almoco-painel';
+    let canalAlmocoMenu = null;
+
+    function hojeLocal() {
+        return new Date().toLocaleDateString('sv-SE');
+    }
+
+    async function atualizarBadgeAlmoco(client) {
+        const link = document.getElementById('link-menu-almoco');
+        if (!link) return false;
+        try {
+            const { count, error } = await client.from('almoco_itens').select('id', { count: 'exact', head: true })
+                .eq('data', hojeLocal()).is('responsavel_id', null).eq('status', 'pendente');
+            if (error) throw error;
+            link.classList.remove('oculto');
+            try { localStorage.setItem(CHAVE_ALMOCO, '1'); } catch (e) {}
+            definirContador(link, count || 0);
+            return true;
+        } catch (e) {
+            link.classList.add('oculto');
+            try { localStorage.removeItem(CHAVE_ALMOCO); } catch (err) {}
+            return false;
+        }
+    }
+
+    async function iniciarAbaAlmoco(client, permitido) {
+        const link = document.getElementById('link-menu-almoco');
+        if (!link) return;
+        if (!permitido) {
+            link.classList.add('oculto');
+            try { localStorage.removeItem(CHAVE_ALMOCO); } catch (e) {}
+            return;
+        }
+        const ok = await atualizarBadgeAlmoco(client);
+        if (!ok || canalAlmocoMenu) return;
+        canalAlmocoMenu = client.channel('almoco-menu')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'almoco_itens' }, () => atualizarBadgeAlmoco(client))
+            .subscribe();
+    }
+
     async function atualizarContadorDivergencias(client, opcoes) {
         try {
             const { data: { session } } = await client.auth.getSession();
             if (!session || !session.user) return;
             const id = session.user.id;
-            const { data: perfil } = await client.from('perfis').select('role').eq('id', id).maybeSingle();
+            const { data: perfil } = await client.from('perfis').select('role, equipe').eq('id', id).maybeSingle();
             const admin = !!perfil && perfil.role === 'admin';
+            iniciarAbaAlmoco(client, admin || /toyota/i.test((perfil && perfil.equipe) || ''));
             const { data, error } = await client.from('divergencias').select('status, resolvido_em');
             if (error || !Array.isArray(data)) return;
             const chave = `divergenciasVistas_${id}`;
@@ -167,6 +208,7 @@
     }
 
     let cacheInativos = null;
+    let cachePerfisInativos = null;
 
     async function carregarInativos(client, forcar) {
         if (cacheInativos && !forcar) return cacheInativos;
@@ -179,11 +221,25 @@
         return mapa;
     }
 
+    async function carregarPerfisInativos(client, forcar) {
+        if (cachePerfisInativos && !forcar) return cachePerfisInativos;
+        const mapa = new Map();
+        try {
+            const { data } = await client.from('perfis').select('*');
+            (data || []).forEach(p => { if (p.inativo_desde) mapa.set(p.id, p.inativo_desde); });
+        } catch (e) {}
+        cachePerfisInativos = mapa;
+        return mapa;
+    }
+
     async function aplicarInativos(client, linhas) {
-        if (!linhas.some(l => !l.user_id && l.inativo_id)) return linhas;
-        const mapa = await carregarInativos(client);
+        const perfisInativos = await carregarPerfisInativos(client);
+        const temSemPerfil = linhas.some(l => !l.user_id && l.inativo_id);
+        const mapa = temSemPerfil ? await carregarInativos(client) : null;
         linhas.forEach(l => {
-            if (!l.user_id && l.inativo_id) {
+            if (l.user_id && perfisInativos.has(l.user_id)) {
+                l.inativo = true;
+            } else if (!l.user_id && l.inativo_id) {
                 const i = mapa.get(l.inativo_id);
                 l.inativo = true;
                 l.autor_nome = i ? i.nome : 'Inativo';
@@ -192,12 +248,14 @@
         return linhas;
     }
 
+    window.carregarPerfisInativos = carregarPerfisInativos;
     window.carregarInativos = carregarInativos;
     window.aplicarInativos = aplicarInativos;
     window.definirSeloFechado = definirSeloFechado;
     window.atualizarSeloFechado = atualizarSeloFechado;
     window.pintarBarraMeta = pintarBarraMeta;
     window.atualizarContadorDivergencias = atualizarContadorDivergencias;
+    window.atualizarBadgeAlmoco = atualizarBadgeAlmoco;
     window.linhaCarregando = linhaCarregando;
     window.linhaVazia = linhaVazia;
     window.avisar = avisar;

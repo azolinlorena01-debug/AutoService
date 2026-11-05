@@ -40,6 +40,7 @@
     window.limparMenuCache = function () {
         try {
             localStorage.removeItem(CHAVE_MENU);
+            localStorage.removeItem('almoco-painel');
         } catch (e) {}
     };
 
@@ -89,6 +90,12 @@
         const menu = lerMenu();
         const area = document.getElementById('area-autenticacao');
         if (menu && area && !area.innerHTML.trim()) area.innerHTML = menu.html;
+        try {
+            if (localStorage.getItem('almoco-painel') === '1') {
+                const almoco = document.getElementById('link-menu-almoco');
+                if (almoco) almoco.classList.remove('oculto');
+            }
+        } catch (e) {}
         if (menu && menu.admin) {
             window.mostrarLinksAdmin();
         }
