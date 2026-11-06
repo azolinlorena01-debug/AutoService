@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     function cartaoNumero(titulo, valor, sub, classe) {
-        return `<div class="dash-card"><span class="dash-card-titulo">${titulo}</span><span class="dash-valor ${classe || ''}">${valor}</span><span class="dash-sub">${sub}</span></div>`;
+        return `<div class="dash-card"><span class="dash-card-titulo">${titulo}</span><span class="dash-valor ${classe || ''}">${valor}</span><span class="dash-sub">${sub || ''}</span></div>`;
     }
 
     function cartaoMeta(titulo, qtd, meta, rodape) {
@@ -214,10 +214,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 <div class="dash-card">
                     <span class="dash-card-titulo">Previsão do bônus</span>
                     <span class="dash-valor">${moeda(atual.total)}</span>
-                    <span class="dash-sub">Individual ${moeda(atual.individual)} + equipe ${moeda(atual.equipe)} (${fatorTexto}).</span>
                     <span class="dash-sub">Se os pendentes comparecerem: <strong>${moeda(potencial.total)}</strong></span>
                 </div>
-                ${cartaoNumero('Posição no ranking', `${posicao}º`, `de ${operadores.size} operador(es) nas suas marcas, por comparecimentos`)}
+                ${cartaoNumero('Posição no ranking', `${posicao}º`)}
                 <a class="dash-card" href="divergencias.html">
                     <span class="dash-card-titulo">Divergências</span>
                     <span class="dash-valor ${abertas ? 'alerta' : ''}">${abertas}</span>
@@ -376,8 +375,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             </div>
             <div class="dash-secao-titulo">Pendências e fechamento</div>
             <div class="dash-grade">
-                <a class="dash-card" href="divergencias.html"><span class="dash-card-titulo">Divergências abertas</span><span class="dash-valor ${totalDivAbertas ? 'alerta' : 'sucesso'}">${totalDivAbertas || 0}</span><span class="dash-sub">Aguardando resposta da gestão</span></a>
-                <a class="dash-card" href="admin.html#fechamento"><span class="dash-card-titulo">Fechamento do mês</span><span class="dash-valor">${comPago} / ${operadoresFech.length}</span><span class="dash-sub">com valor pago lançado · ${comNota} com monitoria · mês ${mesFechado ? 'fechado' : 'aberto'}</span></a>
+                <a class="dash-card" href="divergencias.html"><span class="dash-card-titulo">Divergências abertas</span><span class="dash-valor ${totalDivAbertas ? 'alerta' : 'sucesso'}">${totalDivAbertas || 0}</span><span class="dash-sub">Aguardando resposta</span></a>
+                <a class="dash-card" href="admin.html#fechamento"><span class="dash-card-titulo">Fechamento do mês</span><span class="dash-valor">${comPago} / ${operadoresFech.length}</span></a>
                 <a class="dash-card" href="admin.html#inativos"><span class="dash-card-titulo">Agendamentos de inativos</span><span class="dash-valor">${agsInativos.length}</span><span class="dash-sub">${compInativos} comparecido(s) · ${pendInativos} pendente(s)${resumoInativos ? ' · ' + escaparHtml(resumoInativos) : ''}</span></a>
                 ${almocoSemResponsavel === null ? '' : `<a class="dash-card" href="almoco.html"><span class="dash-card-titulo">Almoço Toyota hoje</span><span class="dash-valor ${almocoSemResponsavel ? 'alerta' : 'sucesso'}">${almocoSemResponsavel}</span><span class="dash-sub">${almocoSemResponsavel ? 'evento(s) sem responsável' : 'Nenhum evento sem responsável'}</span></a>`}
             </div>

@@ -3047,8 +3047,12 @@ html body .tabela-admin .input-valor-facilitada.input-curto {
     width: 100px;
 }
 
-html body .tabela-divergencias td {
+html body .tabela-admin.tabela-divergencias td {
     vertical-align: top;
+}
+
+html body .tabela-admin.tabela-divergencias td:not(.celula-resposta) {
+    padding-top: 23px;
 }
 
 html body .tabela-divergencias .celula-descricao {
@@ -3075,6 +3079,7 @@ html body .tabela-divergencias .input-resposta {
 
 html body .acoes-divergencia {
     display: flex;
+    justify-content: flex-end;
     gap: 8px;
     margin-top: 8px;
 }
