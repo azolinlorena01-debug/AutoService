@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Bônus - Início</title>
+    <link rel="icon" type="image/png" href="imagens/logo-painel.png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+        <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <script src="tema.js?v=20261102u"></script>
+    <script src="avisos.js?v=20261102u"></script>
+    <script src="seletor-mes.js?v=20261102u" defer></script>
+    <link rel="stylesheet" href="style.css?v=20261102u">
+</head>
+<body class="pagina-inicio">
+    <div class="container">
+        <header class="cabecalho-principal">
+            <div class="logo-area">
+                <h1>Painel de Bônus</h1>
+                <span class="subtitulo-toyota">AutoService</span>
+            </div>
+            <nav class="navegacao-menu">
+                <div class="links-paginas">
+                    <a href="index.html" class="link-nav">Agendamentos</a>
+                    <a href="almoco.html" id="link-menu-almoco" class="link-nav oculto">Almoço</a>
+                    <a href="divergencias.html" id="link-menu-divergencias" class="link-nav">Divergências</a>
+                    <a href="admin.html" id="link-menu-admin" class="link-nav oculto">Gestão</a>
+                    <a href="relatorios.html" class="link-nav">Relatórios & Gráficos</a>
+                </div>
+                <div id="area-autenticacao" class="auth-area"></div>
+            </nav>
+        </header>
+        <script>window.montarMenu();</script>
+
+        <main class="conteudo-carregando" id="inicio-conteudo"></main>
+    </div>
+
+    <script src="dropdown.js?v=20261102u" defer></script>
+    <script src="bonus.js?v=20261102u" defer></script>
+    <script src="inicio.js?v=20261102u" defer></script>
+</body>
+</html>

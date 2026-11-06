@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     if (!isAdmin && !/toyota/i.test(equipeUsuario)) {
-        window.location.href = 'index.html';
+        window.location.href = 'inicio.html';
         return;
     }
 

@@ -1268,11 +1268,11 @@ table td:nth-child(8) {
     transition: width 0.4s ease;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .oculto {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .oculto {
     display: none !important;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .card .input-mes-card {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .card .input-mes-card {
     width: 100%;
     height: 38px;
     padding: 0 10px;
@@ -1288,12 +1288,12 @@ table td:nth-child(8) {
     margin-top: 6px;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .card .input-mes-card:focus {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .card .input-mes-card:focus {
     border-color: #2563eb;
     background-color: #ffffff;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .select-marca-embutido {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .select-marca-embutido {
     width: 100%;
     height: 34px;
     padding: 0 8px;
@@ -1308,7 +1308,7 @@ table td:nth-child(8) {
     box-sizing: border-box;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .grupo-input-monitoria {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .grupo-input-monitoria {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -1316,7 +1316,7 @@ table td:nth-child(8) {
     flex-wrap: wrap;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .grupo-input-monitoria input[type="number"] {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .grupo-input-monitoria input[type="number"] {
     width: 65px;
     height: 36px;
     padding: 0 6px;
@@ -1332,25 +1332,25 @@ table td:nth-child(8) {
     transition: all 0.2s ease;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .grupo-input-monitoria input[type="number"]:disabled {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .grupo-input-monitoria input[type="number"]:disabled {
     background-color: #e2e8f0;
     color: #475569;
     cursor: not-allowed;
     border-color: #cbd5e1;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .grupo-input-monitoria input[type="number"]:focus:not(:disabled) {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .grupo-input-monitoria input[type="number"]:focus:not(:disabled) {
     border-color: #2563eb;
     background-color: #ffffff;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .grupo-input-monitoria .sufixo-porcentagem {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .grupo-input-monitoria .sufixo-porcentagem {
     font-weight: 700;
     color: #475569;
     font-size: 14px;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-acao-monitoria {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-acao-monitoria {
     background: #2563eb;
     color: #ffffff;
     border: none;
@@ -1363,22 +1363,22 @@ table td:nth-child(8) {
     transition: background 0.2s ease;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-acao-monitoria:hover {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-acao-monitoria:hover {
     background: #1d4ed8;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-acao-monitoria.btn-modo-editar {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-acao-monitoria.btn-modo-editar {
     background: #ffffff;
     color: #475569;
     border: 1px solid #cbd5e1;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-acao-monitoria.btn-modo-editar:hover {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-acao-monitoria.btn-modo-editar:hover {
     background: #f1f5f9;
     color: #0f172a;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .badge-ajuste-monitoria {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .badge-ajuste-monitoria {
     background-color: #dcfce7;
     color: #15803d;
     font-size: 11px;
@@ -1388,7 +1388,7 @@ table td:nth-child(8) {
     white-space: nowrap;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .badge-ajuste-monitoria-reducao {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .badge-ajuste-monitoria-reducao {
     background-color: #fee2e2;
     color: #b91c1c;
     font-size: 11px;
@@ -1398,7 +1398,7 @@ table td:nth-child(8) {
     white-space: nowrap;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .card-meta-equipe {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .card-meta-equipe {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
@@ -1408,7 +1408,7 @@ table td:nth-child(8) {
     box-sizing: border-box;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .meta-equipe-cabecalho {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .meta-equipe-cabecalho {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1417,21 +1417,21 @@ table td:nth-child(8) {
     gap: 10px;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .meta-equipe-cabecalho h3 {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .meta-equipe-cabecalho h3 {
     margin: 4px 0 0 0;
     font-size: 18px;
     font-weight: 700;
     color: #1e293b;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .area-badges-meta {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .area-badges-meta {
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .meta-badge-restante {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .meta-badge-restante {
     background-color: #eff6ff;
     color: #2563eb;
     font-size: 12px;
@@ -1441,7 +1441,7 @@ table td:nth-child(8) {
     border: 1px solid #bfdbfe;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .meta-badge-sucesso {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .meta-badge-sucesso {
     background-color: #dcfce7;
     color: #166534;
     font-size: 12px;
@@ -1451,7 +1451,7 @@ table td:nth-child(8) {
     border: 1px solid #bbf7d0;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .meta-badge-bonus-equipe {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .meta-badge-bonus-equipe {
     background-color: #dcfce7;
     color: #15803d;
     font-size: 12px;
@@ -1461,13 +1461,13 @@ table td:nth-child(8) {
     border: 1px solid #86efac;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .meta-badge-bonus-equipe.bloqueado {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .meta-badge-bonus-equipe.bloqueado {
     background-color: #f1f5f9;
     color: #64748b;
     border: 1px solid #cbd5e1;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .barra-progresso-container {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .barra-progresso-container {
     width: 100%;
     height: 10px;
     background-color: #e2e8f0;
@@ -1475,14 +1475,14 @@ table td:nth-child(8) {
     overflow: hidden;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .barra-progresso-preenchimento {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .barra-progresso-preenchimento {
     height: 100%;
     background-color: #2563eb;
     border-radius: 5px;
     transition: width 0.4s ease;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .barra-filtros-graficos {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .barra-filtros-graficos {
     display: flex;
     gap: 10px;
     margin: 20px 0;
@@ -1490,7 +1490,7 @@ table td:nth-child(8) {
     flex-wrap: wrap;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-filtro-grafico {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-filtro-grafico {
     background: #ffffff;
     border: 1px solid #cbd5e1;
     color: #475569;
@@ -1502,20 +1502,20 @@ table td:nth-child(8) {
     transition: all 0.2s ease;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-filtro-grafico:hover {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-filtro-grafico:hover {
     background: #f8fafc;
     border-color: #94a3b8;
     color: #1e293b;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-filtro-grafico.ativo {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-filtro-grafico.ativo {
     background: #2563eb;
     color: #ffffff;
     border-color: #2563eb;
     box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-abrir-config-metas {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-abrir-config-metas {
     background: #ffffff;
     border: 1px solid #cbd5e1;
     color: #1e293b;
@@ -1532,12 +1532,12 @@ table td:nth-child(8) {
     margin-top: 18px;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-abrir-config-metas:hover {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-abrir-config-metas:hover {
     background: #f1f5f9;
     border-color: #94a3b8;
 }
 
-:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco) .modal-overlay {
+:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio) .modal-overlay {
     display: none;
     position: fixed;
     top: 0;
@@ -1553,7 +1553,7 @@ table td:nth-child(8) {
     box-sizing: border-box;
 }
 
-:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .modal-card-metas {
+:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .modal-card-metas {
     background: #ffffff;
     color: #1e293b;
     border-radius: 12px;
@@ -1566,7 +1566,7 @@ table td:nth-child(8) {
     position: relative;
 }
 
-:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .modal-topo-metas {
+:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .modal-topo-metas {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1574,21 +1574,21 @@ table td:nth-child(8) {
     border-bottom: 1px solid #f1f5f9;
 }
 
-:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .modal-topo-metas h3 {
+:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .modal-topo-metas h3 {
     font-size: 16px;
     font-weight: 700;
     margin: 0;
     color: #0f172a;
 }
 
-:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .modal-corpo-metas {
+:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .modal-corpo-metas {
     padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 14px;
 }
 
-:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco) .modal-campo-label {
+:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio) .modal-campo-label {
     font-size: 11px;
     font-weight: 700;
     color: #64748b;
@@ -1598,7 +1598,7 @@ table td:nth-child(8) {
     display: block;
 }
 
-:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco) .modal-input-metas {
+:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio) .modal-input-metas {
     width: 100%;
     height: 40px;
     padding: 0 12px;
@@ -1612,17 +1612,17 @@ table td:nth-child(8) {
     transition: border-color 0.2s;
 }
 
-:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco) .modal-input-metas:focus {
+:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio) .modal-input-metas:focus {
     border-color: #2563eb;
     background: #ffffff;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-container {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-container {
     position: relative;
     width: 100%;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-trigger {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-trigger {
     width: 100%;
     height: 40px;
     padding: 0 12px;
@@ -1640,28 +1640,28 @@ table td:nth-child(8) {
     transition: all 0.2s ease;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-trigger:hover {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-trigger:hover {
     border-color: #94a3b8;
     background: #ffffff;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-trigger.aberto {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-trigger.aberto {
     border-color: #2563eb;
     background: #ffffff;
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-arrow {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-arrow {
     font-size: 11px;
     color: #64748b;
     transition: transform 0.2s ease;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-trigger.aberto .custom-dropdown-arrow {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-trigger.aberto .custom-dropdown-arrow {
     transform: rotate(180deg);
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-menu {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-menu {
     display: none;
     position: absolute;
     top: calc(100% + 4px);
@@ -1678,11 +1678,11 @@ table td:nth-child(8) {
     padding: 4px 0;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-menu.visivel {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-menu.visivel {
     display: block;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-group-title {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-group-title {
     padding: 6px 12px 2px 12px;
     font-size: 10.5px;
     font-weight: 700;
@@ -1692,7 +1692,7 @@ table td:nth-child(8) {
     user-select: none;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-item {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-item {
     padding: 8px 14px;
     font-size: 13.5px;
     color: #1e293b;
@@ -1700,18 +1700,18 @@ table td:nth-child(8) {
     transition: background 0.15s ease;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-item:hover {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-item:hover {
     background: #eff6ff;
     color: #2563eb;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-item.selecionado {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-item.selecionado {
     background: #2563eb;
     color: #ffffff;
     font-weight: 600;
 }
 
-:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .modal-rodape-metas {
+:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .modal-rodape-metas {
     padding: 14px 20px;
     background: #f8fafc;
     border-top: 1px solid #f1f5f9;
@@ -1720,7 +1720,7 @@ table td:nth-child(8) {
     gap: 10px;
 }
 
-:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-cancelar-modal {
+:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-cancelar-modal {
     background: #ffffff;
     border: 1px solid #cbd5e1;
     color: #475569;
@@ -1731,7 +1731,7 @@ table td:nth-child(8) {
     cursor: pointer;
 }
 
-:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-salvar-modal {
+:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-salvar-modal {
     background: #2563eb;
     color: #ffffff;
     border: none;
@@ -1743,11 +1743,11 @@ table td:nth-child(8) {
     transition: background 0.2s;
 }
 
-:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-salvar-modal:hover {
+:where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-salvar-modal:hover {
     background: #1d4ed8;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .grade-graficos-lado-a-lado {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .grade-graficos-lado-a-lado {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 24px;
@@ -1756,11 +1756,11 @@ table td:nth-child(8) {
     margin-bottom: 24px;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .grade-graficos-lado-a-lado.coluna-unica {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .grade-graficos-lado-a-lado.coluna-unica {
     grid-template-columns: 1fr !important;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixas-revisao-container {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixas-revisao-container {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -1772,7 +1772,7 @@ table td:nth-child(8) {
     transition: all 0.2s ease;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixa-item {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixa-item {
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -1781,63 +1781,63 @@ table td:nth-child(8) {
     cursor: default;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixa-dot {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixa-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
     display: inline-block;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixa-azul .faixa-dot {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixa-azul .faixa-dot {
     background-color: #2563eb;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixa-azul {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixa-azul {
     color: #1e40af;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixa-roxa .faixa-dot {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixa-roxa .faixa-dot {
     background-color: #8b5cf6;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixa-roxa {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixa-roxa {
     color: #6d28d9;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixa-verde .faixa-dot {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixa-verde .faixa-dot {
     background-color: #10b981;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixa-verde {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixa-verde {
     color: #047857;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixa-divisor {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixa-divisor {
     color: #cbd5e1;
     font-size: 12px;
     user-select: none;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) #tabela-cabecalho-admin th:nth-child(6),
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) #tabela-corpo-admin td:nth-child(6) {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) #tabela-cabecalho-admin th:nth-child(6),
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) #tabela-corpo-admin td:nth-child(6) {
     text-align: center !important;
     padding-left: 20px !important;
     padding-right: 20px !important;
     min-width: 250px;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) #tabela-cabecalho-admin th:last-child,
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) #tabela-corpo-admin td:last-child {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) #tabela-cabecalho-admin th:last-child,
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) #tabela-corpo-admin td:last-child {
     padding-right: 28px !important;
     min-width: 120px;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .tabela-container table {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .tabela-container table {
     width: 100%;
     table-layout: auto;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) #btn-voltar-admin {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) #btn-voltar-admin {
     background: #ffffff !important;
     color: #1e293b !important;
     border: 1px solid #cbd5e1 !important;
@@ -1852,13 +1852,13 @@ table td:nth-child(8) {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) #btn-voltar-admin:hover {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) #btn-voltar-admin:hover {
     background: #f8fafc !important;
     border-color: #94a3b8 !important;
     color: #0f172a !important;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .ranking-card-wrapper {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .ranking-card-wrapper {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
@@ -1867,14 +1867,14 @@ table td:nth-child(8) {
     margin-bottom: 24px;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .ranking-lista {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .ranking-lista {
     display: flex;
     flex-direction: column;
     gap: 12px;
     margin-top: 18px;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .ranking-item {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .ranking-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1885,25 +1885,25 @@ table td:nth-child(8) {
     transition: all 0.2s ease;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .ranking-item:hover {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .ranking-item:hover {
     border-color: #cbd5e1;
     background: #ffffff;
     box-shadow: 0 2px 6px rgba(0,0,0,0.04);
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .ranking-item.destaque-primeiro {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .ranking-item.destaque-primeiro {
     background: #fffbeb;
     border-color: #fde68a;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .ranking-esquerda {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .ranking-esquerda {
     display: flex;
     align-items: center;
     gap: 16px;
     flex: 1;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .posicao-circulo {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .posicao-circulo {
     width: 38px;
     height: 38px;
     border-radius: 50%;
@@ -1915,46 +1915,46 @@ table td:nth-child(8) {
     flex-shrink: 0;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .pos-1 {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .pos-1 {
     background-color: #fef08a; color: #854d0e; border: 2px solid #facc15;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .pos-2 {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .pos-2 {
     background-color: #e2e8f0; color: #334155; border: 2px solid #cbd5e1;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .pos-3 {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .pos-3 {
     background-color: #fed7aa; color: #9a3412; border: 2px solid #fb923c;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .pos-padrao {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .pos-padrao {
     background-color: #f1f5f9; color: #64748b; font-size: 13px; font-weight: 700;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .operador-info-bloco {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .operador-info-bloco {
     display: flex;
     flex-direction: column;
     gap: 2px;
     min-width: 170px;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .operador-info-bloco strong {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .operador-info-bloco strong {
     font-size: 14px;
     color: #1e293b;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .operador-info-bloco span {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .operador-info-bloco span {
     font-size: 12px;
     color: #64748b;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .ranking-barra-area {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .ranking-barra-area {
     flex: 1;
     max-width: 320px;
     margin: 0 20px;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .ranking-trilho {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .ranking-trilho {
     width: 100%;
     height: 8px;
     background-color: #e2e8f0;
@@ -1962,27 +1962,27 @@ table td:nth-child(8) {
     overflow: hidden;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .ranking-preenchimento {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .ranking-preenchimento {
     height: 100%;
     background-color: #22c55e;
     border-radius: 4px;
     transition: width 0.4s ease;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .ranking-direita {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .ranking-direita {
     display: flex;
     align-items: center;
     gap: 20px;
     text-align: right;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .num-comparecidos {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .num-comparecidos {
     font-size: 16px;
     font-weight: 800;
     color: #15803d;
 }
 
-:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .num-comparecidos-sub {
+:where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .num-comparecidos-sub {
     font-size: 11px;
     color: #64748b;
     text-transform: uppercase;
@@ -4662,6 +4662,401 @@ html body .sm-rodape.sm-rodape-dia {
     justify-content: space-between;
 }
 
+html body .links-paginas.oculto-lateral {
+    display: none;
+}
+
+html body.menu-lateral-ativo {
+    padding-left: 96px;
+}
+
+html body.menu-lateral-ativo.ml-fixo {
+    padding-left: 252px;
+}
+
+html body .menu-lateral {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 500;
+    width: 64px;
+    padding: 18px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: hidden;
+    background: var(--fundo-cartao);
+    border-right: 1px solid var(--cor-borda);
+    transition: width 0.18s ease, box-shadow 0.18s ease;
+}
+
+html body .menu-lateral:hover,
+html body.ml-fixo .menu-lateral {
+    width: 220px;
+}
+
+html body:not(.ml-fixo) .menu-lateral:hover {
+    box-shadow: 8px 0 24px rgba(15, 23, 42, 0.12);
+}
+
+html body .menu-lateral-links {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+html body .menu-lateral .link-nav,
+html body .menu-lateral .ml-fixar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: 42px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--texto-secundario);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    position: relative;
+    box-sizing: border-box;
+}
+
+html body .menu-lateral .link-nav:hover,
+html body .menu-lateral .ml-fixar:hover {
+    background: var(--fundo-pagina);
+    color: var(--texto-principal);
+}
+
+html body .menu-lateral .link-nav.ativo {
+    background: var(--cor-destaque);
+    color: #ffffff;
+}
+
+html body .menu-lateral .link-nav.oculto {
+    display: none;
+}
+
+html body .menu-lateral .ml-icone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+}
+
+html body .menu-lateral .ml-texto {
+    opacity: 0;
+    transition: opacity 0.12s ease;
+}
+
+html body .menu-lateral:hover .ml-texto,
+html body.ml-fixo .menu-lateral .ml-texto {
+    opacity: 1;
+}
+
+html body .menu-lateral .contador-menu {
+    margin-left: auto;
+}
+
+html body:not(.ml-fixo) .menu-lateral:not(:hover) .contador-menu {
+    position: absolute;
+    top: 3px;
+    left: 28px;
+    margin: 0;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 10px;
+    line-height: 16px;
+}
+
+html body.ml-fixo .menu-lateral .ml-fixar {
+    color: var(--cor-destaque);
+}
+
+html body .dash-titulo-pagina {
+    margin: 0 0 4px;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--texto-principal);
+}
+
+html body .dash-subtitulo-pagina {
+    margin: 0 0 22px;
+    font-size: 14px;
+    color: var(--texto-secundario);
+}
+
+html body .dash-secao-titulo {
+    margin: 26px 0 12px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--texto-secundario);
+}
+
+html body .dash-grade {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+html body .dash-grade.dash-largo {
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+}
+
+html body .dash-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 20px;
+    background: var(--fundo-cartao);
+    border: 1px solid var(--cor-borda);
+    border-radius: 12px;
+    color: var(--texto-principal);
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+html body a.dash-card {
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+html body a.dash-card:hover {
+    border-color: var(--cor-destaque);
+    transform: translateY(-1px);
+}
+
+html body .dash-card-titulo {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--texto-secundario);
+}
+
+html body .dash-valor {
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--texto-principal);
+}
+
+html body .dash-valor.sucesso { color: var(--estado-sucesso); }
+html body .dash-valor.alerta { color: var(--estado-pendente); }
+html body .dash-valor.perigo { color: var(--estado-insucesso); }
+
+html body .dash-sub {
+    font-size: 13px;
+    color: var(--texto-secundario);
+    line-height: 1.45;
+}
+
+html body .dash-linha {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 14px;
+}
+
+html body .dash-linha strong {
+    font-weight: 700;
+}
+
+html body .dash-trilho {
+    width: 100%;
+    height: 10px;
+    border-radius: 5px;
+    background: var(--cor-borda);
+    overflow: hidden;
+}
+
+html body .dash-preenchimento {
+    height: 100%;
+    border-radius: 5px;
+    background: var(--cor-destaque);
+}
+
+html body .dash-preenchimento.meta-baixa { background-color: #dc2626; }
+html body .dash-preenchimento.meta-media { background-color: #f59e0b; }
+html body .dash-preenchimento.meta-alta { background-color: #16a34a; }
+
+html body .dash-chip {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+html body .dash-chip.ok { background: var(--fundo-etiqueta-sucesso); color: var(--estado-sucesso); }
+html body .dash-chip.alerta { background: var(--fundo-etiqueta-pendente); color: var(--estado-pendente); }
+html body .dash-chip.perigo { background: var(--fundo-etiqueta-insucesso); color: var(--estado-insucesso); }
+
+html body .dash-lista {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+}
+
+html body .dash-lista li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 14px;
+}
+
+html body .dash-lista .dash-sub {
+    font-size: 12px;
+}
+
+html body .dash-alerta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+html body .dash-alerta.alerta { background: var(--fundo-etiqueta-pendente); color: var(--estado-pendente); }
+html body .dash-alerta.perigo { background: var(--fundo-etiqueta-insucesso); color: var(--estado-insucesso); }
+html body .dash-alerta.ok { background: var(--fundo-etiqueta-sucesso); color: var(--estado-sucesso); }
+
+html body .dash-alertas {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+html body .dash-vazio {
+    font-size: 13px;
+    color: var(--texto-secundario);
+}
+
+html body .dash-lista.dash-rolavel {
+    max-height: 370px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+html body .dash-mini-grade {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 6px 0 4px;
+}
+
+html body .dash-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 12px;
+    background: var(--fundo-pagina);
+    border: 1px solid var(--cor-borda);
+    border-radius: 10px;
+}
+
+html body .dash-mini-valor {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--texto-principal);
+}
+
+html body .dash-mini-valor.sucesso { color: var(--estado-sucesso); }
+html body .dash-mini-valor.alerta { color: var(--estado-pendente); }
+html body .dash-mini-valor.perigo { color: var(--estado-insucesso); }
+
+html body .dash-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+    padding: 20px 24px;
+    background: var(--fundo-cartao);
+    border: 1px solid var(--cor-borda);
+    border-left: 4px solid var(--cor-destaque);
+    border-radius: 12px;
+}
+
+html body .dash-hero .dash-titulo-pagina {
+    margin: 0 0 4px;
+}
+
+html body .dash-hero .dash-subtitulo-pagina {
+    margin: 0;
+}
+
+html body .dash-chip-mes {
+    padding: 6px 14px;
+    border: 1px solid var(--cor-borda);
+    border-radius: 999px;
+    background: var(--fundo-pagina);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--texto-secundario);
+    white-space: nowrap;
+}
+
+html body .dash-mini-grade {
+    margin: 16px 0 12px;
+}
+
+html body .dash-mini-grade + .dash-lista {
+    margin-top: 4px;
+    padding-top: 18px;
+    gap: 14px;
+    border-top: 1px solid var(--cor-borda);
+}
+
+html body .dash-metas-grade {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px 40px;
+    max-height: 380px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+html body .dash-meta-linha {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+html body .dash-card-titulo {
+    display: block;
+    height: 16px;
+    line-height: 16px;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+html body .dash-card-titulo + .dash-lista {
+    margin-top: 0;
+}
+
 html[data-tema="escuro"] {
     color-scheme: dark;
     --fundo-pagina: #0b1220;
@@ -5308,7 +5703,7 @@ html[data-tema="escuro"] :where(body.pagina-agendamentos) .preenchimento-progres
     border-radius: 5px;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .card .input-mes-card {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .card .input-mes-card {
     border: 1px solid #334155;
     border-radius: 6px;
     background-color: #0f1729;
@@ -5316,12 +5711,12 @@ html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.
     outline: none;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .card .input-mes-card:focus {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .card .input-mes-card:focus {
     border-color: #2563eb;
     background-color: #131c2e;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .select-marca-embutido {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .select-marca-embutido {
     border: 1px solid #334155;
     border-radius: 6px;
     background-color: #131c2e;
@@ -5329,7 +5724,7 @@ html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.
     outline: none;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .grupo-input-monitoria input[type="number"] {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .grupo-input-monitoria input[type="number"] {
     border: 1px solid #334155;
     border-radius: 6px;
     background-color: #0f1729;
@@ -5337,140 +5732,140 @@ html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.
     outline: none;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .grupo-input-monitoria input[type="number"]:disabled {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .grupo-input-monitoria input[type="number"]:disabled {
     background-color: #263349;
     color: #cbd5e1;
     border-color: #334155;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .grupo-input-monitoria input[type="number"]:focus:not(:disabled) {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .grupo-input-monitoria input[type="number"]:focus:not(:disabled) {
     border-color: #2563eb;
     background-color: #131c2e;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .grupo-input-monitoria .sufixo-porcentagem {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .grupo-input-monitoria .sufixo-porcentagem {
     color: #cbd5e1;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-acao-monitoria {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-acao-monitoria {
     background: #2563eb;
     color: #ffffff;
     border: none;
     border-radius: 6px;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-acao-monitoria:hover {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-acao-monitoria:hover {
     background: #1d4ed8;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-acao-monitoria.btn-modo-editar {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-acao-monitoria.btn-modo-editar {
     background: #131c2e;
     color: #cbd5e1;
     border: 1px solid #334155;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-acao-monitoria.btn-modo-editar:hover {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-acao-monitoria.btn-modo-editar:hover {
     background: #1a2438;
     color: #e2e8f0;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .badge-ajuste-monitoria {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .badge-ajuste-monitoria {
     background-color: #14532d;
     color: #4ade80;
     border-radius: 20px;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .badge-ajuste-monitoria-reducao {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .badge-ajuste-monitoria-reducao {
     background-color: #4c1d1d;
     color: #f87171;
     border-radius: 20px;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .card-meta-equipe {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .card-meta-equipe {
     background: #131c2e;
     border: 1px solid #263349;
     border-radius: 12px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.45);
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .meta-equipe-cabecalho h3 {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .meta-equipe-cabecalho h3 {
     color: #e2e8f0;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .meta-badge-restante {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .meta-badge-restante {
     background-color: #1b2845;
     color: #60a5fa;
     border-radius: 20px;
     border: 1px solid #1e40af;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .meta-badge-sucesso {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .meta-badge-sucesso {
     background-color: #14532d;
     color: #86efac;
     border-radius: 20px;
     border: 1px solid #166534;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .meta-badge-bonus-equipe {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .meta-badge-bonus-equipe {
     background-color: #14532d;
     color: #4ade80;
     border-radius: 20px;
     border: 1px solid #166534;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .meta-badge-bonus-equipe.bloqueado {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .meta-badge-bonus-equipe.bloqueado {
     background-color: #1a2438;
     color: #a3b1c6;
     border: 1px solid #334155;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .barra-progresso-container {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .barra-progresso-container {
     background-color: #263349;
     border-radius: 5px;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .barra-progresso-preenchimento {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .barra-progresso-preenchimento {
     background-color: #2563eb;
     border-radius: 5px;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-filtro-grafico {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-filtro-grafico {
     background: #131c2e;
     border: 1px solid #334155;
     color: #cbd5e1;
     border-radius: 8px;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-filtro-grafico:hover {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-filtro-grafico:hover {
     background: #0f1729;
     border-color: #475569;
     color: #e2e8f0;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-filtro-grafico.ativo {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-filtro-grafico.ativo {
     background: #2563eb;
     color: #ffffff;
     border-color: #2563eb;
     box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-abrir-config-metas {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-abrir-config-metas {
     background: #131c2e;
     border: 1px solid #334155;
     color: #e2e8f0;
     border-radius: 8px;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-abrir-config-metas:hover {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-abrir-config-metas:hover {
     background: #1a2438;
     border-color: #475569;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco) .modal-overlay {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio) .modal-overlay {
     background: rgba(15, 23, 42, 0.6);
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .modal-card-metas {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .modal-card-metas {
     background: #131c2e;
     color: #e2e8f0;
     border-radius: 12px;
@@ -5478,19 +5873,19 @@ html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos
     border: 1px solid #263349;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .modal-topo-metas {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .modal-topo-metas {
     border-bottom: 1px solid #1e293b;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .modal-topo-metas h3 {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .modal-topo-metas h3 {
     color: #e2e8f0;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco) .modal-campo-label {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio) .modal-campo-label {
     color: #a3b1c6;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco) .modal-input-metas {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio) .modal-input-metas {
     border: 1px solid #334155;
     border-radius: 8px;
     color: #e2e8f0;
@@ -5498,121 +5893,121 @@ html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos
     outline: none;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco) .modal-input-metas:focus {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio) .modal-input-metas:focus {
     border-color: #2563eb;
     background: #131c2e;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-trigger {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-trigger {
     border: 1px solid #334155;
     border-radius: 8px;
     color: #e2e8f0;
     background: #0f1729;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-trigger:hover {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-trigger:hover {
     border-color: #475569;
     background: #131c2e;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-trigger.aberto {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-trigger.aberto {
     border-color: #2563eb;
     background: #131c2e;
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-arrow {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-arrow {
     color: #a3b1c6;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-menu {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-menu {
     background: #131c2e;
     border: 1px solid #334155;
     border-radius: 8px;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.45), 0 4px 6px -2px rgba(0, 0, 0, 0.45);
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-group-title {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-group-title {
     color: #8f9db3;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-item {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-item {
     color: #e2e8f0;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-item:hover {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-item:hover {
     background: #1b2845;
     color: #60a5fa;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .custom-dropdown-item.selecionado {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .custom-dropdown-item.selecionado {
     background: #2563eb;
     color: #ffffff;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .modal-rodape-metas {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .modal-rodape-metas {
     background: #0f1729;
     border-top: 1px solid #1e293b;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-cancelar-modal {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-cancelar-modal {
     background: #131c2e;
     border: 1px solid #334155;
     color: #cbd5e1;
     border-radius: 6px;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-salvar-modal {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-salvar-modal {
     background: #2563eb;
     color: #ffffff;
     border: none;
     border-radius: 6px;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .btn-salvar-modal:hover {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-agendamentos, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .btn-salvar-modal:hover {
     background: #1d4ed8;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixas-revisao-container {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixas-revisao-container {
     background: #0f1729;
     border: 1px solid #263349;
     border-radius: 8px;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixa-dot {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixa-dot {
     border-radius: 50%;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixa-azul .faixa-dot {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixa-azul .faixa-dot {
     background-color: #2563eb;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixa-azul {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixa-azul {
     color: #93c5fd;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixa-roxa .faixa-dot {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixa-roxa .faixa-dot {
     background-color: #8b5cf6;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixa-roxa {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixa-roxa {
     color: #c4b5fd;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixa-verde .faixa-dot {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixa-verde .faixa-dot {
     background-color: #10b981;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixa-verde {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixa-verde {
     color: #34d399;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .faixa-divisor {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .faixa-divisor {
     color: #cbd5e1;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) #btn-voltar-admin {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) #btn-voltar-admin {
     background: #131c2e !important;
     color: #e2e8f0 !important;
     border: 1px solid #334155 !important;
@@ -5620,86 +6015,86 @@ html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45) !important;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) #btn-voltar-admin:hover {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) #btn-voltar-admin:hover {
     background: #0f1729 !important;
     border-color: #475569 !important;
     color: #e2e8f0 !important;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .ranking-card-wrapper {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .ranking-card-wrapper {
     background: #131c2e;
     border: 1px solid #263349;
     border-radius: 12px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .ranking-item {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .ranking-item {
     border-radius: 10px;
     background: #0f1729;
     border: 1px solid #263349;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .ranking-item:hover {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .ranking-item:hover {
     border-color: #334155;
     background: #131c2e;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .ranking-item.destaque-primeiro {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .ranking-item.destaque-primeiro {
     background: #2a1d08;
     border-color: #854d0e;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .posicao-circulo {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .posicao-circulo {
     border-radius: 50%;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .pos-1 {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .pos-1 {
     background-color: #713f12;
     color: #fcd34d;
     border: 2px solid #facc15;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .pos-2 {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .pos-2 {
     background-color: #263349;
     color: #cbd5e1;
     border: 2px solid #334155;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .pos-3 {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .pos-3 {
     background-color: #7c2d12;
     color: #fdba74;
     border: 2px solid #fb923c;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .pos-padrao {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .pos-padrao {
     background-color: #1a2438;
     color: #a3b1c6;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .operador-info-bloco strong {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .operador-info-bloco strong {
     color: #e2e8f0;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .operador-info-bloco span {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .operador-info-bloco span {
     color: #a3b1c6;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .ranking-trilho {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .ranking-trilho {
     background-color: #263349;
     border-radius: 4px;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .ranking-preenchimento {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .ranking-preenchimento {
     background-color: #22c55e;
     border-radius: 4px;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .num-comparecidos {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .num-comparecidos {
     color: #4ade80;
 }
 
-html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-importar) .num-comparecidos-sub {
+html[data-tema="escuro"] :where(body.pagina-relatorios, body.pagina-admin, body.pagina-divergencias, body.pagina-almoco, body.pagina-inicio, body.pagina-importar) .num-comparecidos-sub {
     color: #a3b1c6;
 }
 
@@ -6831,6 +7226,187 @@ html[data-tema="escuro"] body .sm-dia.selecionado {
     background: var(--cor-destaque);
     border-color: var(--cor-destaque);
     color: #ffffff;
+}
+
+html[data-tema="escuro"] body .menu-lateral {
+    background: var(--fundo-cartao);
+    border-right: 1px solid var(--cor-borda);
+}
+
+html[data-tema="escuro"] body:not(.ml-fixo) .menu-lateral:hover {
+    box-shadow: 8px 0 24px rgba(15, 23, 42, 0.12);
+}
+
+html[data-tema="escuro"] body .menu-lateral .link-nav, html[data-tema="escuro"] body .menu-lateral .ml-fixar {
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--texto-secundario);
+}
+
+html[data-tema="escuro"] body .menu-lateral .link-nav:hover, html[data-tema="escuro"] body .menu-lateral .ml-fixar:hover {
+    background: var(--fundo-pagina);
+    color: var(--texto-principal);
+}
+
+html[data-tema="escuro"] body .menu-lateral .link-nav.ativo {
+    background: var(--cor-destaque);
+    color: #ffffff;
+}
+
+html[data-tema="escuro"] body.ml-fixo .menu-lateral .ml-fixar {
+    color: var(--cor-destaque);
+}
+
+html[data-tema="escuro"] body .dash-titulo-pagina {
+    color: var(--texto-principal);
+}
+
+html[data-tema="escuro"] body .dash-subtitulo-pagina {
+    color: var(--texto-secundario);
+}
+
+html[data-tema="escuro"] body .dash-secao-titulo {
+    color: var(--texto-secundario);
+}
+
+html[data-tema="escuro"] body .dash-card {
+    background: var(--fundo-cartao);
+    border: 1px solid var(--cor-borda);
+    border-radius: 12px;
+    color: var(--texto-principal);
+}
+
+html[data-tema="escuro"] body a.dash-card:hover {
+    border-color: var(--cor-destaque);
+}
+
+html[data-tema="escuro"] body .dash-card-titulo {
+    color: var(--texto-secundario);
+}
+
+html[data-tema="escuro"] body .dash-valor {
+    color: var(--texto-principal);
+}
+
+html[data-tema="escuro"] body .dash-valor.sucesso {
+    color: var(--estado-sucesso);
+}
+
+html[data-tema="escuro"] body .dash-valor.alerta {
+    color: var(--estado-pendente);
+}
+
+html[data-tema="escuro"] body .dash-valor.perigo {
+    color: var(--estado-insucesso);
+}
+
+html[data-tema="escuro"] body .dash-sub {
+    color: var(--texto-secundario);
+}
+
+html[data-tema="escuro"] body .dash-trilho {
+    border-radius: 5px;
+    background: var(--cor-borda);
+}
+
+html[data-tema="escuro"] body .dash-preenchimento {
+    border-radius: 5px;
+    background: var(--cor-destaque);
+}
+
+html[data-tema="escuro"] body .dash-preenchimento.meta-baixa {
+    background-color: #dc2626;
+}
+
+html[data-tema="escuro"] body .dash-preenchimento.meta-media {
+    background-color: #f59e0b;
+}
+
+html[data-tema="escuro"] body .dash-preenchimento.meta-alta {
+    background-color: #16a34a;
+}
+
+html[data-tema="escuro"] body .dash-chip {
+    border-radius: 999px;
+}
+
+html[data-tema="escuro"] body .dash-chip.ok {
+    background: var(--fundo-etiqueta-sucesso);
+    color: var(--estado-sucesso);
+}
+
+html[data-tema="escuro"] body .dash-chip.alerta {
+    background: var(--fundo-etiqueta-pendente);
+    color: var(--estado-pendente);
+}
+
+html[data-tema="escuro"] body .dash-chip.perigo {
+    background: var(--fundo-etiqueta-insucesso);
+    color: var(--estado-insucesso);
+}
+
+html[data-tema="escuro"] body .dash-alerta {
+    border-radius: 10px;
+}
+
+html[data-tema="escuro"] body .dash-alerta.alerta {
+    background: var(--fundo-etiqueta-pendente);
+    color: var(--estado-pendente);
+}
+
+html[data-tema="escuro"] body .dash-alerta.perigo {
+    background: var(--fundo-etiqueta-insucesso);
+    color: var(--estado-insucesso);
+}
+
+html[data-tema="escuro"] body .dash-alerta.ok {
+    background: var(--fundo-etiqueta-sucesso);
+    color: var(--estado-sucesso);
+}
+
+html[data-tema="escuro"] body .dash-vazio {
+    color: var(--texto-secundario);
+}
+
+html[data-tema="escuro"] body .dash-mini {
+    background: var(--fundo-pagina);
+    border: 1px solid var(--cor-borda);
+    border-radius: 10px;
+}
+
+html[data-tema="escuro"] body .dash-mini-valor {
+    color: var(--texto-principal);
+}
+
+html[data-tema="escuro"] body .dash-mini-valor.sucesso {
+    color: var(--estado-sucesso);
+}
+
+html[data-tema="escuro"] body .dash-mini-valor.alerta {
+    color: var(--estado-pendente);
+}
+
+html[data-tema="escuro"] body .dash-mini-valor.perigo {
+    color: var(--estado-insucesso);
+}
+
+html[data-tema="escuro"] body .dash-hero {
+    background: var(--fundo-cartao);
+    border: 1px solid var(--cor-borda);
+    border-left: 4px solid var(--cor-destaque);
+    border-radius: 12px;
+}
+
+html[data-tema="escuro"] body .dash-chip-mes {
+    border: 1px solid var(--cor-borda);
+    border-radius: 999px;
+    background: var(--fundo-pagina);
+    color: var(--texto-secundario);
+}
+
+html[data-tema="escuro"] body .dash-mini-grade + .dash-lista {
+    border-top: 1px solid var(--cor-borda);
 }
 
 @media print {

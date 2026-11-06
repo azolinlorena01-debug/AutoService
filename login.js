@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session && session.user) {
-        window.location.href = 'index.html';
+        window.location.href = 'inicio.html';
         return;
     }
 
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                 exibirMensagem('Login realizado com sucesso! Redirecionando...', 'sucesso');
                 setTimeout(() => {
-                    window.location.href = 'index.html';
+                    window.location.href = 'inicio.html';
                 }, 700);
 
             } else {
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                 exibirMensagem('Conta criada com sucesso! Redirecionando...', 'sucesso');
                 setTimeout(() => {
-                    window.location.href = 'index.html';
+                    window.location.href = 'inicio.html';
                 }, 900);
             }
         } catch (erro) {
