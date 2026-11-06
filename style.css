@@ -4612,6 +4612,56 @@ html body .form-inativo .btn-adicionar-agendamento {
     box-sizing: border-box;
 }
 
+html body .sm-dias {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+html body .sm-semana {
+    height: 26px;
+    line-height: 26px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--texto-secundario);
+}
+
+html body .sm-dia {
+    height: 34px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--texto-principal);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+html body .sm-dia:hover {
+    background: var(--fundo-pagina);
+    border-color: var(--cor-borda);
+}
+
+html body .sm-dia.fora {
+    opacity: 0.4;
+}
+
+html body .sm-dia.atual {
+    border-color: var(--cor-destaque);
+}
+
+html body .sm-dia.selecionado {
+    background: var(--cor-destaque);
+    border-color: var(--cor-destaque);
+    color: #ffffff;
+    opacity: 1;
+}
+
+html body .sm-rodape.sm-rodape-dia {
+    justify-content: space-between;
+}
+
 html[data-tema="escuro"] {
     color-scheme: dark;
     --fundo-pagina: #0b1220;
@@ -6755,6 +6805,32 @@ html[data-tema="escuro"] body .tabela-almoco.tabela-admin td .input-almoco-edica
 
 html[data-tema="escuro"] body .tabela-almoco.tabela-admin td .input-almoco-edicao.input-valor-facilitada:hover, html[data-tema="escuro"] body .tabela-almoco.tabela-admin td .input-almoco-edicao.input-valor-facilitada:focus {
     border-color: var(--borda-input, #475569);
+}
+
+html[data-tema="escuro"] body .sm-semana {
+    color: var(--texto-secundario);
+}
+
+html[data-tema="escuro"] body .sm-dia {
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--texto-principal);
+}
+
+html[data-tema="escuro"] body .sm-dia:hover {
+    background: var(--fundo-pagina);
+    border-color: var(--cor-borda);
+}
+
+html[data-tema="escuro"] body .sm-dia.atual {
+    border-color: var(--cor-destaque);
+}
+
+html[data-tema="escuro"] body .sm-dia.selecionado {
+    background: var(--cor-destaque);
+    border-color: var(--cor-destaque);
+    color: #ffffff;
 }
 
 @media print {

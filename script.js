@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     window.atualizarContadorDivergencias(supabaseClient);
 
-    const META_GLOBAL_CENTRAL = 6000;
+    const META_GLOBAL_PADRAO = 6000;
 
     const areaAuth = document.getElementById('area-autenticacao');
     const inputBusca = document.getElementById('input-busca');
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 item.data_revisao && item.data_revisao.startsWith(mesSelecionado)
             );
 
-            atualizarBarraMetaCentral(agendamentosGeraisDoMes);
+            atualizarBarraMetaCentral(agendamentosGeraisDoMes, await buscarMetaCentral(mesSelecionado));
 
             if (isAdmin) {
                 todosAgendamentosMes = agendamentosGeraisDoMes;
@@ -175,7 +175,18 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    function atualizarBarraMetaCentral(listaGeral) {
+    async function buscarMetaCentral(mes) {
+        try {
+            const { data, error } = await supabaseClient.from('metas_mensais').select('meta_valor').eq('mes_referencia', mes).eq('equipe', 'Geral').maybeSingle();
+            const valor = !error && data ? parseInt(data.meta_valor, 10) : NaN;
+            return valor > 0 ? valor : META_GLOBAL_PADRAO;
+        } catch (e) {
+            return META_GLOBAL_PADRAO;
+        }
+    }
+
+    function atualizarBarraMetaCentral(listaGeral, metaCentral) {
+        const META_GLOBAL_CENTRAL = metaCentral || META_GLOBAL_PADRAO;
         if (!textoProgressoCentral || !badgeRestanteCentral || !barraProgressoCentral) return;
 
         const comparecidosCentral = listaGeral.filter(item => item.status === 'compareceu').length;
@@ -749,6 +760,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         const mesSel = (filtroMes && filtroMes.value) ? filtroMes.value : valorMesPadrao;
         const hojeISO = `${anoAtual}-${mesAtual}-${String(hoje.getDate()).padStart(2, '0')}`;
         const dataPadrao = hojeISO.startsWith(mesSel) ? hojeISO : `${mesSel}-01`;
+        window.transformarData(campo('manual-data-contato'));
+        window.transformarData(campo('manual-data-revisao'));
         campo('manual-data-contato').value = dataPadrao;
         campo('manual-data-revisao').value = dataPadrao;
 
