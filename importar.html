@@ -8,11 +8,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <script src="tema.js?v=20261107h"></script>
-    <script src="avisos.js?v=20261107h"></script>
-    <script src="seletor-mes.js?v=20261107h" defer></script>
-    <script src="dropdown.js?v=20261107h" defer></script>
-    <link rel="stylesheet" href="style.css?v=20261107h">
+    <script src="tema.js?v=20261107i"></script>
+    <script src="avisos.js?v=20261107i"></script>
+    <script src="seletor-mes.js?v=20261107i" defer></script>
+    <script src="dropdown.js?v=20261107i" defer></script>
+    <link rel="stylesheet" href="style.css?v=20261107i">
 </head>
 <body class="pagina-importar">
     <div class="container">
@@ -809,6 +809,25 @@
                             }
                             log(`Tipo de planilha: ${modoPlanilha === 'toyota' ? 'Toyota' : 'Outras Marcas'}`);
 
+                            let totalAutoCadastrados = 0;
+                            if (destinoEscolhido === 'auto' && modoPlanilha === 'outras') {
+                                const nomesNovos = new Map();
+                                for (let i = 1; i < linhasMatriz.length; i++) {
+                                    const row = linhasMatriz[i];
+                                    if (!row || row.length === 0) continue;
+                                    const nome = String(row[colAgendador] || '').trim();
+                                    const cod = colCodigo !== -1 ? String(row[colCodigo] || '').toUpperCase().replace(/\s/g, '') : '';
+                                    if (!nome || nomeIgnoravel(nome) || /^OP-?0*20$/.test(cod)) continue;
+                                    if (identificarConsultor(nome) || identificarInativo(nome, listaInativos, cod)) continue;
+                                    const chaveNome = nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+                                    if (!nomesNovos.has(chaveNome)) nomesNovos.set(chaveNome, nome);
+                                }
+                                for (const dealerNovo of nomesNovos.keys()) {
+                                    const { data: criado, error: erroCriar } = await supabaseClient.from('operadores_inativos').insert({ dealer: dealerNovo }).select().single();
+                                    if (!erroCriar && criado) { listaInativos.push(criado); totalAutoCadastrados++; }
+                                }
+                            }
+
                             const registrosParaSalvar = [];
                             let totalIgnoradosOutroGrupo = 0;
                             let totalInativos = 0;
@@ -822,6 +841,7 @@
                             let linhasLidas = 0;
                             let linhasSemRevisao = 0;
                             let totalServicos = 0;
+                            let totalServicosIgnoradosToyota = 0;
 
                             const resumoPorConsultor = {};
                             const naoReconhecidos = {};
@@ -836,11 +856,17 @@
                                 const ehExterno = /^OP-?0*20$/.test(codigoLinha);
                                 let consultorAlvo = null;
 
+                                if (destinoEscolhido === 'auto' && ehExterno) {
+                                    const nomeExterno = String(textoAgendador || '').trim();
+                                    if (nomeExterno && !nomeIgnoravel(nomeExterno)) totalExternos++;
+                                    continue;
+                                }
+
                                 if (destinoEscolhido !== 'auto') {
                                     const cOp = OPERADORES_MESTRE.find(o => o.id === destinoEscolhido);
                                     consultorAlvo = { id: destinoEscolhido, nome: cOp ? cOp.nome : 'Manual', dealer: cOp ? cOp.dealer : 'MANUAL' };
                                 } else {
-                                    consultorAlvo = identificarConsultor(textoAgendador) || identificarInativo(textoAgendador, listaInativos, codigoLinha);
+                                    consultorAlvo = identificarConsultor(textoAgendador) || identificarInativo(textoAgendador, modoPlanilha === 'toyota' ? listaInativos.filter(i => !/\s/.test(String(i.dealer || '').trim())) : listaInativos, codigoLinha);
                                 }
 
                                 if (!consultorAlvo) {
@@ -861,6 +887,7 @@
                                 let tipoServicoLinha = null;
                                 if (!numRevisao) {
                                     tipoServicoLinha = rotuloServico(textoServico);
+                                    if (modoPlanilha === 'toyota' && destinoEscolhido === 'auto') { totalServicosIgnoradosToyota++; continue; }
                                     numRevisao = 'SERVICO';
                                     totalServicos++;
                                 }
@@ -958,7 +985,7 @@
                                 if (consultorAlvo.inativo) registrosParaSalvar[registrosParaSalvar.length - 1].inativo_id = consultorAlvo.id;
 
                                 const rotuloDealer = consultorAlvo.dealer ? ` [${consultorAlvo.dealer}]` : '';
-                                const chaveResumo = `${consultorAlvo.nome}${rotuloDealer} (${marcaDetectada})`;
+                                const chaveResumo = `${consultorAlvo.nome || "Inativo"}${rotuloDealer} (${marcaDetectada})`;
 
                                 if (!resumoPorConsultor[chaveResumo]) {
                                     resumoPorConsultor[chaveResumo] = { total: 0, compareceu: 0, noshow: 0, pendente: 0, facilitada: 0 };
@@ -1028,6 +1055,7 @@
                             if (qtdExistentes === null || qtdExistentes > 0) linhasConfirmacao.push(['Serão substituídos', qtdExistentes === null ? 'não foi possível contar' : String(qtdExistentes)]);
                             if (qtdManuais === null || qtdManuais > 0) linhasConfirmacao.push(['Lançamentos manuais preservados', qtdManuais === null ? 'não foi possível contar' : String(qtdManuais)]);
                             if (totalInativos > 0) linhasConfirmacao.push(['De funcionários inativos', String(totalInativos)]);
+                            if (totalAutoCadastrados > 0) linhasConfirmacao.push(['Nomes sem usuário agrupados como inativos', String(totalAutoCadastrados)]);
                             if (totalExternos > 0) linhasConfirmacao.push(['Ignorados (código OP-20, agendam fora)', String(totalExternos)]);
                             if (totalIgnoradosOutroGrupo > 0) linhasConfirmacao.push(['Ignorados (outro grupo de marcas)', String(totalIgnoradosOutroGrupo)]);
                             const alertasMes = [];
@@ -1054,6 +1082,7 @@
                             linhasConfirmacao.splice(3, 0, ['Linhas lidas na planilha', String(linhasLidas)]);
                             if (linhasSemRevisao > 0) linhasConfirmacao.push(['Ignoradas (sem revisão reconhecida)', String(linhasSemRevisao)]);
                             if (totalServicos > 0) linhasConfirmacao.push(['Serviços que não são revisão (sem bônus)', String(totalServicos)]);
+                            if (totalServicosIgnoradosToyota > 0) linhasConfirmacao.push(['Ignorados (Toyota: serviços que não são revisão)', String(totalServicosIgnoradosToyota)]);
                             if (totalDuplicados > 0) linhasConfirmacao.push(['Possíveis duplicados no arquivo', String(totalDuplicados)]);
                             if (qtdExistentes !== null) {
                                 const dif = totalGeral - qtdExistentes;
@@ -1382,6 +1411,6 @@ td.c, th.c { text-align: center; }
             carregarHistorico();
         });
     </script>
-    <script src="conta.js?v=20261107h" defer></script>
+    <script src="conta.js?v=20261107i" defer></script>
 </body>
 </html>
