@@ -1008,7 +1008,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     const corpoHistorico = document.getElementById('corpo-historico');
-    const buscaHistorico = document.getElementById('historico-busca');
     const filtroTabela = document.getElementById('historico-tabela');
     const btnHistoricoMais = document.getElementById('btn-historico-mais');
     let historicoCarregado = false;
@@ -1098,13 +1097,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     function renderizarHistorico() {
-        const termo = buscaHistorico.value.trim().toLowerCase();
         const todas = historicoItens.map(item => ({
             item,
             registro: descreverRegistro(item),
             mudanca: descreverMudanca(item),
             quem: item.usuario_id ? nomeDe(item.usuario_id) : 'Sistema'
-        })).filter(l => !termo || `${l.registro} ${l.mudanca} ${l.quem}`.toLowerCase().includes(termo));
+        }));
 
         const totalPaginas = Math.max(1, Math.ceil(todas.length / POR_PAGINA_HISTORICO));
         if (paginaHistorico > totalPaginas) paginaHistorico = totalPaginas;
@@ -1221,7 +1219,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         await concluirExclusaoHistorico(error, count || 0, historicoItens.length);
     });
 
-    buscaHistorico.addEventListener('input', () => { paginaHistorico = 1; renderizarHistorico(); });
     if (filtroMesHistorico) filtroMesHistorico.addEventListener('change', () => carregarHistorico(true));
     btnHistoricoAnterior.addEventListener('click', () => { paginaHistorico--; renderizarHistorico(); });
     filtroTabela.addEventListener('change', () => carregarHistorico(true));

@@ -9020,8 +9020,9 @@ html:not([data-tema="escuro"]) body .btn-cadastrar-inativo { color: #374151; }
         gap: 16px;
     }
 
-    html body .tabela-almoco .linha-sem-responsavel td:first-child {
-        box-shadow: none;
+    html body .tabela-almoco .linha-sem-responsavel td:first-child,
+    html[data-tema="escuro"] body .tabela-almoco .linha-sem-responsavel td:first-child {
+        box-shadow: none !important;
     }
 
     html body .tabela-almoco tr.linha-sem-responsavel {
