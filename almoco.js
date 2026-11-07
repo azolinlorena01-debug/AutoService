@@ -23,9 +23,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     } catch (e) {}
 
-    if (usuarioAtual.email === 'usuariotestesite01@gmail.com' || usuarioAtual.email?.includes('admin')) {
-        isAdmin = true;
-    }
 
     if (!isAdmin && !/toyota/i.test(equipeUsuario)) {
         window.location.href = 'inicio.html';
@@ -149,10 +146,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         corpo.innerHTML = itens.map(item => {
             const meu = item.criado_por === usuarioAtual.id;
             const editavel = meu || isAdmin;
-            const evento = editavel
-                ? `<input type="text" class="input-valor-facilitada input-almoco-edicao" data-campo="evento" maxlength="40" value="${escaparHtml(item.evento)}">`
-                : `<strong>${escaparHtml(item.evento)}</strong>`;
-            const os = editavel
+            const evento = `<strong>${escaparHtml(item.evento)}</strong>`;
+            const podeEditarOs = editavel || item.responsavel_id === usuarioAtual.id;
+            const os = podeEditarOs
                 ? `<input type="text" class="input-valor-facilitada input-almoco-edicao" data-campo="os" maxlength="40" value="${escaparHtml(item.os || '')}" placeholder="-">`
                 : escaparHtml(item.os || '-');
             return `
@@ -203,11 +199,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (e.target.classList.contains('input-almoco-edicao')) {
             const campo = e.target.dataset.campo;
             const valor = e.target.value.trim();
-            if (campo === 'evento' && !valor) {
-                e.target.value = item.evento;
-                avisar('Informe o número do evento.');
-                return;
-            }
+            if (campo !== 'os') return;
             const { data, error } = await supabaseClient.from('almoco_itens').update({ [campo]: valor || null }).eq('id', item.id).select('id');
             if (error || !data || data.length === 0) avisar('Não foi possível salvar' + (error ? ': ' + error.message : '.'));
             item[campo] = valor || null;

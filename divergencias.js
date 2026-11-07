@@ -24,9 +24,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     } catch (e) {}
 
-    if (usuarioAtual.email === 'usuariotestesite01@gmail.com' || usuarioAtual.email?.includes('admin')) {
-        isAdmin = true;
-    }
 
     function escaparHtml(texto) {
         return String(texto ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -114,13 +111,13 @@ document.addEventListener('DOMContentLoaded', async function () {
             let resposta;
             if (isAdmin) {
                 const aberta = i.status === 'aberta';
-                resposta = `
-                    <textarea class="input-valor-facilitada input-resposta" rows="2" maxlength="300" placeholder="Resposta ao operador" ${aberta ? '' : 'disabled'}>${escaparHtml(i.resposta || '')}</textarea>
+                resposta = `<div class="resposta-linha">
+                    <textarea class="input-valor-facilitada input-resposta" rows="1" maxlength="300" placeholder="Resposta ao operador" ${aberta ? '' : 'disabled'}>${escaparHtml(i.resposta || '')}</textarea>
                     <div class="acoes-divergencia">
                         ${aberta
                             ? '<button type="button" class="btn-adicionar-agendamento btn-resolver">Resolver</button><button type="button" class="btn-abrir-config-metas btn-recusar">Recusar</button>'
                             : '<button type="button" class="btn-abrir-config-metas btn-reabrir">Reabrir</button>'}
-                    </div>`;
+                    </div></div>`;
             } else {
                 resposta = i.resposta ? escaparHtml(i.resposta) : '<span class="texto-pequeno">Aguardando resposta da gestão</span>';
             }

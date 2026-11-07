@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const subtituloLogin = document.getElementById('subtitulo-login');
     const mensagemStatus = document.getElementById('mensagem-status');
     const form = document.getElementById('formulario-autenticacao');
+    const btnEsqueci = document.getElementById('btn-esqueci-senha');
 
     let modoAtual = 'entrar';
 
@@ -34,6 +35,13 @@ document.addEventListener('DOMContentLoaded', async function() {
             mensagemStatus.className = 'mensagem-status admin-val-perigo';
         }
     }
+
+    try {
+        if (sessionStorage.getItem('sessao_expirada')) {
+            sessionStorage.removeItem('sessao_expirada');
+            exibirMensagem('Sua sessão expirou. Entre novamente para continuar.');
+        }
+    } catch (e) {}
 
     abaEntrar.addEventListener('click', () => {
         modoAtual = 'entrar';
@@ -49,6 +57,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         btnSubmit.textContent = 'Acessar Painel';
         subtituloLogin.textContent = 'Acesse sua conta para continuar';
         mensagemStatus.textContent = '';
+        btnEsqueci.classList.remove('oculto');
     });
 
     abaCadastrar.addEventListener('click', () => {
@@ -65,6 +74,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         btnSubmit.textContent = 'Cadastrar Conta';
         subtituloLogin.textContent = 'Crie seu perfil no sistema';
         mensagemStatus.textContent = '';
+        btnEsqueci.classList.add('oculto');
     });
 
     form.addEventListener('submit', async function(e) {
@@ -157,6 +167,30 @@ document.addEventListener('DOMContentLoaded', async function() {
         } finally {
             btnSubmit.disabled = false;
             btnSubmit.textContent = modoAtual === 'entrar' ? 'Acessar Painel' : 'Cadastrar Conta';
+        }
+    });
+
+    btnEsqueci.addEventListener('click', async () => {
+        const email = campoEmail.value.trim();
+        if (!email) {
+            exibirMensagem('Informe seu e-mail acima para receber o link de redefinição.');
+            campoEmail.focus();
+            return;
+        }
+        btnEsqueci.disabled = true;
+        try {
+            const destino = new URL('redefinir.html', window.location.href).href;
+            const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: destino });
+            if (error) {
+                const limite = /rate|limit|seconds/i.test(error.message || '');
+                exibirMensagem(limite ? 'Muitas solicitações em pouco tempo. Aguarde alguns minutos e tente de novo.' : 'Não foi possível enviar o e-mail agora. Tente novamente em instantes.');
+            } else {
+                exibirMensagem('Se o e-mail estiver cadastrado, você receberá um link para redefinir a senha. Verifique também o spam.', 'sucesso');
+            }
+        } catch (e) {
+            exibirMensagem('Não foi possível enviar o e-mail agora. Tente novamente em instantes.');
+        } finally {
+            btnEsqueci.disabled = false;
         }
     });
 

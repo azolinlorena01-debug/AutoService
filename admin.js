@@ -26,9 +26,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     } catch (e) {}
 
-    if (usuarioAtual.email === 'usuariotestesite01@gmail.com' || usuarioAtual.email?.includes('admin')) {
-        isAdmin = true;
-    }
 
     if (!isAdmin) {
         window.location.href = 'relatorios.html';
@@ -99,10 +96,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     const historicoSelecionados = new Set();
     let linhasHistoricoVisiveis = [];
 
+    let moduloBackup = null;
+
     const abas = {
         fechamento: { botao: document.getElementById('aba-fechamento'), secao: document.getElementById('secao-fechamento') },
         usuarios: { botao: document.getElementById('aba-usuarios'), secao: document.getElementById('secao-usuarios') },
         inativos: { botao: document.getElementById('aba-inativos'), secao: document.getElementById('secao-inativos') },
+        backup: { botao: document.getElementById('aba-backup'), secao: document.getElementById('secao-backup') },
         historico: { botao: document.getElementById('aba-historico'), secao: document.getElementById('secao-historico') }
     };
 
@@ -113,6 +113,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
         if (nome === 'historico' && !historicoCarregado) carregarHistorico(true);
         if (nome === 'inativos') carregarInativosAdmin();
+        if (nome === 'backup' && moduloBackup) moduloBackup.carregarRegistro();
     }
 
     Object.entries(abas).forEach(([chave, aba]) => aba.botao.addEventListener('click', () => trocarAba(chave)));
@@ -331,6 +332,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     btnFecharMes.addEventListener('click', async () => {
+        const backupFeito = window.verificarBackupDoMes ? await window.verificarBackupDoMes(estado.mes) : null;
+        if (backupFeito === false) {
+            avisar('Antes de fechar o mês, gere o backup dele hoje na aba Backup.');
+            return;
+        }
         const faltando = estado.linhas.filter(l => l.pago === null && l.calculo.agendados > 0);
         if (faltando.length > 0) {
             avisar(`Informe o valor pago de todos os operadores com agendamentos antes de fechar. Faltam ${faltando.length}: ${faltando.slice(0, 5).map(l => l.perfil.nome).join(', ')}${faltando.length > 5 ? '...' : ''}.`);
@@ -407,16 +413,19 @@ document.addEventListener('DOMContentLoaded', async function () {
         document.getElementById('usuarios-contador').textContent = `${lista.length} ${lista.length === 1 ? 'usuário' : 'usuários'}`;
 
         if (lista.length === 0) {
-            corpoUsuarios.innerHTML = linhaVazia(4, 'Nenhum usuário encontrado.', 'Ajuste a busca para ver outros nomes.');
+            corpoUsuarios.innerHTML = linhaVazia(5, 'Nenhum usuário encontrado.', 'Ajuste a busca para ver outros nomes.');
             return;
         }
 
         corpoUsuarios.innerHTML = lista.map(p => {
-            const r = rascunhos.get(p.id) || { nome: p.nome || '', equipe: p.equipe || '', role: p.role || 'consultor' };
+            const r = rascunhos.get(p.id) || { nome: p.nome || '', equipe: p.equipe || '', role: p.role || 'consultor', dealer: p.dealer || '' };
             const ehEu = p.id === usuarioAtual.id;
             return `
                 <tr data-id="${escaparHtml(p.id)}">
                     <td class="celula-nome-usuario"><input type="text" class="input-valor-facilitada input-nome-usuario" maxlength="80" value="${escaparHtml(r.nome)}" placeholder="Nome">${ehEu ? ' <span class="tag-badge-equipe">Você</span>' : ''}${(r.role !== 'admin' && !r.equipe) ? ' <span class="tag-sem-marcas">Sem marcas</span>' : ''}${p.inativo_desde ? ' <span class="tag-inativo">Inativo</span>' : ''}</td>
+                    <td class="col-centro">
+                        <input type="text" class="input-valor-facilitada input-dealer-usuario" maxlength="40" value="${escaparHtml(r.dealer)}" placeholder="Código do dealer">
+                    </td>
                     <td class="col-centro">
                         <button type="button" class="btn-abrir-config-metas btn-editar-marcas">${escaparHtml(r.equipe || 'Definir marcas')}</button>
                     </td>
@@ -440,10 +449,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             const id = tr.dataset.id;
             const perfil = perfisPorId.get(id);
             const rascunho = () => {
-                if (!rascunhos.has(id)) rascunhos.set(id, { nome: perfil.nome || '', equipe: perfil.equipe || '', role: perfil.role || 'consultor' });
+                if (!rascunhos.has(id)) rascunhos.set(id, { nome: perfil.nome || '', equipe: perfil.equipe || '', role: perfil.role || 'consultor', dealer: perfil.dealer || '' });
                 return rascunhos.get(id);
             };
             tr.querySelector('.input-nome-usuario').addEventListener('input', e => { rascunho().nome = e.target.value; });
+            tr.querySelector('.input-dealer-usuario').addEventListener('input', e => { rascunho().dealer = e.target.value; });
             tr.querySelector('.select-funcao').addEventListener('change', e => { rascunho().role = e.target.value; });
             tr.querySelector('.btn-editar-marcas').addEventListener('click', () => {
                 abrirModalMarcas(rascunho().equipe, nova => {
@@ -482,13 +492,29 @@ document.addEventListener('DOMContentLoaded', async function () {
                     return;
                 }
                 const mudouRole = r.role !== (perfil.role || 'consultor');
-                if (mudouRole && !(await confirmar(`Alterar a função de ${perfil.nome} para ${r.role === 'admin' ? 'Administrador' : 'Consultor'}?`, { titulo: 'Alterar função', confirmar: 'Alterar' }))) return;
-                const { data, error } = await supabaseClient.from('perfis')
-                    .update({ nome: nomeNovo, equipe: r.equipe || null, role: r.role }).eq('id', id).select('id');
-                if (error || !data || data.length === 0) {
-                    avisar('Não foi possível salvar: ' + (error ? error.message : 'sem permissão.'));
+                if (mudouRole && perfil.role === 'admin' && r.role !== 'admin' && perfis.filter(p => p.role === 'admin').length <= 1) {
+                    avisar('Não é possível remover o único administrador do sistema.');
                     return;
                 }
+                if (mudouRole) {
+                    const promover = r.role === 'admin';
+                    const mensagemFuncao = promover
+                        ? `Tornar ${perfil.nome} Administrador? A pessoa poderá importar planilhas, fechar meses, alterar valores, criar e excluir usuários e ver todos os dados.`
+                        : `Remover o acesso de Administrador de ${perfil.nome}? O usuário passa a ser Consultor.`;
+                    if (!(await confirmar(mensagemFuncao, { titulo: promover ? 'Conceder acesso de administrador' : 'Remover acesso de administrador', confirmar: promover ? 'Conceder acesso' : 'Remover acesso', perigo: true }))) return;
+                }
+                const dealerNovo = normalizarDealerUsuario(r.dealer);
+                const atualizacao = { nome: nomeNovo, equipe: r.equipe || null, role: r.role };
+                const colunaDealer = Object.prototype.hasOwnProperty.call(perfil, 'dealer');
+                if (colunaDealer) atualizacao.dealer = dealerNovo || null;
+                const { data, error } = await supabaseClient.from('perfis')
+                    .update(atualizacao).eq('id', id).select('id');
+                if (error || !data || data.length === 0) {
+                    const duplicado = error && /perfis_dealer_unico|duplicate/i.test(error.message);
+                    avisar(duplicado ? `O dealer ${dealerNovo} já está vinculado a outro usuário.` : 'Não foi possível salvar: ' + (error ? error.message : 'sem permissão.'));
+                    return;
+                }
+                if (colunaDealer) perfil.dealer = dealerNovo || null;
                 perfil.nome = nomeNovo;
                 perfil.equipe = r.equipe || null;
                 perfil.role = r.role;
@@ -502,6 +528,160 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     buscaUsuarios.addEventListener('input', renderizarUsuarios);
+
+    function normalizarDealerUsuario(texto) {
+        return String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/\s+/g, '').trim();
+    }
+
+    function gerarSenhaTemporaria() {
+        const letras = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+        const bytes = new Uint32Array(10);
+        crypto.getRandomValues(bytes);
+        return Array.from(bytes, b => letras[b % letras.length]).join('') + '#7';
+    }
+
+    async function chamarFuncaoUsuarios(corpo) {
+        const { data, error } = await supabaseClient.functions.invoke('hyper-action', { body: corpo });
+        if (error) {
+            let mensagem = error.message || 'Falha na chamada.';
+            try {
+                if (error.context && typeof error.context.json === 'function') {
+                    const detalhe = await error.context.json();
+                    if (detalhe && detalhe.erro) mensagem = detalhe.erro;
+                }
+            } catch (e) {}
+            if (/Failed to send|not found|404|FunctionsFetchError/i.test(mensagem)) mensagem = 'A função hyper-action ainda não foi publicada no Supabase.';
+            return { erro: mensagem };
+        }
+        if (data && data.erro) return { erro: data.erro };
+        return { dados: data };
+    }
+
+    function abrirModalGenerico(id, html) {
+        let overlay = document.getElementById(id);
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = id;
+            overlay.className = 'modal-overlay';
+            overlay.addEventListener('click', e => { if (e.target === overlay) overlay.style.display = 'none'; });
+            document.body.appendChild(overlay);
+        }
+        overlay.innerHTML = html;
+        overlay.style.display = 'flex';
+        return overlay;
+    }
+
+    function abrirModalNovoUsuario() {
+        const dados = { equipe: '' };
+        const overlay = abrirModalGenerico('modalNovoUsuario', `
+            <div class="modal-card-metas">
+                <div class="modal-topo-metas">
+                    <h3>Novo usuário</h3>
+                    <button type="button" class="btn-fechar-modal-metas" data-fechar>&times;</button>
+                </div>
+                <div class="modal-corpo-metas">
+                    <div class="form-novo-usuario">
+                        <div class="campo-form"><span>Nome completo</span><input type="text" id="nu-nome" class="input-busca-padrao" maxlength="80" autocomplete="off"></div>
+                        <div class="campo-form"><span>E-mail de acesso</span><input type="email" id="nu-email" class="input-busca-padrao" maxlength="120" autocomplete="off"></div>
+                        <div class="campo-form"><span>Código do dealer (opcional)</span><input type="text" id="nu-dealer" class="input-busca-padrao" maxlength="40" placeholder="Como aparece na planilha" autocomplete="off"></div>
+                        <div class="campo-form"><span>Função</span><select id="nu-role" class="select-filtro-status select-funcao">
+                                <option value="consultor" selected>Consultor</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                        </div>
+                        <div class="campo-form"><span>Marcas</span><button type="button" id="nu-marcas" class="btn-abrir-config-metas">Definir marcas</button></div>
+                        <div class="campo-form"><span>Senha temporária</span><input type="text" id="nu-senha" class="input-busca-padrao" maxlength="60" autocomplete="off"></div>
+                    </div>
+                    <p class="texto-pequeno">Informe a senha temporária ao usuário. Ele pode usá-la para entrar imediatamente.</p>
+                </div>
+                <div class="modal-rodape-metas">
+                    <button type="button" class="btn-cancelar-modal" data-fechar>Cancelar</button>
+                    <button type="button" id="nu-criar" class="btn-salvar-modal">Criar usuário</button>
+                </div>
+            </div>`);
+        const fechar = () => { overlay.style.display = 'none'; };
+        overlay.querySelectorAll('[data-fechar]').forEach(b => b.addEventListener('click', fechar));
+        overlay.querySelector('#nu-senha').value = gerarSenhaTemporaria();
+        overlay.querySelector('#nu-marcas').addEventListener('click', () => {
+            abrirModalMarcas(dados.equipe, nova => {
+                dados.equipe = nova;
+                overlay.querySelector('#nu-marcas').textContent = nova || 'Definir marcas';
+            });
+        });
+        overlay.querySelector('#nu-criar').addEventListener('click', async () => {
+            const botao = overlay.querySelector('#nu-criar');
+            const corpo = {
+                acao: 'criar',
+                nome: overlay.querySelector('#nu-nome').value.trim(),
+                email: overlay.querySelector('#nu-email').value.trim(),
+                dealer: overlay.querySelector('#nu-dealer').value,
+                role: overlay.querySelector('#nu-role').value,
+                equipe: dados.equipe,
+                senha: overlay.querySelector('#nu-senha').value
+            };
+            if (!corpo.nome || !corpo.email) { avisar('Informe nome e e-mail.'); return; }
+            if (corpo.senha.length < 8) { avisar('A senha temporária precisa ter pelo menos 8 caracteres.'); return; }
+            if (corpo.role !== 'admin' && !corpo.equipe) {
+                if (!(await confirmar('Este usuário ficará sem marcas e não aparecerá nas metas por marca. Criar mesmo assim?', { titulo: 'Sem marcas', confirmar: 'Criar' }))) return;
+            }
+            botao.disabled = true;
+            botao.textContent = 'Criando...';
+            const { erro } = await chamarFuncaoUsuarios(corpo);
+            botao.disabled = false;
+            botao.textContent = 'Criar usuário';
+            if (erro) { avisar(erro); return; }
+            fechar();
+            await carregarPerfis();
+            window.carregarPerfisInativos(supabaseClient, true);
+            renderizarUsuarios();
+            avisar(`Usuário criado. Senha temporária: ${corpo.senha}`, 'sucesso');
+        });
+    }
+
+    function abrirModalSenha() {
+        const overlay = abrirModalGenerico('modalSenhaUsuario', `
+            <div class="modal-card-metas">
+                <div class="modal-topo-metas">
+                    <h3>Nova senha</h3>
+                    <button type="button" class="btn-fechar-modal-metas" data-fechar>&times;</button>
+                </div>
+                <div class="modal-corpo-metas">
+                    <div class="form-novo-usuario">
+                        <div class="campo-form"><span>Usuário</span>
+                            <select id="ns-usuario" class="select-filtro-status select-funcao">
+                                <option value="">Selecione o usuário</option>
+                                ${perfis.filter(p => p.nome).map(p => `<option value="${escaparHtml(p.id)}">${escaparHtml(p.nome)}${p.inativo_desde ? ' (inativo)' : ''}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="campo-form"><span>Nova senha temporária</span><input type="text" id="ns-senha" class="input-busca-padrao" maxlength="60" autocomplete="off"></div>
+                    </div>
+                    <p class="texto-pequeno">A senha atual deixa de funcionar assim que você confirmar.</p>
+                </div>
+                <div class="modal-rodape-metas">
+                    <button type="button" class="btn-cancelar-modal" data-fechar>Cancelar</button>
+                    <button type="button" id="ns-salvar" class="btn-salvar-modal">Definir senha</button>
+                </div>
+            </div>`);
+        const fechar = () => { overlay.style.display = 'none'; };
+        overlay.querySelectorAll('[data-fechar]').forEach(b => b.addEventListener('click', fechar));
+        overlay.querySelector('#ns-senha').value = gerarSenhaTemporaria();
+        overlay.querySelector('#ns-salvar').addEventListener('click', async () => {
+            const senha = overlay.querySelector('#ns-senha').value;
+            const alvo = overlay.querySelector('#ns-usuario').value;
+            if (!alvo) { avisar('Selecione o usuário.'); return; }
+            if (senha.length < 8) { avisar('A senha precisa ter pelo menos 8 caracteres.'); return; }
+            const botao = overlay.querySelector('#ns-salvar');
+            botao.disabled = true;
+            const { erro } = await chamarFuncaoUsuarios({ acao: 'senha', user_id: alvo, senha });
+            botao.disabled = false;
+            if (erro) { avisar(erro); return; }
+            fechar();
+            avisar(`Senha definida. Nova senha temporária: ${senha}`, 'sucesso');
+        });
+    }
+
+    document.getElementById('btn-novo-usuario').addEventListener('click', abrirModalNovoUsuario);
+    document.getElementById('btn-senha-usuario').addEventListener('click', abrirModalSenha);
 
     const corpoInativos = document.getElementById('corpo-inativos');
     const campoDealerInativo = document.getElementById('inativo-dealer');
@@ -556,7 +736,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         <td>Usuário inativado desde ${escaparHtml(desde)}</td>
                         <td class="col-centro">${c.total}</td>
                         <td class="col-centro">${c.comp}</td>
-                        <td class="col-centro"><div class="acoes-usuario"><button type="button" class="btn-abrir-config-metas btn-detalhes-inativo">Ver detalhes</button><button type="button" class="btn-abrir-config-metas btn-reativar-perfil">Reativar</button></div></td>
+                        <td class="col-centro"><div class="acoes-usuario"><button type="button" class="btn-abrir-config-metas btn-detalhes-inativo">Ver detalhes</button><button type="button" class="btn-abrir-config-metas btn-reativar-perfil">Reativar</button><button type="button" class="btn-abrir-config-metas ico ico-lixeira btn-excluir-inativo btn-excluir-perfil" title="Excluir usuário" aria-label="Excluir usuário"></button></div></td>
                     </tr>`;
             }).join('');
             corpoInativos.innerHTML = linhasPerfilHtml + lista.map(i => {
@@ -571,7 +751,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                             <div class="acoes-usuario">
                                 <button type="button" class="btn-abrir-config-metas btn-detalhes-inativo">Ver detalhes</button>
                                 <button type="button" class="btn-abrir-config-metas btn-salvar-inativo">Salvar</button>
-                                <button type="button" class="btn-abrir-config-metas btn-remover-inativo">Remover</button>
+                                <button type="button" class="btn-abrir-config-metas ico ico-lixeira btn-excluir-inativo btn-remover-inativo" title="Excluir código" aria-label="Excluir código"></button>
                             </div>
                         </td>
                     </tr>`;
@@ -583,6 +763,22 @@ document.addEventListener('DOMContentLoaded', async function () {
                 });
             });
             corpoInativos.querySelectorAll('tr[data-perfil]').forEach(tr => {
+                tr.querySelector('.btn-excluir-perfil').addEventListener('click', async () => {
+                    const perfil = perfisPorId.get(tr.dataset.perfil);
+                    const qtd = (contagemPerfis.get(perfil.id) || { total: 0 }).total;
+                    if (qtd > 0) {
+                        avisar(`${perfil.nome} possui ${qtd} agendamento(s) e não pode ser excluído. Mantenha como inativo para que eles continuem contando nas metas.`);
+                        return;
+                    }
+                    if (!(await confirmar(`Excluir ${perfil.nome} definitivamente? O login e o perfil serão apagados e isso não pode ser desfeito.`, { titulo: 'Excluir usuário', confirmar: 'Excluir', perigo: true }))) return;
+                    const { erro } = await chamarFuncaoUsuarios({ acao: 'excluir', user_id: perfil.id });
+                    if (erro) { avisar(erro); return; }
+                    await carregarPerfis();
+                    window.carregarPerfisInativos(supabaseClient, true);
+                    avisar('Usuário excluído.', 'sucesso');
+                    renderizarUsuarios();
+                    carregarInativosAdmin();
+                });
                 tr.querySelector('.btn-reativar-perfil').addEventListener('click', async () => {
                     const perfil = perfisPorId.get(tr.dataset.perfil);
                     if (!(await confirmar(`Reativar ${perfil.nome}? Ela volta para o Fechamento, ranking e filtros.`, { titulo: 'Reativar usuário', confirmar: 'Reativar' }))) return;
@@ -965,6 +1161,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     buscaHistorico.addEventListener('input', renderizarHistorico);
     filtroTabela.addEventListener('change', () => carregarHistorico(true));
     btnHistoricoMais.addEventListener('click', () => carregarHistorico(false));
+
+    if (typeof window.montarBackup === 'function') {
+        moduloBackup = window.montarBackup({ supabaseClient, usuarioAtual, getPerfis: () => perfis, buscarTodasLinhas, escaparHtml, aoRestaurar: () => { if (estado.mes) carregarFechamento(); } });
+    }
 
     try {
         await carregarPerfis();

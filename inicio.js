@@ -355,12 +355,12 @@ document.addEventListener('DOMContentLoaded', async function () {
             </li>`;
         }).join('') || '<li class="dash-vazio">Sem agendamentos no mês.</li>';
 
-        const linhasRanking = ranking.map(([id, d], i) => {
+        const linhasRanking = ranking.slice(0, 3).map(([id, d], i) => {
             const pres = (d.comp + d.falt) > 0 ? Math.round((d.comp / (d.comp + d.falt)) * 100) : 0;
             return `<li><span>${i + 1}º ${escaparHtml(nomePor.get(id) || 'Operador')}</span><span><strong>${d.comp}</strong> <span class="dash-sub">comp. · ${pres}%</span></span></li>`;
         }).join('') || '<li class="dash-vazio">Sem dados no mês.</li>';
 
-        const linhasHistorico = (historico || []).map(h => `<li><div><div>${ROTULO_ACAO[h.operacao] || h.operacao} · ${ROTULO_AREA[h.tabela] || h.tabela}</div><div class="dash-sub">${escaparHtml(descrever(h))}</div></div><span class="dash-sub">${quando(h.criado_em)}</span></li>`).join('') || '<li class="dash-vazio">Sem alterações registradas.</li>';
+        const linhasHistorico = (historico || []).slice(0, 3).map(h => `<li><div><div>${ROTULO_ACAO[h.operacao] || h.operacao} · ${ROTULO_AREA[h.tabela] || h.tabela}</div><div class="dash-sub">${escaparHtml(descrever(h))}</div></div><span class="dash-sub">${quando(h.criado_em)}</span></li>`).join('') || '<li class="dash-vazio">Sem alterações registradas.</li>';
 
         const imp = (ultimaImportacao && ultimaImportacao[0]) ? ultimaImportacao[0] : null;
         const impDados = imp ? (imp.dados_depois || {}) : null;
@@ -381,10 +381,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 ${almocoSemResponsavel === null ? '' : `<a class="dash-card" href="almoco.html"><span class="dash-card-titulo">Almoço Toyota hoje</span><span class="dash-valor ${almocoSemResponsavel ? 'alerta' : 'sucesso'}">${almocoSemResponsavel}</span><span class="dash-sub">${almocoSemResponsavel ? 'evento(s) sem responsável' : 'Nenhum evento sem responsável'}</span></a>`}
             </div>
             <div class="dash-secao-titulo">Desempenho e atividade</div>
-            <div class="dash-grade dash-largo">
-                <div class="dash-card"><span class="dash-card-titulo">Ranking do mês</span><ul class="dash-lista">${linhasRanking}</ul></div>
-                <div class="dash-card"><span class="dash-card-titulo">Últimas alterações</span><ul class="dash-lista">${linhasHistorico}</ul></div>
-                <div class="dash-card"><span class="dash-card-titulo">Última importação</span>${imp ? `<span class="dash-valor" style="font-size: 20px;">${escaparHtml(impDados.arquivo || 'Planilha')}</span><span class="dash-sub">${quando(imp.criado_em)} · ${escaparHtml(impDados.periodo || '')}</span><span class="dash-sub">${impDados.total ?? 0} agendamentos (${impDados.comparecidos ?? 0} comparecidos, ${impDados.no_show ?? 0} no-show)</span>` : '<span class="dash-vazio">Nenhuma importação registrada.</span>'}</div>
+            <div class="dash-card dash-atividade">
+                <div class="dash-atv-col"><span class="dash-card-titulo">Ranking do mês</span><ul class="dash-lista">${linhasRanking}</ul></div>
+                <div class="dash-atv-col"><span class="dash-card-titulo">Últimas alterações</span><ul class="dash-lista">${linhasHistorico}</ul></div>
+                <div class="dash-atv-col"><span class="dash-card-titulo">Última importação</span>${imp ? `<strong class="dash-import-arquivo" title="${escaparHtml(impDados.arquivo || 'Planilha')}">${escaparHtml(impDados.arquivo || 'Planilha')}</strong><span class="dash-sub">${quando(imp.criado_em)}${impDados.periodo ? ' · período ' + escaparHtml(impDados.periodo) : ''}</span><span class="dash-import-resumo"><strong>${impDados.total ?? 0}</strong> agendamentos · <strong class="sucesso">${impDados.comparecidos ?? 0}</strong> comparecidos · <strong class="perigo">${impDados.no_show ?? 0}</strong> no&#8209;show</span>${impDados.marcas ? `<span class="dash-sub">Marcas: ${escaparHtml(impDados.marcas)}</span>` : ''}` : '<span class="dash-vazio">Nenhuma importação registrada.</span>'}</div>
             </div>`;
     }
 

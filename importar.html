@@ -8,11 +8,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <script src="tema.js?v=20261102u"></script>
-    <script src="avisos.js?v=20261102u"></script>
-    <script src="seletor-mes.js?v=20261102u" defer></script>
-    <script src="dropdown.js?v=20261102u" defer></script>
-    <link rel="stylesheet" href="style.css?v=20261102u">
+    <script src="tema.js?v=20261106h"></script>
+    <script src="avisos.js?v=20261106h"></script>
+    <script src="seletor-mes.js?v=20261106h" defer></script>
+    <script src="dropdown.js?v=20261106h" defer></script>
+    <link rel="stylesheet" href="style.css?v=20261106h">
 </head>
 <body class="pagina-importar">
     <div class="container">
@@ -63,33 +63,6 @@
                             <label for="consultorDestino">Atribuir agendamentos a:</label>
                             <select id="consultorDestino" class="custom-select">
                                 <option value="auto">Automático (Lê Empresa e Operador)</option>
-                                <optgroup label="Toyota">
-                                    <option value="70b40aa8-8b9c-4219-acd1-3f16647558fa">Alany Benato [ALANYNI]</option>
-                                    <option value="58267673-516d-4b01-9d27-c60a8a6c39b6">Allana Thaina [ALLANASAL]</option>
-                                    <option value="61218e37-acdb-4e75-bc86-8a71e183bf17">Ana Lucia [ANAPIL]</option>
-                                    <option value="45ac2ad5-cce7-4d0a-9cf8-58c2a5690777">Cristiane da Silva [CRISTIANESZT]</option>
-                                    <option value="b3bc63cd-c783-482d-a2d8-c978bbd32703">Lorena Mendes [LORENAAZ]</option>
-                                    <option value="b5167b50-fe5e-429f-b2fe-7bf861190f30">Nicoly Moreira [NICOLYMOSANG]</option>
-                                </optgroup>
-                                <optgroup label="Multimarcas">
-                                    <option value="6ecc4207-4078-46ca-9719-83e26cb7f87c">Guilherme Meira [GUILHERMEHENP]</option>
-                                    <option value="0145aff1-9805-40ec-811c-f40dac682576">Anita Henrique [ANITAH]</option>
-                                    <option value="0a574cb7-71aa-493e-8d4f-7949c71abec4">Talita Soares [TALITANSO]</option>
-                                </optgroup>
-                                <optgroup label="Marcas Individuais">
-                                    <option value="1eab4622-a0ef-445c-9002-36dd49a05736">Camila Macioszki [CAMILAMAC]</option>
-                                    <option value="f239082b-2cec-440b-b530-c59d5b19b7b7">Lucas Oliveira [LUCASORO]</option>
-                                    <option value="3f7bf777-f5d4-4041-9dd1-b3fddf83b6a7">Larissa Rodrigues [LARISSABTRG]</option>
-                                    <option value="be200c79-0a05-439a-8575-8f88a1eb60c0">Francine Silva [FRANCINEDLS]</option>
-                                    <option value="613c5992-4e73-4f7b-9506-8c589da86899">Emili Almeida [EMILIALM]</option>
-                                    <option value="973837fa-77b7-402b-b8b6-90569e73d26c">Ana Eliza Lopes [ANAERLPS]</option>
-                                    <option value="24ba66ba-1a58-4263-95c8-eea8fed14ac1">Nicolly Prado [NICOLLYGFP]</option>
-                                    <option value="cd857f41-4a48-4284-af7e-569d16f9c179">Ana Galdino [ANAGATI]</option>
-                                    <option value="c541b7bb-4068-4b9e-87b7-d33a6388a698">Isabela Alves [ISABELACBA]</option>
-                                    <option value="dd448d7e-c65e-4a91-9cf8-f07cb3c4ab81">Ellen Ferreira [ELLENMDSF]</option>
-                                    <option value="13f5b203-b846-482e-b322-b607ff16d3c3">Guilherme Araujo [GUILHERMEAAL]</option>
-                                    <option value="13e2c547-9af5-43a5-9870-94c4b66575a9">Mayara Santos [MAYARAS]</option>
-                                </optgroup>
                             </select>
                         </div>
                     </div>
@@ -307,9 +280,6 @@
                 }
             } catch (e) {}
 
-            if (session.user.email === 'usuariotestesite01@gmail.com' || session.user.email?.includes('admin')) {
-                isAdmin = true;
-            }
             if (!isAdmin) {
                 avisar('Acesso restrito!');
                 window.location.href = 'relatorios.html';
@@ -343,7 +313,6 @@
             (function definirMesPadrao() {
                 const d = new Date();
                 d.setDate(1);
-                d.setMonth(d.getMonth() - 1);
                 const valor = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
                 mesSelect.value = valor;
                 mesExport.value = valor;
@@ -395,33 +364,63 @@
                 else return 10.00;
             }
 
-            const OPERADORES_MESTRE = [
-                { id: 'b5167b50-fe5e-429f-b2fe-7bf861190f30', dealer: 'NICOLYMOSANG', nome: 'Nicoly Moreira', toyota: true, match: (t) => t.includes('NICOLYMOSANG') || t.includes('NICOLY') || t.includes('SANGA') },
-                { id: '58267673-516d-4b01-9d27-c60a8a6c39b6', dealer: 'ALLANASAL', nome: 'Allana Thaina', toyota: true, match: (t) => t.includes('ALLANASAL') || (t.includes('ALLANA') && (t.includes('VAZ') || t.includes('THAINA'))) },
-                { id: '45ac2ad5-cce7-4d0a-9cf8-58c2a5690777', dealer: 'CRISTIANESZT', nome: 'Cristiane da Silva', toyota: true, match: (t) => t.includes('CRISTIANESZT') || (t.includes('CRISTIANE') && t.includes('SILVA')) },
-                { id: '61218e37-acdb-4e75-bc86-8a71e183bf17', dealer: 'ANAPIL', nome: 'Ana Lucia', toyota: true, match: (t) => t.includes('ANAPIL') || (t.includes('ANA') && t.includes('LUCIA')) || t.includes('BUGALA') },
-                { id: '70b40aa8-8b9c-4219-acd1-3f16647558fa', dealer: 'ALANYNI', nome: 'Alany Benato', toyota: true, match: (t) => t.includes('ALANYNI') || t.includes('ALANY') || t.includes('BENATO') || t.includes('WEIGERT') },
-                { id: 'b3bc63cd-c783-482d-a2d8-c978bbd32703', dealer: 'LORENAAZ', nome: 'Lorena Mendes', toyota: true, match: (t) => t.includes('LORENAAZ') || t.includes('LORENA') || t.includes('AZOLIN') },
+            let OPERADORES_MESTRE = [];
+            let usuariosCarregados = false;
 
-                { id: '6ecc4207-4078-46ca-9719-83e26cb7f87c', dealer: 'GUILHERMEHENP', nome: 'Guilherme Meira', match: (t) => t.includes('GUILHERMEHENP') || (t.includes('GUILHERME') && (t.includes('MEIRA') || t.includes('PINTO'))) },
-                { id: '0145aff1-9805-40ec-811c-f40dac682576', dealer: 'ANITAH', nome: 'Anita Henrique', match: (t) => t.includes('ANITAH') || (t.includes('ANITA') && (t.includes('ZANOSO') || t.includes('HENRIQUE'))) },
-                { id: '0a574cb7-71aa-493e-8d4f-7949c71abec4', dealer: 'TALITANSO', nome: 'Talita Soares', match: (t) => t.includes('TALITANSO') || (t.includes('TALITA') && (t.includes('SOARES') || t.includes('NASCIMENTO'))) },
+            function normalizarTexto(t) {
+                return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+            }
 
-                { id: '1eab4622-a0ef-445c-9002-36dd49a05736', dealer: 'CAMILAMAC', nome: 'Camila Macioszki', match: (t) => t.includes('CAMILAMAC') || t.includes('MACIOSZKI') || (t.includes('CAMILA') && t.includes('RIBEIRO')) },
-                { id: 'f239082b-2cec-440b-b530-c59d5b19b7b7', dealer: 'LUCASORO', nome: 'Lucas Oliveira', match: (t) => t.includes('LUCASORO') || (t.includes('LUCAS') && (t.includes('OLIVEIRA') || t.includes('ROCHA'))) },
-                { id: '3f7bf777-f5d4-4041-9dd1-b3fddf83b6a7', dealer: 'LARISSABTRG', nome: 'Larissa Rodrigues', match: (t) => t.includes('LARISSABTRG') || (t.includes('LARISSA') && (t.includes('RODRIGUES') || t.includes('BATALHA'))) },
-                { id: 'be200c79-0a05-439a-8575-8f88a1eb60c0', dealer: 'FRANCINEDLS', nome: 'Francine Silva', match: (t) => t.includes('FRANCINEDLS') || (t.includes('FRANCINE') && (t.includes('DIOVANA') || t.includes('LEAL'))) },
-                { id: '613c5992-4e73-4f7b-9506-8c589da86899', dealer: 'EMILIALM', nome: 'Emili Almeida', match: (t) => t.includes('EMILIALM') || (t.includes('EMILI') && (t.includes('ALVES') || t.includes('ALMEIDA'))) },
-                
-                { id: '973837fa-77b7-402b-b8b6-90569e73d26c', dealer: 'ANAERLPS', nome: 'Ana Eliza Lopes', match: (t) => t.includes('ANAERLPS') || (t.includes('ANA') && t.includes('ELIZA')) || (t.includes('ELIZA') && t.includes('LOPES')) },
+            function montarOperadores(perfis) {
+                const ignorar = new Set(['DE', 'DA', 'DO', 'DAS', 'DOS', 'E']);
+                return perfis.filter(p => p.id && p.nome).map(p => {
+                    const marcas = String(p.equipe || '').split('|').map(m => m.trim()).filter(Boolean);
+                    const dealer = normalizarTexto(p.dealer).replace(/\s+/g, '');
+                    const tokens = normalizarTexto(p.nome).split(/[^A-Z0-9]+/).filter(t => t && !ignorar.has(t));
+                    return {
+                        id: p.id,
+                        nome: p.nome,
+                        dealer,
+                        tokens: tokens.length >= 2 ? tokens : [],
+                        marcas,
+                        temToyota: marcas.some(m => /toyota/i.test(m)),
+                        soToyota: marcas.length > 0 && marcas.every(m => /toyota/i.test(m))
+                    };
+                });
+            }
 
-                { id: '24ba66ba-1a58-4263-95c8-eea8fed14ac1', dealer: 'NICOLLYGFP', nome: 'Nicolly Prado', match: (t) => t.includes('NICOLLYGFP') || (t.includes('NICOLLY') && (t.includes('PRADO') || t.includes('FRAGOZO'))) },
-                { id: 'cd857f41-4a48-4284-af7e-569d16f9c179', dealer: 'ANAGATI', nome: 'Ana Galdino', match: (t) => t.includes('ANAGATI') || (t.includes('ANA') && t.includes('GALDINO')) || (t.includes('CAROLINE') && t.includes('GALDINO')) },
-                { id: 'c541b7bb-4068-4b9e-87b7-d33a6388a698', dealer: 'ISABELACBA', nome: 'Isabela Alves', match: (t) => t.includes('ISABELACBA') || (t.includes('ISABELA') && (t.includes('BRANDELERO') || t.includes('CECILIA'))) },
-                { id: 'dd448d7e-c65e-4a91-9cf8-f07cb3c4ab81', dealer: 'ELLENMDSF', nome: 'Ellen Ferreira', match: (t) => t.includes('ELLENMDSF') || (t.includes('ELLEN') && (t.includes('FERREIRA') || t.includes('MAYLIN'))) },
-                { id: '13f5b203-b846-482e-b322-b607ff16d3c3', dealer: 'GUILHERMEAAL', nome: 'Guilherme Araujo', match: (t) => t.includes('GUILHERMEAAL') || (t.includes('GUILHERME') && (t.includes('ARAUJO') || t.includes('ALMEIDA'))) },
-                { id: '13e2c547-9af5-43a5-9870-94c4b66575a9', dealer: 'MAYARAS', nome: 'Mayara Santos', match: (t) => t.includes('MAYARAS') || (t.includes('MAYARA') && (t.includes('SANTOS') || t.includes('BARBOSA'))) }
-            ];
+            async function carregarOperadores() {
+                let resposta = await supabaseClient.from('perfis').select('id, nome, dealer, equipe');
+                if (resposta.error) resposta = await supabaseClient.from('perfis').select('id, nome, equipe');
+                if (resposta.error || !resposta.data) {
+                    usuariosCarregados = false;
+                    if (window.avisar) window.avisar('Não foi possível carregar os usuários do sistema. A importação automática não vai reconhecer ninguém.');
+                    return;
+                }
+                OPERADORES_MESTRE = montarOperadores(resposta.data);
+                usuariosCarregados = true;
+                montarListaDestino();
+            }
+
+            function montarListaDestino() {
+                const grupos = [['Toyota', []], ['Multimarcas', []], ['Marcas Individuais', []]];
+                OPERADORES_MESTRE.filter(o => o.marcas.length > 0 || o.dealer).forEach(o => {
+                    const idx = o.soToyota ? 0 : (o.marcas.length > 1 ? 1 : 2);
+                    grupos[idx][1].push(o);
+                });
+                const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+                const atual = consultorDestinoSelect.value;
+                let html = '<option value="auto">Automático (Lê Empresa e Operador)</option>';
+                grupos.forEach(([titulo, lista]) => {
+                    if (lista.length === 0) return;
+                    lista.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+                    html += `<optgroup label="${titulo}">` + lista.map(o => `<option value="${esc(o.id)}">${esc(o.nome)}${o.dealer ? ' [' + esc(o.dealer) + ']' : ''}</option>`).join('') + '</optgroup>';
+                });
+                consultorDestinoSelect.innerHTML = html;
+                if ([...consultorDestinoSelect.options].some(o => o.value === atual)) consultorDestinoSelect.value = atual;
+            }
+
+            await carregarOperadores();
 
             function nomeIgnoravel(texto) {
                 const txt = String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
@@ -449,11 +448,11 @@
                                 <h3>Confirmar importação</h3>
                             </div>
                             <div class="modal-corpo-metas">
-                                <div class="resumo-confirmacao">${linhas}${avisoNomes}</div>
+                                <div class="resumo-confirmacao">${(resumo.alertas || []).map(t => `<div class="alerta-mes-importacao">${esc(t)}</div>`).join('')}${linhas}${avisoNomes}</div>
                             </div>
                             <div class="modal-rodape-metas">
                                 <button type="button" id="btnImportarCancelar" class="btn-cancelar-modal">Cancelar</button>
-                                <button type="button" id="btnImportarConfirmar" class="btn-salvar-modal">Confirmar e gravar</button>
+                                <button type="button" id="btnImportarConfirmar" class="btn-salvar-modal">${(resumo.alertas || []).length ? 'Confirmar mesmo assim' : 'Confirmar e gravar'}</button>
                             </div>
                         </div>`;
                     const fechar = (resposta) => { overlay.style.display = 'none'; resolve(resposta); };
@@ -478,15 +477,22 @@
 
             function identificarConsultor(textoAgendador) {
                 if (!textoAgendador) return null;
-                const txt = String(textoAgendador).normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+                const txt = normalizarTexto(textoAgendador);
                 if (txt === 'MASTER' || txt.includes('SUPORTE') || txt.includes('PESQUISA') || txt.includes('BACKUP')) return null;
 
+                const palavras = new Set(txt.split(/[^A-Z0-9]+/).filter(Boolean));
+                const semEspaco = txt.replace(/\s+/g, '');
+                const resultado = op => ({ id: op.id, nome: op.nome, dealer: op.dealer, toyota: op.soToyota, temToyota: op.temToyota, soToyota: op.soToyota });
+
+                const porDealer = OPERADORES_MESTRE.find(op => op.dealer && (semEspaco === op.dealer || palavras.has(op.dealer)));
+                if (porDealer) return resultado(porDealer);
+
+                let melhor = null;
                 for (const op of OPERADORES_MESTRE) {
-                    if (txt === op.dealer || op.match(txt)) {
-                        return { id: op.id, nome: op.nome, dealer: op.dealer, toyota: !!op.toyota };
-                    }
+                    if (op.tokens.length < 2 || !op.tokens.every(t => palavras.has(t))) continue;
+                    if (!melhor || op.tokens.length > melhor.tokens.length) melhor = op;
                 }
-                return null;
+                return melhor ? resultado(melhor) : null;
             }
 
             function identificarInativo(textoAgendador, lista, codigoLinha) {
@@ -834,8 +840,8 @@
                                 if (!numRevisao) continue;
 
                                 if (destinoEscolhido === 'auto' && !consultorAlvo.inativo) {
-                                    if (modoPlanilha === 'outras' && consultorAlvo.toyota) { totalIgnoradosOutroGrupo++; continue; }
-                                    if (modoPlanilha === 'toyota' && !consultorAlvo.toyota) { totalIgnoradosOutroGrupo++; continue; }
+                                    if (modoPlanilha === 'outras' && consultorAlvo.soToyota) { totalIgnoradosOutroGrupo++; continue; }
+                                    if (modoPlanilha === 'toyota' && !consultorAlvo.temToyota) { totalIgnoradosOutroGrupo++; continue; }
                                 }
 
                                 if (numRevisao === 'FACILITADA') totalFacilitadas++;
@@ -992,7 +998,21 @@
                             if (totalInativos > 0) linhasConfirmacao.push(['De funcionários inativos', String(totalInativos)]);
                             if (totalExternos > 0) linhasConfirmacao.push(['Ignorados (código OP-20, agendam fora)', String(totalExternos)]);
                             if (totalIgnoradosOutroGrupo > 0) linhasConfirmacao.push(['Ignorados (outro grupo de marcas)', String(totalIgnoradosOutroGrupo)]);
-                            const confirmado = await confirmarImportacao({ linhas: linhasConfirmacao, naoReconhecidos: Object.entries(naoReconhecidos).sort((x, y) => y[1].q - x[1].q) });
+                            const alertasMes = [];
+                            const formatarMesAno = m => m.split('-').reverse().join('/');
+                            const mesReferencia = `${anoRef}-${mesPadrao}`;
+                            const contagemMeses = {};
+                            registrosParaSalvar.forEach(r => { const m = String(r.data_revisao || '').slice(0, 7); if (m) contagemMeses[m] = (contagemMeses[m] || 0) + 1; });
+                            const mesesFora = Object.entries(contagemMeses).filter(([m]) => m !== mesReferencia).sort((x, y) => y[1] - x[1]);
+                            const totalFora = mesesFora.reduce((soma, [, q]) => soma + q, 0);
+                            if (totalFora > 0) {
+                                const dominante = Object.entries(contagemMeses).sort((x, y) => y[1] - x[1])[0][0];
+                                const detalhe = mesesFora.map(([m, q]) => `${formatarMesAno(m)}: ${q}`).join(', ');
+                                alertasMes.push(dominante !== mesReferencia
+                                    ? `A maior parte do arquivo é de ${formatarMesAno(dominante)}, mas o mês de referência escolhido é ${formatarMesAno(mesReferencia)}. Cancele e confira o mês antes de gravar.`
+                                    : `${totalFora} de ${registrosParaSalvar.length} agendamentos têm data fora de ${formatarMesAno(mesReferencia)} (${detalhe}). Confira se o mês de referência está correto.`);
+                            }
+                            const confirmado = await confirmarImportacao({ alertas: alertasMes, linhas: linhasConfirmacao, naoReconhecidos: Object.entries(naoReconhecidos).sort((x, y) => y[1].q - x[1].q) });
                             if (!confirmado) {
                                 log('Importação cancelada. Nada foi alterado.');
                                 return;
@@ -1205,5 +1225,6 @@
             carregarHistorico();
         });
     </script>
+    <script src="conta.js?v=20261106h" defer></script>
 </body>
 </html>

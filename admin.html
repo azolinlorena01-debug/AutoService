@@ -6,13 +6,13 @@
     <title>Painel de Bônus - Gestão</title>
     <link rel="icon" type="image/png" href="imagens/logo-painel.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-    <script src="bonus.js?v=20261102u" defer></script>
+    <script src="bonus.js?v=20261106h" defer></script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <script src="tema.js?v=20261102u"></script>
-    <script src="avisos.js?v=20261102u"></script>
-    <script src="seletor-mes.js?v=20261102u" defer></script>
-    <script src="dropdown.js?v=20261102u" defer></script>
-    <link rel="stylesheet" href="style.css?v=20261102u">
+    <script src="tema.js?v=20261106h"></script>
+    <script src="avisos.js?v=20261106h"></script>
+    <script src="seletor-mes.js?v=20261106h" defer></script>
+    <script src="dropdown.js?v=20261106h" defer></script>
+    <link rel="stylesheet" href="style.css?v=20261106h">
 </head>
 <body class="pagina-admin">
     <div class="container">
@@ -42,6 +42,7 @@
                 <a href="importar.html" class="btn-filtro-grafico">Importar / Exportar</a>
                 <button type="button" id="aba-usuarios" class="btn-filtro-grafico">Usuários</button>
                 <button type="button" id="aba-inativos" class="btn-filtro-grafico">Inativos</button>
+                <button type="button" id="aba-backup" class="btn-filtro-grafico">Backup</button>
             </div>
 
             <section id="secao-fechamento">
@@ -91,20 +92,25 @@
                         <h2>Usuários</h2>
                         <span class="subtitulo-contador" id="usuarios-contador">0 usuários</span>
                     </div>
-                    <input type="text" id="usuarios-busca" class="input-busca-padrao" placeholder="Buscar por nome...">
+                    <div class="acoes-cabecalho-usuarios">
+                        <input type="text" id="usuarios-busca" class="input-busca-padrao" placeholder="Buscar por nome...">
+                        <button type="button" id="btn-senha-usuario" class="btn-abrir-config-metas">Redefinir senha</button>
+                        <button type="button" id="btn-novo-usuario" class="btn-adicionar-agendamento">+ Novo usuário</button>
+                    </div>
                 </div>
                 <div class="tabela-container">
                     <table class="tabela-admin">
                         <thead>
                             <tr>
                                 <th>NOME</th>
+                                <th class="col-centro">DEALER</th>
                                 <th class="col-centro">MARCAS</th>
                                 <th class="col-centro">FUNÇÃO</th>
                                 <th class="col-centro">AÇÃO</th>
                             </tr>
                         </thead>
                         <tbody id="corpo-usuarios">
-                            <tr class="linha-esqueleto"><td colspan="4"><div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div></td></tr>
+                            <tr class="linha-esqueleto"><td colspan="5"><div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -165,7 +171,7 @@
                     </div>
                 </div>
                 <div class="tabela-container">
-                    <table class="tabela-admin">
+                    <table class="tabela-admin tabela-historico">
                         <thead>
                             <tr>
                                 <th class="col-selecao"><input type="checkbox" id="historico-selecionar-todos" aria-label="Selecionar todos"></th>
@@ -189,11 +195,55 @@
                     </div>
                 </div>
             </section>
+
+            <section id="secao-backup" class="card-tabela-agendamentos oculto">
+                <div class="tabela-cabecalho-acoes">
+                    <div>
+                        <h2>Backup</h2>
+                        <span class="subtitulo-contador" id="backup-contador"></span>
+                    </div>
+                </div>
+                <p class="lista-inativos-aviso">O backup salva em um arquivo os agendamentos, metas, fechamentos e divergências de um mês, ligados aos usuários e aos inativos. Guarde o arquivo fora do sistema. Para fechar um mês é preciso ter gerado o backup dele no mesmo dia.</p>
+                <div class="backup-grade">
+                    <div class="backup-bloco">
+                        <h3>Gerar backup</h3>
+                        <p class="texto-pequeno">Escolha o mês e baixe o arquivo.</p>
+                        <div class="backup-linha">
+                            <input type="month" id="backup-mes-gerar" class="input-mes-padrao">
+                            <button type="button" id="btn-backup-gerar" class="btn-adicionar-agendamento">Gerar backup</button>
+                        </div>
+                    </div>
+                    <div class="backup-bloco">
+                        <h3>Restaurar backup</h3>
+                        <p class="texto-pequeno">Só meses anteriores ao atual. Nada que já existe é alterado ou apagado; entram apenas os registros que faltam.</p>
+                        <div class="backup-linha">
+                            <label for="backup-arquivo" class="btn-abrir-config-metas btn-escolher-arquivo">Escolher arquivo</label>
+                            <input type="file" id="backup-arquivo" accept=".json,application/json" class="oculto">
+                            <span id="backup-arquivo-nome" class="texto-pequeno">Nenhum arquivo escolhido</span>
+                            <button type="button" id="btn-backup-restaurar" class="btn-abrir-config-metas">Restaurar</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="tabela-container">
+                    <table class="tabela-admin">
+                        <thead>
+                            <tr>
+                                <th>DATA / HORA</th>
+                                <th>TIPO</th>
+                                <th class="col-centro">MÊS</th>
+                                <th class="col-centro">AGENDAMENTOS</th>
+                                <th>QUEM / DETALHES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-backups"></tbody>
+                    </table>
+                </div>
+            </section>
             <script>
                 (function () {
                     var h = window.location.hash.replace('#', '');
-                    if (['historico', 'usuarios', 'inativos'].indexOf(h) === -1) return;
-                    ['fechamento', 'historico', 'usuarios', 'inativos'].forEach(function (n) {
+                    if (['historico', 'usuarios', 'inativos', 'backup'].indexOf(h) === -1) return;
+                    ['fechamento', 'historico', 'usuarios', 'inativos', 'backup'].forEach(function (n) {
                         var b = document.getElementById('aba-' + n);
                         var sec = document.getElementById('secao-' + n);
                         if (b) b.classList.toggle('ativo', n === h);
@@ -204,6 +254,8 @@
         </main>
     </div>
 
-    <script src="admin.js?v=20261102u" defer></script>
+    <script src="backup.js?v=20261106h" defer></script>
+    <script src="admin.js?v=20261106h" defer></script>
+    <script src="conta.js?v=20261106h" defer></script>
 </body>
 </html>

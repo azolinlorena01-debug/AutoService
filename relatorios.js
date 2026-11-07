@@ -187,9 +187,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.warn('Erro ao carregar perfil:', e);
     }
 
-    if (usuarioAtual.email === 'usuariotestesite01@gmail.com' || usuarioAtual.email?.includes('admin')) {
-        isAdmin = true;
-    }
 
     if (isAdmin) {
         window.mostrarLinksAdmin();
