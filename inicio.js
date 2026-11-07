@@ -124,8 +124,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         </div>`;
     }
 
-    function cartaoNumero(titulo, valor, sub, classe) {
-        return `<div class="dash-card"><span class="dash-card-titulo">${titulo}</span><span class="dash-valor ${classe || ''}">${valor}</span><span class="dash-sub">${sub || ''}</span></div>`;
+    function cartaoNumero(titulo, valor, sub, classe, href) {
+        const abrir = href ? `<a class="dash-card" href="${href}">` : '<div class="dash-card">';
+        const fechar = href ? '</a>' : '</div>';
+        return `${abrir}<span class="dash-card-titulo">${titulo}</span><span class="dash-valor ${classe || ''}">${valor}</span><span class="dash-sub">${sub || ''}</span>${fechar}`;
     }
 
     function cartaoMeta(titulo, qtd, meta, rodape) {
@@ -203,9 +205,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             <div class="dash-secao-titulo">Seus números</div>
             <div class="dash-grade">
                 ${cartaoNumero('Agendamentos', meus.length, 'Registrados por você no mês')}
-                ${cartaoNumero('Comparecidos', comp, `${presenca}% de presença`, 'sucesso')}
-                ${cartaoNumero('Pendentes', pend, 'Aguardando comparecimento', 'alerta')}
-                ${cartaoNumero('No-show', falt, 'Não compareceram', 'perigo')}
+                ${cartaoNumero('Comparecidos', comp, `${presenca}% de presença`, 'sucesso', 'index.html?status=compareceu')}
+                ${cartaoNumero('Pendentes', pend, pend > 0 ? 'Aguardando comparecimento · Ver lista' : 'Aguardando comparecimento', 'alerta', 'index.html?status=pendente')}
+                ${cartaoNumero('No-show', falt, 'Não compareceram', 'perigo', 'index.html?status=faltou')}
             </div>
             <div class="dash-secao-titulo">Meta da equipe</div>
             ${cartoesMeta}
@@ -270,6 +272,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         const operadoresFech = (perfis || []).filter(p => p.role !== 'admin' && !p.inativo_desde);
         const fechamentos = await seguro(supabaseClient.from('fechamentos').select('user_id, valor_pago, nota_monitoria').eq('mes', mes), []);
         const comPago = (fechamentos || []).filter(f => f.valor_pago !== null && f.valor_pago !== undefined).length;
+        const comPagoIds = new Set((fechamentos || []).filter(f => f.valor_pago !== null && f.valor_pago !== undefined).map(f => f.user_id));
+        const comAgendamento = new Set(agendamentos.filter(a => a.user_id).map(a => a.user_id));
+        const pendFech = operadoresFech.filter(p => comAgendamento.has(p.id) && !comPagoIds.has(p.id)).length;
         const comNota = (fechamentos || []).filter(f => f.nota_monitoria !== null && f.nota_monitoria !== undefined).length;
         const mesFechado = fechados.has(mes);
 
@@ -280,7 +285,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (comparecido(a)) contagemOp[a.user_id].comp++;
             else if (a.status === 'faltou') contagemOp[a.user_id].falt++;
         });
-        const ranking = Object.entries(contagemOp).sort((a, b) => b[1].comp - a[1].comp).slice(0, 5);
+        const ranking = Object.entries(contagemOp).sort((a, b) => b[1].comp - a[1].comp || b[1].total - a[1].total);
 
         const agsInativos = agendamentos.filter(a => a.inativo);
         const compInativos = agsInativos.filter(comparecido).length;
@@ -295,7 +300,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (!error) almocoSemResponsavel = count || 0;
         } catch (e) {}
 
-        const historico = await seguro(supabaseClient.from('historico_alteracoes').select('*').order('criado_em', { ascending: false }).limit(5), []);
+        const historico = await seguro(supabaseClient.from('historico_alteracoes').select('*').gte('criado_em', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()).order('criado_em', { ascending: false }).limit(50), []);
         const ultimaImportacao = await seguro(supabaseClient.from('historico_alteracoes').select('*').eq('tabela', 'importacoes').order('criado_em', { ascending: false }).limit(1), []);
         const ROTULO_AREA = { agendamentos: 'Agendamento', perfis: 'Usuário', fechamentos: 'Fechamento', meses_fechados: 'Mês fechado', metas_mensais: 'Meta', divergencias: 'Divergência', importacoes: 'Importação' };
         const ROTULO_ACAO = { INSERT: 'Inclusão', UPDATE: 'Alteração', DELETE: 'Exclusão', IMPORTACAO: 'Importação' };
@@ -355,12 +360,12 @@ document.addEventListener('DOMContentLoaded', async function () {
             </li>`;
         }).join('') || '<li class="dash-vazio">Sem agendamentos no mês.</li>';
 
-        const linhasRanking = ranking.slice(0, 3).map(([id, d], i) => {
+        const linhasRanking = ranking.map(([id, d], i) => {
             const pres = (d.comp + d.falt) > 0 ? Math.round((d.comp / (d.comp + d.falt)) * 100) : 0;
             return `<li><span>${i + 1}º ${escaparHtml(nomePor.get(id) || 'Operador')}</span><span><strong>${d.comp}</strong> <span class="dash-sub">comp. · ${pres}%</span></span></li>`;
         }).join('') || '<li class="dash-vazio">Sem dados no mês.</li>';
 
-        const linhasHistorico = (historico || []).slice(0, 3).map(h => `<li><div><div>${ROTULO_ACAO[h.operacao] || h.operacao} · ${ROTULO_AREA[h.tabela] || h.tabela}</div><div class="dash-sub">${escaparHtml(descrever(h))}</div></div><span class="dash-sub">${quando(h.criado_em)}</span></li>`).join('') || '<li class="dash-vazio">Sem alterações registradas.</li>';
+        const linhasHistorico = (historico || []).map(h => `<li><div><div>${ROTULO_ACAO[h.operacao] || h.operacao} · ${ROTULO_AREA[h.tabela] || h.tabela}</div><div class="dash-sub">${escaparHtml(descrever(h))}</div></div><span class="dash-sub">${quando(h.criado_em)}</span></li>`).join('') || '<li class="dash-vazio">Sem alterações registradas.</li>';
 
         const imp = (ultimaImportacao && ultimaImportacao[0]) ? ultimaImportacao[0] : null;
         const impDados = imp ? (imp.dados_depois || {}) : null;
@@ -376,14 +381,14 @@ document.addEventListener('DOMContentLoaded', async function () {
             <div class="dash-secao-titulo">Pendências e fechamento</div>
             <div class="dash-grade">
                 <a class="dash-card" href="divergencias.html"><span class="dash-card-titulo">Divergências abertas</span><span class="dash-valor ${totalDivAbertas ? 'alerta' : 'sucesso'}">${totalDivAbertas || 0}</span><span class="dash-sub">Aguardando resposta</span></a>
-                <a class="dash-card" href="admin.html#fechamento"><span class="dash-card-titulo">Fechamento do mês</span><span class="dash-valor">${comPago} / ${operadoresFech.length}</span></a>
+                <a class="dash-card" href="${pendFech > 0 ? 'admin.html?pendentes=1#fechamento' : 'admin.html#fechamento'}"><span class="dash-card-titulo">Fechamento do mês</span><span class="dash-valor">${comPago} / ${operadoresFech.length}</span><span class="dash-sub">${operadoresFech.length === 0 ? 'Nenhum operador cadastrado' : pendFech > 0 ? `${pendFech} ${pendFech === 1 ? 'operador sem valor pago' : 'operadores sem valor pago'} · Ver pendentes` : 'Nenhum valor pendente'}</span></a>
                 <a class="dash-card" href="admin.html#inativos"><span class="dash-card-titulo">Agendamentos de inativos</span><span class="dash-valor">${agsInativos.length}</span><span class="dash-sub">${compInativos} comparecido(s) · ${pendInativos} pendente(s)${resumoInativos ? ' · ' + escaparHtml(resumoInativos) : ''}</span></a>
                 ${almocoSemResponsavel === null ? '' : `<a class="dash-card" href="almoco.html"><span class="dash-card-titulo">Almoço Toyota hoje</span><span class="dash-valor ${almocoSemResponsavel ? 'alerta' : 'sucesso'}">${almocoSemResponsavel}</span><span class="dash-sub">${almocoSemResponsavel ? 'evento(s) sem responsável' : 'Nenhum evento sem responsável'}</span></a>`}
             </div>
             <div class="dash-secao-titulo">Desempenho e atividade</div>
             <div class="dash-card dash-atividade">
-                <div class="dash-atv-col"><span class="dash-card-titulo">Ranking do mês</span><ul class="dash-lista">${linhasRanking}</ul></div>
-                <div class="dash-atv-col"><span class="dash-card-titulo">Últimas alterações</span><ul class="dash-lista">${linhasHistorico}</ul></div>
+                <div class="dash-atv-col"><span class="dash-card-titulo">Ranking do mês</span><ul class="dash-lista dash-rolavel-curto">${linhasRanking}</ul></div>
+                <div class="dash-atv-col"><span class="dash-card-titulo">Últimas 24 horas</span><ul class="dash-lista dash-rolavel-curto">${linhasHistorico}</ul></div>
                 <div class="dash-atv-col"><span class="dash-card-titulo">Última importação</span>${imp ? `<strong class="dash-import-arquivo" title="${escaparHtml(impDados.arquivo || 'Planilha')}">${escaparHtml(impDados.arquivo || 'Planilha')}</strong><span class="dash-sub">${quando(imp.criado_em)}${impDados.periodo ? ' · período ' + escaparHtml(impDados.periodo) : ''}</span><span class="dash-import-resumo"><strong>${impDados.total ?? 0}</strong> agendamentos · <strong class="sucesso">${impDados.comparecidos ?? 0}</strong> comparecidos · <strong class="perigo">${impDados.no_show ?? 0}</strong> no&#8209;show</span>${impDados.marcas ? `<span class="dash-sub">Marcas: ${escaparHtml(impDados.marcas)}</span>` : ''}` : '<span class="dash-vazio">Nenhuma importação registrada.</span>'}</div>
             </div>`;
     }

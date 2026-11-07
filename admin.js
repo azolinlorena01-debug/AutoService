@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const hoje = new Date();
     inputMes.value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
 
-    let estado = { mes: '', agendamentos: [], metas: {}, salvos: new Map(), fechado: false, linhas: [] };
+    let estado = { mes: '', agendamentos: [], metas: {}, salvos: new Map(), fechado: false, linhas: [], soPendentes: new URLSearchParams(window.location.search).get('pendentes') === '1' };
 
     function intervaloDoMes(mes) {
         const [ano, m] = mes.split('-');
@@ -240,6 +240,31 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
 
         atualizarEstadoFechamento();
+        aplicarFiltroPendentes();
+    }
+
+    function aplicarFiltroPendentes() {
+        const aviso = document.getElementById('aviso-pendentes-fechamento');
+        const linhasTabela = corpoFechamento.querySelectorAll('tr[data-id]');
+        if (!aviso) return;
+        if (!estado.soPendentes) {
+            aviso.classList.add('oculto');
+            linhasTabela.forEach(tr => tr.classList.remove('oculto'));
+            return;
+        }
+        let visiveis = 0;
+        linhasTabela.forEach(tr => {
+            const linha = linhaDoElemento(tr);
+            const pendente = linha && linha.pago === null && linha.calculo.agendados > 0;
+            tr.classList.toggle('oculto', !pendente);
+            if (pendente) visiveis++;
+        });
+        aviso.classList.remove('oculto');
+        aviso.innerHTML = `<span>${visiveis === 0 ? 'Nenhum operador pendente neste mês.' : `Mostrando só os ${visiveis} ${visiveis === 1 ? 'operador sem valor pago' : 'operadores sem valor pago'}.`}</span><button type="button" class="btn-abrir-config-metas" id="btn-mostrar-todos-fechamento">Mostrar todos</button>`;
+        document.getElementById('btn-mostrar-todos-fechamento').addEventListener('click', () => {
+            estado.soPendentes = false;
+            aplicarFiltroPendentes();
+        });
     }
 
     function linhaDoElemento(tr) {
@@ -374,31 +399,43 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     btnExportar.addEventListener('click', () => {
-        const cabecalho = ['Operador', 'Marcas', 'Comparecidos', 'Agendados', 'Individual', 'Equipe', 'Monitoria', 'Calculado', 'Valor pago', 'Diferença', 'Observação'];
-        const num = v => (Math.round(v * 100) / 100).toFixed(2).replace('.', ',');
-        const linhas = estado.linhas.map(l => [
-            l.perfil.nome || '',
-            l.calculo.detalheEquipe.map(i => `${i.marca} ${i.pct}%`).join(' | '),
-            l.calculo.comparecidos,
-            l.calculo.agendados,
-            num(l.calculo.individual),
-            num(l.calculo.equipe),
-            l.nota === null ? '' : l.nota,
-            num(l.calculo.total),
-            l.pago === null ? '' : num(l.pago),
-            l.pago === null ? '' : num(l.pago - l.calculo.total),
-            l.observacao
-        ]);
-        const csv = [cabecalho, ...linhas]
-            .map(linha => linha.map(c => `"${String(c).replace(/"/g, '""')}"`).join(';'))
-            .join('\r\n');
-        const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `fechamento-${estado.mes}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+        if (!estado.linhas.length) {
+            avisar('Não há dados de fechamento para exportar neste mês.');
+            return;
+        }
+        const overlay = abrirModalGenerico('modalExportarFechamento', `
+            <div class="modal-card-metas">
+                <div class="modal-topo-metas">
+                    <h3>Exportar fechamento</h3>
+                    <button type="button" class="btn-fechar-modal-metas" data-fechar>&times;</button>
+                </div>
+                <div class="modal-corpo-metas">
+                    <p class="texto-pequeno">Escolha o formato do arquivo do mês ${escaparHtml(window.FechamentoExport.rotuloMes(estado.mes))}.</p>
+                    <div class="opcoes-exportacao">
+                        <button type="button" class="btn-abrir-config-metas" data-formato="excel">Excel (.xlsx)</button>
+                        <button type="button" class="btn-abrir-config-metas" data-formato="pdf">PDF</button>
+                        <button type="button" class="btn-abrir-config-metas" data-formato="csv">CSV</button>
+                    </div>
+                    <p class="texto-pequeno">No PDF, a janela de impressão abre e basta escolher "Salvar como PDF".</p>
+                </div>
+            </div>`);
+        const fechar = () => { overlay.style.display = 'none'; };
+        overlay.querySelectorAll('[data-fechar]').forEach(b => b.addEventListener('click', fechar));
+        overlay.querySelectorAll('[data-formato]').forEach(botao => botao.addEventListener('click', async () => {
+            const formato = botao.dataset.formato;
+            const meta = { geradoEm: new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }), usuario: nomeLogado };
+            botao.disabled = true;
+            try {
+                if (formato === 'excel') await window.FechamentoExport.excel(estado, meta);
+                else if (formato === 'pdf') window.FechamentoExport.pdf(estado, meta);
+                else window.FechamentoExport.csv(estado);
+                fechar();
+            } catch (e) {
+                avisar('Não foi possível gerar o arquivo agora. Verifique a conexão e tente de novo.');
+            } finally {
+                botao.disabled = false;
+            }
+        }));
     });
 
     inputMes.addEventListener('change', carregarFechamento);

@@ -8,11 +8,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <script src="tema.js?v=20261106h"></script>
-    <script src="avisos.js?v=20261106h"></script>
-    <script src="seletor-mes.js?v=20261106h" defer></script>
-    <script src="dropdown.js?v=20261106h" defer></script>
-    <link rel="stylesheet" href="style.css?v=20261106h">
+    <script src="tema.js?v=20261106k"></script>
+    <script src="avisos.js?v=20261106k"></script>
+    <script src="seletor-mes.js?v=20261106k" defer></script>
+    <script src="dropdown.js?v=20261106k" defer></script>
+    <link rel="stylesheet" href="style.css?v=20261106k">
 </head>
 <body class="pagina-importar">
     <div class="container">
@@ -439,16 +439,17 @@
                     const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
                     const linhas = resumo.linhas.map(([rotulo, valor]) => `<div class="linha-resumo"><span>${esc(rotulo)}</span><strong>${esc(valor)}</strong></div>`).join('');
                     const nomes = resumo.naoReconhecidos;
+                    const detalhes = (resumo.detalhes || []).map(d => `<details class="aviso-resumo detalhe-previa"><summary>${esc(d.titulo)}</summary>${d.html}</details>`).join('');
                     const avisoNomes = nomes.length > 0
                         ? `<details class="aviso-resumo"><summary>${nomes.length} ${nomes.length === 1 ? 'nome da planilha sem usuário correspondente' : 'nomes da planilha sem usuário correspondente'} (essas linhas não entram). Ver lista</summary><ul>${nomes.map(([n, info]) => `<li><span>${esc(n)} (${info.q} ${info.q === 1 ? 'linha' : 'linhas'}${info.codigo ? ', ' + esc(info.codigo) : ''})</span> <button type="button" class="btn-cadastrar-inativo" data-nome="${esc(n)}">Cadastrar como inativo</button></li>`).join('')}</ul><p class="aviso-resumo-nota">Depois de cadastrar, cancele e importe a planilha novamente para incluir esses agendamentos.</p></details>`
                         : '';
                     overlay.innerHTML = `
-                        <div class="modal-card-metas">
+                        <div class="modal-card-metas modal-largo">
                             <div class="modal-topo-metas">
                                 <h3>Confirmar importação</h3>
                             </div>
                             <div class="modal-corpo-metas">
-                                <div class="resumo-confirmacao">${(resumo.alertas || []).map(t => `<div class="alerta-mes-importacao">${esc(t)}</div>`).join('')}${linhas}${avisoNomes}</div>
+                                <div class="resumo-confirmacao">${(resumo.alertas || []).map(t => `<div class="alerta-mes-importacao">${esc(t)}</div>`).join('')}${linhas}${avisoNomes}${detalhes}</div>
                             </div>
                             <div class="modal-rodape-metas">
                                 <button type="button" id="btnImportarCancelar" class="btn-cancelar-modal">Cancelar</button>
@@ -802,6 +803,8 @@
                             let totalCompareceu = 0;
                             let totalNoShow = 0;
                             let totalPendente = 0;
+                            let linhasLidas = 0;
+                            let linhasSemRevisao = 0;
 
                             const resumoPorConsultor = {};
                             const naoReconhecidos = {};
@@ -809,6 +812,7 @@
                             for (let i = 1; i < linhasMatriz.length; i++) {
                                 const row = linhasMatriz[i];
                                 if (!row || row.length === 0) continue;
+                                linhasLidas++;
 
                                 const textoAgendador = row[colAgendador] || '';
                                 const codigoLinha = colCodigo !== -1 ? String(row[colCodigo] || '').toUpperCase().replace(/\s/g, '') : '';
@@ -837,7 +841,7 @@
 
                                 const textoServico = row[colServico] || row[1] || '';
                                 const numRevisao = extrairNumeroRevisaoTMO(textoServico);
-                                if (!numRevisao) continue;
+                                if (!numRevisao) { linhasSemRevisao++; continue; }
 
                                 if (destinoEscolhido === 'auto' && !consultorAlvo.inativo) {
                                     if (modoPlanilha === 'outras' && consultorAlvo.soToyota) { totalIgnoradosOutroGrupo++; continue; }
@@ -1012,7 +1016,35 @@
                                     ? `A maior parte do arquivo é de ${formatarMesAno(dominante)}, mas o mês de referência escolhido é ${formatarMesAno(mesReferencia)}. Cancele e confira o mês antes de gravar.`
                                     : `${totalFora} de ${registrosParaSalvar.length} agendamentos têm data fora de ${formatarMesAno(mesReferencia)} (${detalhe}). Confira se o mês de referência está correto.`);
                             }
-                            const confirmado = await confirmarImportacao({ alertas: alertasMes, linhas: linhasConfirmacao, naoReconhecidos: Object.entries(naoReconhecidos).sort((x, y) => y[1].q - x[1].q) });
+                            const escP = t => String(t === null || t === undefined ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+                            const chavesDup = new Map();
+                            registrosParaSalvar.forEach(r => {
+                                const k = `${r.user_id || r.inativo_id}|${r.placa}|${r.revisao}|${r.data_revisao}`;
+                                chavesDup.set(k, (chavesDup.get(k) || 0) + 1);
+                            });
+                            const totalDuplicados = [...chavesDup.values()].reduce((t, q) => t + (q > 1 ? q - 1 : 0), 0);
+                            linhasConfirmacao.splice(3, 0, ['Linhas lidas na planilha', String(linhasLidas)]);
+                            if (linhasSemRevisao > 0) linhasConfirmacao.push(['Ignoradas (sem revisão reconhecida)', String(linhasSemRevisao)]);
+                            if (totalDuplicados > 0) linhasConfirmacao.push(['Possíveis duplicados no arquivo', String(totalDuplicados)]);
+                            if (qtdExistentes !== null) {
+                                const dif = totalGeral - qtdExistentes;
+                                linhasConfirmacao.push(['Total no período: hoje → depois', `${qtdExistentes} → ${totalGeral} (${dif > 0 ? '+' : ''}${dif})`]);
+                            }
+                            const tabelaPrevia = (cabecalhos, linhasTabela) => `<div class="tabela-previa-rolagem"><table class="tabela-previa"><thead><tr>${cabecalhos.map((c, i) => `<th class="${i ? 'c' : ''}">${escP(c)}</th>`).join('')}</tr></thead><tbody>${linhasTabela.map(l => `<tr>${l.map((c, i) => `<td class="${i ? 'c' : ''}">${escP(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+                            const porOperadorLinhas = Object.entries(resumoPorConsultor).sort((x, y) => y[1].total - x[1].total).map(([nome, c]) => [nome, c.total, c.compareceu, c.noshow, c.pendente, c.facilitada]);
+                            const porMarcaMapa = {};
+                            registrosParaSalvar.forEach(r => {
+                                const m = r.marca || 'Toyota';
+                                const o = porMarcaMapa[m] || (porMarcaMapa[m] = [0, 0, 0, 0]);
+                                o[0]++;
+                                if (r.status === 'compareceu') o[1]++; else if (r.status === 'faltou') o[2]++; else o[3]++;
+                            });
+                            const detalhesPrevia = [
+                                { titulo: `Por operador (${porOperadorLinhas.length})`, html: tabelaPrevia(['Operador', 'Total', 'Comp.', 'No-show', 'Pend.', 'Facilit.'], porOperadorLinhas) },
+                                { titulo: `Por marca (${Object.keys(porMarcaMapa).length})`, html: tabelaPrevia(['Marca', 'Total', 'Comp.', 'No-show', 'Pend.'], Object.entries(porMarcaMapa).sort((x, y) => y[1][0] - x[1][0]).map(([m, v]) => [m, ...v])) },
+                                { titulo: 'Amostra das primeiras 10 linhas', html: tabelaPrevia(['Revisão em', 'Placa', 'Tipo', 'O.S', 'Status', 'Marca'], registrosParaSalvar.slice(0, 10).map(r => [r.data_revisao.split('-').reverse().join('/'), r.placa, r.revisao, r.os, r.status === 'compareceu' ? 'Compareceu' : r.status === 'faltou' ? 'No-show' : 'Pendente', r.marca || 'Toyota'])) }
+                            ];
+                            const confirmado = await confirmarImportacao({ alertas: alertasMes, linhas: linhasConfirmacao, detalhes: detalhesPrevia, naoReconhecidos: Object.entries(naoReconhecidos).sort((x, y) => y[1].q - x[1].q) });
                             if (!confirmado) {
                                 log('Importação cancelada. Nada foi alterado.');
                                 return;
@@ -1225,6 +1257,6 @@
             carregarHistorico();
         });
     </script>
-    <script src="conta.js?v=20261106h" defer></script>
+    <script src="conta.js?v=20261106k" defer></script>
 </body>
 </html>

@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 atualizarCardsResumo(aplicarFiltroOperador(todosAgendamentosMes));
                 aplicarFiltrosTabela();
             });
-            if (inputBusca) inputBusca.placeholder = 'Buscar por placa, ordem de serviço ou nome...';
+            if (inputBusca) inputBusca.placeholder = window.matchMedia('(max-width: 768px)').matches ? 'Placa, ordem de serviço ou nome' : 'Buscar por placa, ordem de serviço ou nome...';
         }
 
         await carregarOperadoresCadastrados();
@@ -1015,6 +1015,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
     }
+
+    const statusDaUrl = new URLSearchParams(window.location.search).get('status');
+    if (filtroStatus && statusDaUrl && Array.from(filtroStatus.options).some(o => o.value === statusDaUrl)) filtroStatus.value = statusDaUrl;
 
     montarBotaoAdicionar();
     await carregarDados();
