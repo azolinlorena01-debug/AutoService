@@ -8999,4 +8999,44 @@ html:not([data-tema="escuro"]) body .btn-cadastrar-inativo { color: #374151; }
     html body #input-busca::placeholder {
         font-size: 13px;
     }
+
+    html body .grade-graficos-lado-a-lado {
+        grid-template-columns: 1fr;
+        display: grid;
+        gap: 14px;
+    }
+
+    html body .grade-graficos-lado-a-lado > * {
+        min-width: 0;
+    }
+
+    html body .tabela-container table:not(.tabela-previa) tr {
+        padding: 6px 18px;
+        margin-bottom: 14px;
+    }
+
+    html body .tabela-container table:not(.tabela-previa) td {
+        padding: 13px 0;
+        gap: 16px;
+    }
+
+    html body .tabela-almoco .linha-sem-responsavel td:first-child {
+        box-shadow: none;
+    }
+
+    html body .tabela-almoco tr.linha-sem-responsavel {
+        border-left: 4px solid #f59e0b;
+        padding-left: 16px;
+    }
+
+
+    html body .tabela-container table:not(.tabela-previa) td > .acoes-linha,
+    html body .tabela-container table:not(.tabela-previa) td > div:has(> button) {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+        flex: 1;
+        min-width: 0;
+    }
 }

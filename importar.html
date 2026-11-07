@@ -8,11 +8,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <script src="tema.js?v=20261106k"></script>
-    <script src="avisos.js?v=20261106k"></script>
-    <script src="seletor-mes.js?v=20261106k" defer></script>
-    <script src="dropdown.js?v=20261106k" defer></script>
-    <link rel="stylesheet" href="style.css?v=20261106k">
+    <script src="tema.js?v=20261106l"></script>
+    <script src="avisos.js?v=20261106l"></script>
+    <script src="seletor-mes.js?v=20261106l" defer></script>
+    <script src="dropdown.js?v=20261106l" defer></script>
+    <link rel="stylesheet" href="style.css?v=20261106l">
 </head>
 <body class="pagina-importar">
     <div class="container">
@@ -1245,18 +1245,114 @@
                 }
             });
 
-            btnIrParaPdf.addEventListener('click', function() {
+            function esc(t) {
+                return String(t === null || t === undefined ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            }
+
+            function resumirLinhas(itens, chave) {
+                const mapa = new Map();
+                itens.forEach(i => {
+                    const k = chave(i);
+                    if (!mapa.has(k)) mapa.set(k, { nome: k, total: 0, comp: 0, falt: 0, pend: 0 });
+                    const r = mapa.get(k);
+                    r.total++;
+                    if (i.status === 'compareceu') r.comp++;
+                    else if (i.status === 'faltou') r.falt++;
+                    else r.pend++;
+                });
+                return Array.from(mapa.values()).sort((x, y) => y.comp - x.comp || y.total - x.total || x.nome.localeCompare(y.nome));
+            }
+
+            function htmlRelatorioMensal(itens, mes, equipe) {
+                const nomesMes = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+                const [ano, mm] = mes.split('-');
+                const tituloMes = nomesMes[Number(mm) - 1].charAt(0).toUpperCase() + nomesMes[Number(mm) - 1].slice(1) + ' de ' + ano;
+                const pct = (c, f) => (c + f) > 0 ? Math.round((c / (c + f)) * 100) + '%' : '—';
+                const total = resumirLinhas(itens, () => 'Total')[0] || { total: 0, comp: 0, falt: 0, pend: 0 };
+                const linhas = lista => lista.map(r => `<tr><td class="nome">${esc(r.nome)}</td><td class="c">${r.total}</td><td class="c">${r.comp}</td><td class="c">${r.pend}</td><td class="c">${r.falt}</td><td class="c">${pct(r.comp, r.falt)}</td></tr>`).join('');
+                const porMarca = resumirLinhas(itens, i => i.marca || 'Toyota');
+                const porOperador = resumirLinhas(itens, i => i.autor_nome || 'Operador');
+                const cabecalho = rotulo => `<thead><tr><th>${rotulo}</th><th class="c">Agendados</th><th class="c">Comparecidos</th><th class="c">Pendentes</th><th class="c">No-show</th><th class="c">Presença</th></tr></thead>`;
+                const geradoEm = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                return `<!DOCTYPE html><html lang="pt-br"><head><meta charset="UTF-8"><title>Relatório ${esc(tituloMes)}</title>
+<style>
+@page { size: A4 portrait; margin: 14mm; }
+* { box-sizing: border-box; }
+body { font-family: Arial, Helvetica, sans-serif; color: #111827; font-size: 11px; margin: 0; }
+h1 { font-size: 20px; margin: 0 0 4px; }
+h2 { font-size: 13px; margin: 22px 0 8px; text-transform: uppercase; letter-spacing: .4px; color: #374151; }
+.meta { color: #374151; margin-bottom: 16px; }
+.resumo { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.resumo div { border: 1px solid #d3d9e4; border-radius: 6px; padding: 8px 10px; }
+.resumo strong { display: block; font-size: 18px; margin-top: 2px; }
+table { width: 100%; border-collapse: collapse; }
+th { background: #eef1f6; text-align: left; font-size: 9.5px; text-transform: uppercase; letter-spacing: .3px; padding: 7px 6px; border-bottom: 1.5px solid #9aa6ba; }
+td { padding: 6px; border-bottom: 1px solid #d9dfe8; }
+tr { page-break-inside: avoid; }
+td.nome { font-weight: 700; }
+td.c, th.c { text-align: center; }
+</style></head><body>
+<h1>Relatório de agendamentos — ${esc(tituloMes)}</h1>
+<div class="meta">Equipe: ${equipe === 'todas' ? 'Todas' : esc(equipe)} &nbsp;·&nbsp; Gerado em ${esc(geradoEm)}</div>
+<div class="resumo">
+<div>Agendados<strong>${total.total}</strong></div><div>Comparecidos<strong>${total.comp}</strong></div><div>Pendentes<strong>${total.pend}</strong></div><div>No-show<strong>${total.falt}</strong></div><div>Presença<strong>${pct(total.comp, total.falt)}</strong></div>
+</div>
+<h2>Por marca</h2>
+<table>${cabecalho('Marca')}<tbody>${linhas(porMarca)}</tbody></table>
+<h2>Por operador</h2>
+<table>${cabecalho('Operador')}<tbody>${linhas(porOperador)}</tbody></table>
+</body></html>`;
+            }
+
+            btnIrParaPdf.addEventListener('click', async function() {
                 if (!/^\d{4}-\d{2}$/.test(mesExport.value)) {
                     avisar('Selecione o mês para exportação!');
                     return;
                 }
-                const equipe = encodeURIComponent(equipeExport.value);
-                window.location.href = `relatorios.html?mes=${mesExport.value}&equipe=${equipe}&imprimir=true`;
+                const [anoExp, mes] = mesExport.value.split('-');
+                const equipe = equipeExport.value;
+                const rotuloOriginal = btnIrParaPdf.innerText;
+                btnIrParaPdf.disabled = true;
+                btnIrParaPdf.innerText = 'Gerando...';
+                try {
+                    const { inicio, fim } = intervaloDoMes(mes, parseInt(anoExp, 10));
+                    const data = await buscarTodasLinhas(() => {
+                        let q = supabaseClient.from('vw_agendamentos_completos').select('*').gte('data_revisao', inicio).lte('data_revisao', fim);
+                        if (equipe !== 'todas') q = q.eq('marca', equipe);
+                        return q.order('data_revisao', { ascending: true }).order('id', { ascending: true });
+                    });
+                    const filtrados = data.filter(item => item.data_revisao && item.data_revisao.startsWith(mesExport.value));
+                    if (filtrados.length === 0) {
+                        avisar(`Nenhum registro encontrado para o mês ${mes}/${anoExp}.`);
+                        return;
+                    }
+                    const quadro = document.createElement('iframe');
+                    quadro.setAttribute('aria-hidden', 'true');
+                    quadro.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+                    document.body.appendChild(quadro);
+                    const doc = quadro.contentWindow.document;
+                    doc.open();
+                    doc.write(htmlRelatorioMensal(filtrados, mesExport.value, equipe));
+                    doc.close();
+                    setTimeout(() => {
+                        try {
+                            quadro.contentWindow.focus();
+                            quadro.contentWindow.print();
+                        } finally {
+                            setTimeout(() => quadro.remove(), 60000);
+                        }
+                    }, 350);
+                } catch (err) {
+                    avisar('Erro ao gerar o relatório: ' + err.message);
+                } finally {
+                    btnIrParaPdf.disabled = false;
+                    btnIrParaPdf.innerText = rotuloOriginal;
+                }
             });
 
             carregarHistorico();
         });
     </script>
-    <script src="conta.js?v=20261106k" defer></script>
+    <script src="conta.js?v=20261106l" defer></script>
 </body>
 </html>

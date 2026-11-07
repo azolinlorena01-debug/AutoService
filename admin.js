@@ -1059,15 +1059,32 @@ document.addEventListener('DOMContentLoaded', async function () {
         return partes.join('; ');
     }
 
+    const LIMITE_HISTORICO_CONSULTA = 1000;
+    const POR_PAGINA_HISTORICO = 15;
+    const filtroMesHistorico = document.getElementById('historico-mes');
+    const btnHistoricoAnterior = document.getElementById('btn-historico-anterior');
+    let paginaHistorico = 1;
+
+    if (filtroMesHistorico && !filtroMesHistorico.value) {
+        const hoje = new Date();
+        filtroMesHistorico.value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+    }
+
     async function carregarHistorico(reiniciar) {
-        if (reiniciar) {
-            historicoItens = [];
-            corpoHistorico.innerHTML = linhaCarregando(8);
-        }
+        paginaHistorico = 1;
+        historicoItens = [];
+        corpoHistorico.innerHTML = linhaCarregando(8);
         let consulta = supabaseClient.from('historico_alteracoes').select('*')
             .order('criado_em', { ascending: false })
-            .range(historicoItens.length, historicoItens.length + TAMANHO_HISTORICO - 1);
+            .limit(LIMITE_HISTORICO_CONSULTA);
         if (filtroTabela.value) consulta = consulta.eq('tabela', filtroTabela.value);
+        const mesEscolhido = filtroMesHistorico ? filtroMesHistorico.value : '';
+        if (/^\d{4}-\d{2}$/.test(mesEscolhido)) {
+            const [ano, mes] = mesEscolhido.split('-').map(Number);
+            const inicio = new Date(ano, mes - 1, 1).toISOString();
+            const fim = new Date(ano, mes, 1).toISOString();
+            consulta = consulta.gte('criado_em', inicio).lt('criado_em', fim);
+        }
 
         const { data, error } = await consulta;
         if (error) {
@@ -1075,23 +1092,32 @@ document.addEventListener('DOMContentLoaded', async function () {
             return;
         }
         historicoCarregado = true;
-        historicoItens = historicoItens.concat(data || []);
-        historicoTemMais = (data || []).length === TAMANHO_HISTORICO;
+        historicoItens = data || [];
+        historicoTemMais = historicoItens.length === LIMITE_HISTORICO_CONSULTA;
         renderizarHistorico();
     }
 
     function renderizarHistorico() {
         const termo = buscaHistorico.value.trim().toLowerCase();
-        const linhas = historicoItens.map(item => ({
+        const todas = historicoItens.map(item => ({
             item,
             registro: descreverRegistro(item),
             mudanca: descreverMudanca(item),
             quem: item.usuario_id ? nomeDe(item.usuario_id) : 'Sistema'
         })).filter(l => !termo || `${l.registro} ${l.mudanca} ${l.quem}`.toLowerCase().includes(termo));
 
-        document.getElementById('historico-contador').textContent = `${linhas.length} ${linhas.length === 1 ? 'registro' : 'registros'}`;
-        document.getElementById('historico-info').textContent = historicoTemMais ? `Mostrando os ${historicoItens.length} mais recentes` : `${historicoItens.length} no total`;
-        btnHistoricoMais.classList.toggle('oculto', !historicoTemMais);
+        const totalPaginas = Math.max(1, Math.ceil(todas.length / POR_PAGINA_HISTORICO));
+        if (paginaHistorico > totalPaginas) paginaHistorico = totalPaginas;
+        const inicioPagina = (paginaHistorico - 1) * POR_PAGINA_HISTORICO;
+        const linhas = todas.slice(inicioPagina, inicioPagina + POR_PAGINA_HISTORICO);
+
+        document.getElementById('historico-contador').textContent = `${todas.length} ${todas.length === 1 ? 'registro' : 'registros'}`;
+        document.getElementById('historico-info').textContent = todas.length === 0
+            ? (historicoTemMais ? `Exibindo os ${LIMITE_HISTORICO_CONSULTA} mais recentes` : '')
+            : `Mostrando ${inicioPagina + 1}–${inicioPagina + linhas.length} de ${todas.length}${historicoTemMais ? ' (limite de ' + LIMITE_HISTORICO_CONSULTA + ' mais recentes)' : ''}`;
+        document.getElementById('historico-indicador').textContent = `${paginaHistorico} de ${totalPaginas}`;
+        btnHistoricoAnterior.disabled = paginaHistorico <= 1;
+        btnHistoricoMais.disabled = paginaHistorico >= totalPaginas;
         linhasHistoricoVisiveis = linhas.map(l => String(l.item.id));
 
         if (linhas.length === 0) {
@@ -1195,9 +1221,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         await concluirExclusaoHistorico(error, count || 0, historicoItens.length);
     });
 
-    buscaHistorico.addEventListener('input', renderizarHistorico);
+    buscaHistorico.addEventListener('input', () => { paginaHistorico = 1; renderizarHistorico(); });
+    if (filtroMesHistorico) filtroMesHistorico.addEventListener('change', () => carregarHistorico(true));
+    btnHistoricoAnterior.addEventListener('click', () => { paginaHistorico--; renderizarHistorico(); });
     filtroTabela.addEventListener('change', () => carregarHistorico(true));
-    btnHistoricoMais.addEventListener('click', () => carregarHistorico(false));
+    btnHistoricoMais.addEventListener('click', () => { paginaHistorico++; renderizarHistorico(); });
 
     if (typeof window.montarBackup === 'function') {
         moduloBackup = window.montarBackup({ supabaseClient, usuarioAtual, getPerfis: () => perfis, buscarTodasLinhas, escaparHtml, aoRestaurar: () => { if (estado.mes) carregarFechamento(); } });
