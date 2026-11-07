@@ -162,6 +162,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
 
             if (isAdmin) await montarFiltroOperador();
+            atualizarOpcoesTipoServico();
             atualizarCardsResumo(aplicarFiltroOperador(todosAgendamentosMes));
             paginaAtual = 1;
             aplicarFiltrosTabela();
@@ -170,6 +171,20 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.error('Erro ao carregar agendamentos:', err);
             tabelaCorpo.innerHTML = `<tr><td colspan="9" class="celula-vazia-mensagem">Erro ao carregar dados: ${err.message}</td></tr>`;
         }
+    }
+
+    function atualizarOpcoesTipoServico() {
+        if (!filtroStatus) return;
+        const valorAtual = filtroStatus.value;
+        Array.from(filtroStatus.options).filter(o => o.value.startsWith('tipo:')).forEach(o => o.remove());
+        const tipos = [...new Set(todosAgendamentosMes.filter(ehServico).map(tipoServicoDe))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+        tipos.forEach(tipo => {
+            const opcao = document.createElement('option');
+            opcao.value = 'tipo:' + tipo;
+            opcao.textContent = 'Serviço: ' + tipo;
+            filtroStatus.appendChild(opcao);
+        });
+        if (valorAtual.startsWith('tipo:') && !tipos.includes(valorAtual.slice(5))) filtroStatus.value = 'todos';
     }
 
     async function buscarMetaCentral(mes) {
@@ -240,6 +255,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         return String(item.revisao || '').toUpperCase().includes('FACILITADA');
     }
 
+    function ehServico(item) {
+        return String(item.revisao || '').toUpperCase() === 'SERVICO';
+    }
+
+    function tipoServicoDe(item) {
+        const m = String(item.observacao || '').match(/Serviço: ([^|]+)/);
+        return m ? m[1].trim() : 'Serviço';
+    }
+
     function ehManual(item) {
         return /^manual/i.test(String(item.observacao || '').trim());
     }
@@ -249,7 +273,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     function valorPorRevisao(revisao) {
-        if (String(revisao).toUpperCase().includes('FACILITADA')) return 0;
+        if (String(revisao).toUpperCase().includes('FACILITADA') || String(revisao).toUpperCase() === 'SERVICO') return 0;
         const r = parseInt(revisao, 10);
         if (isNaN(r) || r <= 4) return 2;
         if (r <= 7) return 6;
@@ -346,6 +370,12 @@ document.addEventListener('DOMContentLoaded', async function() {
                 bateStatus = obsStr.includes('reagendado');
             } else if (statusSelecionado === 'facilitada') {
                 bateStatus = revStr.includes('facilitada');
+            } else if (statusSelecionado === 'revisoes') {
+                bateStatus = !ehServico(item);
+            } else if (statusSelecionado === 'servicos') {
+                bateStatus = ehServico(item);
+            } else if (statusSelecionado.startsWith('tipo:')) {
+                bateStatus = ehServico(item) && tipoServicoDe(item) === statusSelecionado.slice(5);
             } else {
                 bateStatus = (statusItem === statusSelecionado);
             }
@@ -495,7 +525,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             let textoRevisao = '-';
             const revStr = String(item.revisao || '').toUpperCase();
-            if (revStr.includes('FACILITADA')) {
+            if (ehServico(item)) {
+                textoRevisao = 'Serviço';
+            } else if (revStr.includes('FACILITADA')) {
                 textoRevisao = 'Revisão Facilitada';
             } else if (item.revisao) {
                 textoRevisao = `${item.revisao}ª Revisão`;
@@ -504,6 +536,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             let celulaObservacao = '<span class="texto-suave">-</span>';
             if (ehManual(item)) {
                 celulaObservacao = `<span class="tag-manual" title="${escaparHtml(item.observacao)}">Manual</span>`;
+            } else if (ehServico(item)) {
+                celulaObservacao = `<span class="tag-servico" title="${escaparHtml(tipoServicoDe(item))}">${escaparHtml(tipoServicoDe(item))}</span>${String(item.observacao || '').toLowerCase().includes('reagendado') ? ' <span class="tag-reagendado">Reagendado</span>' : ''}`;
             } else if (item.observacao && String(item.observacao).toLowerCase().includes('reagendado')) {
                 celulaObservacao = '<span class="tag-reagendado">Reagendado</span>';
             }
@@ -511,14 +545,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             const classeValor = (st === 'compareceu' && valorNumerico > 0) ? 'valor-celula-destaque' : '';
             const classeApagada = (st !== 'compareceu' || valorNumerico === 0) ? 'valor-celula-apagado' : '';
 
-            const facilitada = ehFacilitada(item);
+            const facilitada = ehFacilitada(item) || ehServico(item);
             let conteudoValor = valorFormatado;
             let classesValor = `${classeValor} ${classeApagada}`;
             if (facilitada && isAdmin) {
                 conteudoValor = `<input type="number" class="input-valor-facilitada" min="0" step="0.01" data-id="${item.id}" value="${valorNumerico > 0 ? valorNumerico.toFixed(2) : ''}" placeholder="Definir valor">`;
                 classesValor = '';
             } else if (facilitada && valorNumerico === 0) {
-                conteudoValor = 'Aguardando valor';
+                conteudoValor = ehServico(item) ? 'Sem bonificação' : 'Aguardando valor';
             }
 
             const celulaSelecao = isAdmin
@@ -1022,4 +1056,4 @@ document.addEventListener('DOMContentLoaded', async function() {
     montarBotaoAdicionar();
     await carregarDados();
     window.mostrarConteudo();
-});
+});

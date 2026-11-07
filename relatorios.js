@@ -558,7 +558,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         let linhas = '';
         lista.forEach(item => {
-            const revisaoTxt = String(item.revisao || '').toUpperCase().includes('FACILITADA') ? 'Facilitada' : `${item.revisao}ª`;
+            const revisaoTxt = String(item.revisao || '').toUpperCase().includes('FACILITADA') ? 'Facilitada' : (String(item.revisao || '').toUpperCase() === 'SERVICO' ? 'Serviço' : `${item.revisao}ª`);
             const valor = (parseFloat(item.valor_unitario) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             const motivo = String(item.observacao || '').replace(/^manual:?\s*/i, '');
             linhas += `<tr>
@@ -1412,6 +1412,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const contagem = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 };
 
         agendamentos.forEach(item => {
+            if (String(item.revisao || '').toUpperCase() === 'SERVICO') return;
             const rev = parseInt(item.revisao, 10) || 1;
             if (rev >= 8) contagem[8]++;
             else if (rev >= 1 && rev <= 7) contagem[rev]++;
@@ -1581,6 +1582,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             else if (item.status === 'pendente') operadores[chave].pendente++;
             else if (item.status === 'faltou') operadores[chave].faltou++;
 
+            if (String(item.revisao || '').toUpperCase() === 'SERVICO') return;
             const rev = parseInt(item.revisao, 10) || 1;
             operadores[chave].revisoes[rev] = (operadores[chave].revisoes[rev] || 0) + 1;
         });
@@ -1705,4 +1707,4 @@ document.addEventListener('DOMContentLoaded', async function() {
             window.print();
         }, 900);
     }
-});
+});

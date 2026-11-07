@@ -608,7 +608,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         return overlay;
     }
 
-    function abrirModalNovoUsuario() {
+    function abrirModalNovoUsuario(previa) {
         const dados = { equipe: '' };
         const overlay = abrirModalGenerico('modalNovoUsuario', `
             <div class="modal-card-metas">
@@ -639,6 +639,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         const fechar = () => { overlay.style.display = 'none'; };
         overlay.querySelectorAll('[data-fechar]').forEach(b => b.addEventListener('click', fechar));
         overlay.querySelector('#nu-senha').value = gerarSenhaTemporaria();
+        if (previa && previa.nome) overlay.querySelector('#nu-nome').value = previa.nome;
+        if (previa && previa.dealer) overlay.querySelector('#nu-dealer').value = previa.dealer;
         overlay.querySelector('#nu-marcas').addEventListener('click', () => {
             abrirModalMarcas(dados.equipe, nova => {
                 dados.equipe = nova;
@@ -717,7 +719,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
     }
 
-    document.getElementById('btn-novo-usuario').addEventListener('click', abrirModalNovoUsuario);
+    document.getElementById('btn-novo-usuario').addEventListener('click', () => abrirModalNovoUsuario());
     document.getElementById('btn-senha-usuario').addEventListener('click', abrirModalSenha);
 
     const corpoInativos = document.getElementById('corpo-inativos');
@@ -1237,5 +1239,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
     const abaInicial = window.location.hash.replace('#', '');
     if (abas[abaInicial]) trocarAba(abaInicial);
+    const parametrosPagina = new URLSearchParams(window.location.search);
+    const novoNome = (parametrosPagina.get('novoUsuario') || '').trim();
+    if (novoNome) {
+        trocarAba('usuarios');
+        abrirModalNovoUsuario({ nome: novoNome, dealer: (parametrosPagina.get('dealer') || '').trim() });
+        window.history.replaceState(null, '', window.location.pathname + '#usuarios');
+    }
     window.mostrarConteudo();
 });

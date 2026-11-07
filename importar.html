@@ -8,11 +8,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <script src="tema.js?v=20261106m"></script>
-    <script src="avisos.js?v=20261106m"></script>
-    <script src="seletor-mes.js?v=20261106m" defer></script>
-    <script src="dropdown.js?v=20261106m" defer></script>
-    <link rel="stylesheet" href="style.css?v=20261106m">
+    <script src="tema.js?v=20261107h"></script>
+    <script src="avisos.js?v=20261107h"></script>
+    <script src="seletor-mes.js?v=20261107h" defer></script>
+    <script src="dropdown.js?v=20261107h" defer></script>
+    <link rel="stylesheet" href="style.css?v=20261107h">
 </head>
 <body class="pagina-importar">
     <div class="container">
@@ -358,6 +358,7 @@
 
             function calcularValorPorRevisao(revisao) {
                 if (String(revisao).toUpperCase().includes('FACILITADA')) return 0.00;
+                if (String(revisao).toUpperCase() === 'SERVICO') return 0.00;
                 const r = parseInt(revisao, 10);
                 if (isNaN(r) || r <= 4) return 2.00;
                 else if (r >= 5 && r <= 7) return 6.00;
@@ -441,7 +442,7 @@
                     const nomes = resumo.naoReconhecidos;
                     const detalhes = (resumo.detalhes || []).map(d => `<details class="aviso-resumo detalhe-previa"><summary>${esc(d.titulo)}</summary>${d.html}</details>`).join('');
                     const avisoNomes = nomes.length > 0
-                        ? `<details class="aviso-resumo"><summary>${nomes.length} ${nomes.length === 1 ? 'nome da planilha sem usuário correspondente' : 'nomes da planilha sem usuário correspondente'} (essas linhas não entram). Ver lista</summary><ul>${nomes.map(([n, info]) => `<li><span>${esc(n)} (${info.q} ${info.q === 1 ? 'linha' : 'linhas'}${info.codigo ? ', ' + esc(info.codigo) : ''})</span> <button type="button" class="btn-cadastrar-inativo" data-nome="${esc(n)}">Cadastrar como inativo</button></li>`).join('')}</ul><p class="aviso-resumo-nota">Depois de cadastrar, cancele e importe a planilha novamente para incluir esses agendamentos.</p></details>`
+                        ? `<details class="aviso-resumo"><summary>${nomes.length} ${nomes.length === 1 ? 'nome da planilha sem usuário correspondente' : 'nomes da planilha sem usuário correspondente'} (essas linhas não entram). Ver lista</summary><ul>${nomes.map(([n, info]) => `<li><span>${esc(n)} (${info.q} ${info.q === 1 ? 'linha' : 'linhas'}${info.codigo ? ', ' + esc(info.codigo) : ''})</span> <a class="btn-cadastrar-ativo" target="_blank" rel="noopener" href="admin.html?novoUsuario=${encodeURIComponent(n)}${info.codigo ? '&dealer=' + encodeURIComponent(info.codigo) : ''}#usuarios">Criar usuário ativo</a> <button type="button" class="btn-cadastrar-inativo" data-nome="${esc(n)}">Cadastrar como inativo</button></li>`).join('')}</ul><p class="aviso-resumo-nota">Funcionário novo: use “Criar usuário ativo” (abre em outra aba). Ex-funcionário: use “Cadastrar como inativo”. Depois, cancele e importe a planilha novamente para incluir esses agendamentos.</p></details>`
                         : '';
                     overlay.innerHTML = `
                         <div class="modal-card-metas modal-largo">
@@ -551,6 +552,15 @@
                     return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                 }
                 return null;
+            }
+
+            function rotuloServico(texto) {
+                const t = String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+                const mapa = { 'DIAGNOSTICO': 'Diagnóstico', 'RECALL': 'Recall', 'SERVICO': 'Serviço', 'SEM CLASSIFICACAO': 'Sem classificação', 'TROCA DE PECA': 'Troca de peça', 'TROCA DE OLEO': 'Troca de óleo', 'INSTALACAO': 'Instalação' };
+                if (!t || t === 'NAN' || t === '(VAZIO)') return 'Sem classificação';
+                if (mapa[t]) return mapa[t];
+                const original = String(texto).trim();
+                return original.charAt(0).toUpperCase() + original.slice(1).toLowerCase();
             }
 
             function extrairNumeroRevisaoTMO(tmoTexto) {
@@ -696,6 +706,7 @@
                     const mapaHistoricoPlacas = new Map();
                     const valoresFacilitadaSalvos = new Map();
                     const valoresFacilitadaPorPlaca = new Map();
+                    const valoresServicoSalvos = new Map();
                     (agendamentosBanco || []).forEach(item => {
                         if (item.evento === 'MANUAL') return;
 
@@ -704,6 +715,11 @@
                             const chaveExata = `${chavePlaca}_${item.data_revisao}`;
                             if (!valoresFacilitadaSalvos.has(chaveExata)) valoresFacilitadaSalvos.set(chaveExata, parseFloat(item.valor_unitario));
                             if (!valoresFacilitadaPorPlaca.has(chavePlaca)) valoresFacilitadaPorPlaca.set(chavePlaca, parseFloat(item.valor_unitario));
+                        }
+
+                        if (String(item.revisao || '').toUpperCase() === 'SERVICO' && parseFloat(item.valor_unitario) > 0) {
+                            const tipoSalvo = (String(item.observacao || '').match(/Serviço: ([^|]+)/) || [])[1];
+                            if (tipoSalvo) valoresServicoSalvos.set(`${item.user_id}|${String(item.placa).toUpperCase().trim()}|${item.data_revisao}|${tipoSalvo.trim()}`, parseFloat(item.valor_unitario));
                         }
 
                         const chave = `${String(item.placa).toUpperCase().trim()}_${item.revisao}`;
@@ -754,8 +770,8 @@
                                 if (colNome === 'DATA PROXIMA ACAO' || colNome === 'DATA AGENDAMENTO' || colNome === 'DATA/HORA AGENDAMENTO') colDataRevisao = idx;
                                 if (colNome === 'PLACA') colPlaca = idx;
                                 if (colNome === 'CHASSI') colChassi = idx;
-                                if (colNome === 'TMO' || colNome === 'TIPO DE SERVIÇO' || colNome === 'SERVIÇO CORRETO' || colNome === 'TIPO EVENTO' || colNome === 'SERVICOS') {
-                                    if (colServico === -1 || colNome === 'TIPO DE SERVIÇO' || colNome === 'TMO') colServico = idx;
+                                if (colNome === 'TMO' || colNome === 'TIPO DE SERVIÇO' || colNome === 'TIPO SERVIÇO' || colNome === 'TIPO SERVICO' || colNome === 'SERVIÇO CORRETO' || colNome === 'TIPO EVENTO' || colNome === 'SERVICOS') {
+                                    if (colServico === -1 || colNome === 'TIPO DE SERVIÇO' || colNome === 'TIPO SERVIÇO' || colNome === 'TIPO SERVICO' || colNome === 'TMO') colServico = idx;
                                 }
                                 if (colNome === 'AGENDADOR' || colNome === 'OPERADOR') colAgendador = idx;
                                 if (colNome.normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'CODIGO OPERADOR') colCodigo = idx;
@@ -805,6 +821,7 @@
                             let totalPendente = 0;
                             let linhasLidas = 0;
                             let linhasSemRevisao = 0;
+                            let totalServicos = 0;
 
                             const resumoPorConsultor = {};
                             const naoReconhecidos = {};
@@ -840,8 +857,13 @@
                                 }
 
                                 const textoServico = row[colServico] || row[1] || '';
-                                const numRevisao = extrairNumeroRevisaoTMO(textoServico);
-                                if (!numRevisao) { linhasSemRevisao++; continue; }
+                                let numRevisao = extrairNumeroRevisaoTMO(textoServico);
+                                let tipoServicoLinha = null;
+                                if (!numRevisao) {
+                                    tipoServicoLinha = rotuloServico(textoServico);
+                                    numRevisao = 'SERVICO';
+                                    totalServicos++;
+                                }
 
                                 if (destinoEscolhido === 'auto' && !consultorAlvo.inativo) {
                                     if (modoPlanilha === 'outras' && consultorAlvo.soToyota) { totalIgnoradosOutroGrupo++; continue; }
@@ -890,7 +912,7 @@
                                 }
 
                                 const chaveComposta = `${placaBruta}_${numRevisao}`;
-                                if (mapaHistoricoPlacas.has(chaveComposta)) {
+                                if (!tipoServicoLinha && mapaHistoricoPlacas.has(chaveComposta)) {
                                     const regAnterior = mapaHistoricoPlacas.get(chaveComposta);
                                     if (regAnterior.data_revisao !== dataRevisaoFormatada || (regAnterior.observacao && regAnterior.observacao.includes('Reagendado'))) {
                                         if (obs !== 'Reagendado') {
@@ -910,6 +932,12 @@
                                         valorUnitario = valorSalvo;
                                         totalFacilitadasComValor++;
                                     }
+                                }
+
+                                if (tipoServicoLinha) {
+                                    obs = obs ? `Serviço: ${tipoServicoLinha} | ${obs}` : `Serviço: ${tipoServicoLinha}`;
+                                    const salvoServico = valoresServicoSalvos.get(`${consultorAlvo.id}|${placaBruta}|${dataRevisaoFormatada}|${tipoServicoLinha}`);
+                                    if (salvoServico !== undefined) valorUnitario = salvoServico;
                                 }
 
                                 if (consultorAlvo.inativo) totalInativos++;
@@ -1019,12 +1047,13 @@
                             const escP = t => String(t === null || t === undefined ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
                             const chavesDup = new Map();
                             registrosParaSalvar.forEach(r => {
-                                const k = `${r.user_id || r.inativo_id}|${r.placa}|${r.revisao}|${r.data_revisao}`;
+                                const k = `${r.user_id || r.inativo_id}|${r.placa}|${r.revisao}|${r.data_revisao}|${r.revisao === 'SERVICO' ? r.observacao : ''}`;
                                 chavesDup.set(k, (chavesDup.get(k) || 0) + 1);
                             });
                             const totalDuplicados = [...chavesDup.values()].reduce((t, q) => t + (q > 1 ? q - 1 : 0), 0);
                             linhasConfirmacao.splice(3, 0, ['Linhas lidas na planilha', String(linhasLidas)]);
                             if (linhasSemRevisao > 0) linhasConfirmacao.push(['Ignoradas (sem revisão reconhecida)', String(linhasSemRevisao)]);
+                            if (totalServicos > 0) linhasConfirmacao.push(['Serviços que não são revisão (sem bônus)', String(totalServicos)]);
                             if (totalDuplicados > 0) linhasConfirmacao.push(['Possíveis duplicados no arquivo', String(totalDuplicados)]);
                             if (qtdExistentes !== null) {
                                 const dif = totalGeral - qtdExistentes;
@@ -1353,6 +1382,6 @@ td.c, th.c { text-align: center; }
             carregarHistorico();
         });
     </script>
-    <script src="conta.js?v=20261106m" defer></script>
+    <script src="conta.js?v=20261107h" defer></script>
 </body>
 </html>
