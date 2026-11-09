@@ -162,7 +162,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
 
             if (isAdmin) await montarFiltroOperador();
-            atualizarOpcoesTipoServico();
             atualizarCardsResumo(aplicarFiltroOperador(todosAgendamentosMes));
             paginaAtual = 1;
             aplicarFiltrosTabela();
@@ -171,20 +170,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.error('Erro ao carregar agendamentos:', err);
             tabelaCorpo.innerHTML = `<tr><td colspan="9" class="celula-vazia-mensagem">Erro ao carregar dados: ${err.message}</td></tr>`;
         }
-    }
-
-    function atualizarOpcoesTipoServico() {
-        if (!filtroStatus) return;
-        const valorAtual = filtroStatus.value;
-        Array.from(filtroStatus.options).filter(o => o.value.startsWith('tipo:')).forEach(o => o.remove());
-        const tipos = [...new Set(todosAgendamentosMes.filter(ehServico).map(tipoServicoDe))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-        tipos.forEach(tipo => {
-            const opcao = document.createElement('option');
-            opcao.value = 'tipo:' + tipo;
-            opcao.textContent = 'Serviço: ' + tipo;
-            filtroStatus.appendChild(opcao);
-        });
-        if (valorAtual.startsWith('tipo:') && !tipos.includes(valorAtual.slice(5))) filtroStatus.value = 'todos';
     }
 
     async function buscarMetaCentral(mes) {
@@ -374,8 +359,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 bateStatus = !ehServico(item);
             } else if (statusSelecionado === 'servicos') {
                 bateStatus = ehServico(item);
-            } else if (statusSelecionado.startsWith('tipo:')) {
-                bateStatus = ehServico(item) && tipoServicoDe(item) === statusSelecionado.slice(5);
             } else {
                 bateStatus = (statusItem === statusSelecionado);
             }
@@ -537,7 +520,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (ehManual(item)) {
                 celulaObservacao = `<span class="tag-manual" title="${escaparHtml(item.observacao)}">Manual</span>`;
             } else if (ehServico(item)) {
-                celulaObservacao = `<span class="tag-servico" title="${escaparHtml(tipoServicoDe(item))}">${escaparHtml(tipoServicoDe(item))}</span>${String(item.observacao || '').toLowerCase().includes('reagendado') ? ' <span class="tag-reagendado">Reagendado</span>' : ''}`;
+                const textoServico = tipoServicoDe(item).split(',').map(t => t.trim()).filter(Boolean).join(', ') || 'Serviço';
+                celulaObservacao = `<span class="tag-servico" title="${escaparHtml(textoServico)}">${escaparHtml(textoServico)}</span>${String(item.observacao || '').toLowerCase().includes('reagendado') ? ' <span class="tag-reagendado">Reagendado</span>' : ''}`;
             } else if (item.observacao && String(item.observacao).toLowerCase().includes('reagendado')) {
                 celulaObservacao = '<span class="tag-reagendado">Reagendado</span>';
             }

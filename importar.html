@@ -6,13 +6,13 @@
     <title>Painel de Bônus - Importar e Exportar</title>
     <link rel="icon" type="image/png" href="imagens/logo-painel.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" async></script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <script src="tema.js?v=20261107i"></script>
-    <script src="avisos.js?v=20261107i"></script>
-    <script src="seletor-mes.js?v=20261107i" defer></script>
-    <script src="dropdown.js?v=20261107i" defer></script>
-    <link rel="stylesheet" href="style.css?v=20261107i">
+    <script src="tema.js?v=20261109a"></script>
+    <script src="avisos.js?v=20261109a"></script>
+    <script src="seletor-mes.js?v=20261109a" defer></script>
+    <script src="dropdown.js?v=20261109a" defer></script>
+    <link rel="stylesheet" href="style.css?v=20261109a">
 </head>
 <body class="pagina-importar">
     <div class="container">
@@ -42,6 +42,7 @@
                 <a href="importar.html" class="btn-filtro-grafico ativo">Importar / Exportar</a>
                 <a href="admin.html#usuarios" class="btn-filtro-grafico">Usuários</a>
                 <a href="admin.html#inativos" class="btn-filtro-grafico">Inativos</a>
+                <a href="admin.html#backup" class="btn-filtro-grafico">Backup</a>
             </div>
 
             <div class="painel-duplo">
@@ -90,6 +91,7 @@
                             <select id="equipeExport" class="custom-select">
                                 <option value="todas">Todas as Equipes</option>
                                 <option value="Toyota" selected>Toyota</option>
+                                <option value="Backup">Backup</option>
                                 <option value="Fiat">Fiat</option>
                                 <option value="Nissan">Nissan</option>
                                 <option value="Volkswagen">Volkswagen</option>
@@ -759,7 +761,7 @@
                                 return;
                             }
 
-                            let colEmpresa = -1, colDataContato = -1, colDataRevisao = -1, colPlaca = -1, colChassi = -1;
+                            let colEmpresa = -1, colDataContato = -1, colDataRevisao = -1, colPlaca = -1, colChassi = -1, colNomeCliente = -1;
                             let colCodigo = -1, colServico = -1, colServicoCorreto = -1, colAgendador = -1, colOS = -1, colComparecido = -1, colStatusPlanilha = -1;
 
                             const cabecalho = (linhasMatriz[0] || []).map(c => String(c).toUpperCase().trim());
@@ -770,6 +772,7 @@
                                 if (colNome === 'DATA PROXIMA ACAO' || colNome === 'DATA AGENDAMENTO' || colNome === 'DATA/HORA AGENDAMENTO') colDataRevisao = idx;
                                 if (colNome === 'PLACA') colPlaca = idx;
                                 if (colNome === 'CHASSI') colChassi = idx;
+                                if (colNome === 'NOME CLIENTE' || colNome === 'CLIENTE') colNomeCliente = idx;
                                 if (colNome === 'TMO' || colNome === 'TIPO DE SERVIÇO' || colNome === 'TIPO SERVIÇO' || colNome === 'TIPO SERVICO' || colNome === 'SERVIÇO CORRETO' || colNome === 'TIPO EVENTO' || colNome === 'SERVICOS') {
                                     if (colServico === -1 || colNome === 'TIPO DE SERVIÇO' || colNome === 'TIPO SERVIÇO' || colNome === 'TIPO SERVICO' || colNome === 'TMO') colServico = idx;
                                 }
@@ -828,6 +831,29 @@
                                 }
                             }
 
+                            const gruposVisita = new Map();
+                            const normVisita = v => String(v == null ? '' : v).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+                            const chaveVisitaDe = r => [formatarDataSemHorario(r[colDataRevisao]), colNomeCliente !== -1 ? normVisita(r[colNomeCliente]) : '', normVisita(r[colPlaca]), normVisita(r[colChassi])].join('|');
+                            if (modoPlanilha === 'toyota') {
+                                for (let i = 1; i < linhasMatriz.length; i++) {
+                                    const r = linhasMatriz[i];
+                                    if (!r || r.length === 0) continue;
+                                    const chave = chaveVisitaDe(r);
+                                    if (!gruposVisita.has(chave)) gruposVisita.set(chave, { temRevisao: false, temFacilitada: false, tipos: [], primeiraServico: -1 });
+                                    const g = gruposVisita.get(chave);
+                                    const txt = r[colServico] || r[1] || '';
+                                    const numTxt = extrairNumeroRevisaoTMO(txt);
+                                    if (numTxt) {
+                                        g.temRevisao = true;
+                                        if (numTxt === 'FACILITADA') g.temFacilitada = true;
+                                    } else {
+                                        const tipo = rotuloServico(txt);
+                                        if (!g.tipos.includes(tipo)) g.tipos.push(tipo);
+                                        if (g.primeiraServico === -1) g.primeiraServico = i;
+                                    }
+                                }
+                            }
+
                             const registrosParaSalvar = [];
                             let totalIgnoradosOutroGrupo = 0;
                             let totalInativos = 0;
@@ -841,7 +867,8 @@
                             let linhasLidas = 0;
                             let linhasSemRevisao = 0;
                             let totalServicos = 0;
-                            let totalServicosIgnoradosToyota = 0;
+                            let totalServicosVinculadosToyota = 0;
+                            let totalRevisoesSubstituidasFacilitada = 0;
 
                             const resumoPorConsultor = {};
                             const naoReconhecidos = {};
@@ -887,9 +914,21 @@
                                 let tipoServicoLinha = null;
                                 if (!numRevisao) {
                                     tipoServicoLinha = rotuloServico(textoServico);
-                                    if (modoPlanilha === 'toyota' && destinoEscolhido === 'auto') { totalServicosIgnoradosToyota++; continue; }
+                                    if (modoPlanilha === 'toyota') {
+                                        const chaveVisita = chaveVisitaDe(row);
+                                        const grupoVisita = gruposVisita.get(chaveVisita);
+                                        if (grupoVisita) {
+                                            if (grupoVisita.temRevisao || grupoVisita.primeiraServico !== i) { totalServicosVinculadosToyota++; continue; }
+                                            tipoServicoLinha = grupoVisita.tipos.join(', ');
+                                        }
+                                    }
                                     numRevisao = 'SERVICO';
                                     totalServicos++;
+                                }
+
+                                if (modoPlanilha === 'toyota' && numRevisao !== 'FACILITADA' && numRevisao !== 'SERVICO') {
+                                    const grupoRev = gruposVisita.get(chaveVisitaDe(row));
+                                    if (grupoRev && grupoRev.temFacilitada) { totalRevisoesSubstituidasFacilitada++; continue; }
                                 }
 
                                 if (destinoEscolhido === 'auto' && !consultorAlvo.inativo) {
@@ -1082,7 +1121,8 @@
                             linhasConfirmacao.splice(3, 0, ['Linhas lidas na planilha', String(linhasLidas)]);
                             if (linhasSemRevisao > 0) linhasConfirmacao.push(['Ignoradas (sem revisão reconhecida)', String(linhasSemRevisao)]);
                             if (totalServicos > 0) linhasConfirmacao.push(['Serviços que não são revisão (sem bônus)', String(totalServicos)]);
-                            if (totalServicosIgnoradosToyota > 0) linhasConfirmacao.push(['Ignorados (Toyota: serviços que não são revisão)', String(totalServicosIgnoradosToyota)]);
+                            if (totalRevisoesSubstituidasFacilitada > 0) linhasConfirmacao.push(['Revisões da mesma visita de uma Facilitada (contada como Facilitada)', String(totalRevisoesSubstituidasFacilitada)]);
+                            if (totalServicosVinculadosToyota > 0) linhasConfirmacao.push(['Serviços vinculados a uma revisão ou à mesma visita (não contados)', String(totalServicosVinculadosToyota)]);
                             if (totalDuplicados > 0) linhasConfirmacao.push(['Possíveis duplicados no arquivo', String(totalDuplicados)]);
                             if (qtdExistentes !== null) {
                                 const dif = totalGeral - qtdExistentes;
@@ -1250,13 +1290,20 @@
 
                 try {
                     const { inicio, fim } = intervaloDoMes(mes, parseInt(anoExp, 10));
+                    let idsBackup = [];
+                    if (equipe === 'Backup') {
+                        const { data: perfisBackup } = await supabaseClient.from('perfis').select('id').ilike('equipe', '%Backup%');
+                        idsBackup = (perfisBackup || []).map(x => x.id);
+                        if (idsBackup.length === 0) idsBackup = ['00000000-0000-0000-0000-000000000000'];
+                    }
                     const data = await buscarTodasLinhas(() => {
                         let q = supabaseClient
                             .from('vw_agendamentos_completos')
                             .select('*')
                             .gte('data_revisao', inicio)
                             .lte('data_revisao', fim);
-                        if (equipe !== 'todas') q = q.eq('marca', equipe);
+                        if (equipe === 'Backup') q = q.in('user_id', idsBackup);
+                        else if (equipe !== 'todas') q = q.eq('marca', equipe);
                         return q.order('data_revisao', { ascending: true }).order('id', { ascending: true });
                     });
 
@@ -1374,9 +1421,16 @@ td.c, th.c { text-align: center; }
                 btnIrParaPdf.innerText = 'Gerando...';
                 try {
                     const { inicio, fim } = intervaloDoMes(mes, parseInt(anoExp, 10));
+                    let idsBackup = [];
+                    if (equipe === 'Backup') {
+                        const { data: perfisBackup } = await supabaseClient.from('perfis').select('id').ilike('equipe', '%Backup%');
+                        idsBackup = (perfisBackup || []).map(x => x.id);
+                        if (idsBackup.length === 0) idsBackup = ['00000000-0000-0000-0000-000000000000'];
+                    }
                     const data = await buscarTodasLinhas(() => {
                         let q = supabaseClient.from('vw_agendamentos_completos').select('*').gte('data_revisao', inicio).lte('data_revisao', fim);
-                        if (equipe !== 'todas') q = q.eq('marca', equipe);
+                        if (equipe === 'Backup') q = q.in('user_id', idsBackup);
+                        else if (equipe !== 'todas') q = q.eq('marca', equipe);
                         return q.order('data_revisao', { ascending: true }).order('id', { ascending: true });
                     });
                     const filtrados = data.filter(item => item.data_revisao && item.data_revisao.startsWith(mesExport.value));
@@ -1411,6 +1465,6 @@ td.c, th.c { text-align: center; }
             carregarHistorico();
         });
     </script>
-    <script src="conta.js?v=20261107i" defer></script>
+    <script src="conta.js?v=20261109a" defer></script>
 </body>
 </html>

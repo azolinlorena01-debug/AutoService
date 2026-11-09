@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     window.atualizarContadorDivergencias(supabaseClient);
     const Bonus = window.Bonus;
 
-    const MARCAS = ['Audi', 'BYD', 'Chery', 'Citroen', 'Fiat', 'Ford', 'Geely', 'Hyundai', 'Jeep', 'Kia', 'Nissan', 'Omoda', 'Renault', 'Toyota', 'Volkswagen'];
+    const MARCAS = ['Audi', 'Backup', 'BYD', 'Chery', 'Citroen', 'Fiat', 'Ford', 'Geely', 'Hyundai', 'Jeep', 'Kia', 'Nissan', 'Omoda', 'Renault', 'Toyota', 'Volkswagen'];
     const TAMANHO_HISTORICO = 100;
 
     const { data: { session } } = await supabaseClient.auth.getSession();

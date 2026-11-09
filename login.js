@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session && session.user) {
-        window.location.href = 'inicio.html';
+        window.location.href = window.paginaInicialPainel ? window.paginaInicialPainel() : 'inicio.html';
         return;
     }
 
@@ -97,9 +97,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (error) throw error;
 
                 exibirMensagem('Login realizado com sucesso! Redirecionando...', 'sucesso');
-                setTimeout(() => {
-                    window.location.href = 'inicio.html';
-                }, 700);
+                executarEfeitoBolha().then(() => {
+                    window.location.href = window.paginaInicialPainel ? window.paginaInicialPainel() : 'inicio.html';
+                });
 
             } else {
                 const nomeCompleto = campoNome.value.trim();
@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                 exibirMensagem('Conta criada com sucesso! Redirecionando...', 'sucesso');
                 setTimeout(() => {
-                    window.location.href = 'inicio.html';
+                    window.location.href = window.paginaInicialPainel ? window.paginaInicialPainel() : 'inicio.html';
                 }, 900);
             }
         } catch (erro) {
@@ -204,3 +204,36 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     });
 });
+
+function executarEfeitoBolha() {
+    const reduzido = window.animacoesAtivas ? !window.animacoesAtivas() : false;
+    if (reduzido) return new Promise(resolve => setTimeout(resolve, 700));
+    try { sessionStorage.setItem('efeito-bolha', '1'); } catch (e) {}
+    return new Promise(resolve => {
+        const camada = document.createElement('div');
+        camada.className = 'bolha-camada';
+        const bolha = document.createElement('div');
+        bolha.className = 'bolha-sabao';
+        camada.appendChild(bolha);
+        document.body.appendChild(camada);
+        document.body.classList.add('bolha-ativa');
+        setTimeout(() => {
+            bolha.remove();
+            const anel = document.createElement('div');
+            anel.className = 'bolha-anel';
+            camada.appendChild(anel);
+            for (let i = 0; i < 16; i++) {
+                const gota = document.createElement('span');
+                gota.className = 'bolha-gota';
+                const angulo = (360 / 16) * i + (Math.random() * 14 - 7);
+                const distancia = 110 + Math.random() * 130;
+                gota.style.setProperty('--gx', `${Math.cos(angulo * Math.PI / 180) * distancia}px`);
+                gota.style.setProperty('--gy', `${Math.sin(angulo * Math.PI / 180) * distancia}px`);
+                gota.style.setProperty('--gt', `${6 + Math.random() * 10}px`);
+                camada.appendChild(gota);
+            }
+            camada.classList.add('bolha-estourou');
+        }, 1000);
+        setTimeout(resolve, 1450);
+    });
+}

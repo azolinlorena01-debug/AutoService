@@ -2,7 +2,7 @@
     try {
         if (!sessionStorage.getItem('painel-sessao')) {
             sessionStorage.setItem('painel-sessao', '1');
-            if (/\/(index\.html)?$/i.test(location.pathname)) location.replace('inicio.html');
+            if (/\/(index\.html)?$/i.test(location.pathname) && localStorage.getItem('pagina-inicial-painel') !== 'agendamentos') location.replace('inicio.html');
         }
     } catch (e) {}
 
@@ -21,6 +21,156 @@
         try {
             localStorage.setItem(CHAVE, tema);
         } catch (e) {}
+    }
+
+    const CHAVE_ANIMACOES = 'animacoes-painel';
+
+    window.animacoesAtivas = function () {
+        let salvo = null;
+        try { salvo = localStorage.getItem(CHAVE_ANIMACOES); } catch (e) {}
+        if (salvo === '0') return false;
+        if (salvo === '1') return true;
+        return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    };
+
+    function aplicarAnimacoes() {
+        document.documentElement.setAttribute('data-animacoes', window.animacoesAtivas() ? 'ligadas' : 'desligadas');
+    }
+
+    function definirAnimacoes(ligadas) {
+        try { localStorage.setItem(CHAVE_ANIMACOES, ligadas ? '1' : '0'); } catch (e) {}
+        aplicarAnimacoes();
+    }
+
+    const PREFERENCIAS = {
+        texto: { chave: 'texto-painel', padrao: 'normal', atributo: 'data-texto' },
+        densidade: { chave: 'densidade-painel', padrao: 'confortavel', atributo: 'data-densidade' },
+        notificacoes: { chave: 'notificacoes-painel', padrao: 'ligadas', atributo: 'data-notificacoes' },
+        paginaInicial: { chave: 'pagina-inicial-painel', padrao: 'inicio', atributo: null }
+    };
+
+    function lerPreferencia(nome) {
+        const p = PREFERENCIAS[nome];
+        try { return localStorage.getItem(p.chave) || p.padrao; } catch (e) { return p.padrao; }
+    }
+
+    function salvarPreferencia(nome, valor) {
+        const p = PREFERENCIAS[nome];
+        try { localStorage.setItem(p.chave, valor); } catch (e) {}
+        aplicarPreferencias();
+    }
+
+    function aplicarPreferencias() {
+        Object.keys(PREFERENCIAS).forEach(nome => {
+            const p = PREFERENCIAS[nome];
+            if (p.atributo) document.documentElement.setAttribute(p.atributo, lerPreferencia(nome));
+        });
+    }
+
+    window.paginaInicialPainel = function () {
+        return lerPreferencia('paginaInicial') === 'agendamentos' ? 'index.html' : 'inicio.html';
+    };
+
+    function infoVersao() {
+        const script = document.querySelector('script[src*="tema.js"]');
+        const m = /v=(\d{4})(\d{2})(\d{2})([a-z]?)/.exec(script ? script.getAttribute('src') : '');
+        return m ? { data: `${m[3]}/${m[2]}/${m[1]}`, build: m[0].slice(2) } : null;
+    }
+
+    function opcoesPreferencia(nome, opcoes) {
+        const atual = lerPreferencia(nome);
+        return `<div class="config-opcoes">${opcoes.map(o => `<button type="button" class="config-opcao${atual === o[0] ? ' ativo' : ''}" data-config="pref" data-pref="${nome}" data-valor="${o[0]}">${o[1]}</button>`).join('')}</div>`;
+    }
+
+    function abrirConfiguracoes() {
+        let overlay = document.getElementById('modal-configuracoes');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'modal-configuracoes';
+            overlay.className = 'modal-overlay';
+            overlay.addEventListener('click', e => { if (e.target === overlay) overlay.style.display = 'none'; });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') overlay.style.display = 'none'; });
+            document.body.appendChild(overlay);
+        }
+        const escuro = document.documentElement.getAttribute('data-tema') === 'escuro';
+        const animar = window.animacoesAtivas();
+        const versaoInfo = infoVersao();
+        overlay.innerHTML = `
+            <div class="modal-card-metas modal-configuracoes-card">
+                <div class="modal-topo-metas">
+                    <h3>Configurações</h3>
+                    <button type="button" class="btn-fechar-modal-metas" data-config="fechar">&times;</button>
+                </div>
+                <div class="modal-corpo-metas">
+                    <div class="config-grupo">Aparência</div>
+                    <div class="config-linha">
+                        <div class="config-texto"><strong>Tema</strong><small>Modo claro ou escuro do sistema.</small></div>
+                        <div class="config-opcoes">
+                            <button type="button" class="config-opcao${escuro ? '' : ' ativo'}" data-config="tema" data-valor="claro">Claro</button>
+                            <button type="button" class="config-opcao${escuro ? ' ativo' : ''}" data-config="tema" data-valor="escuro">Escuro</button>
+                        </div>
+                    </div>
+                    <div class="config-linha">
+                        <div class="config-texto"><strong>Tamanho do texto</strong><small>Aumenta o conteúdo das telas para facilitar a leitura.</small></div>
+                        ${opcoesPreferencia('texto', [['normal', 'Normal'], ['grande', 'Grande']])}
+                    </div>
+                    <div class="config-linha">
+                        <div class="config-texto"><strong>Densidade das tabelas</strong><small>A compacta mostra mais linhas sem rolar a tela.</small></div>
+                        ${opcoesPreferencia('densidade', [['confortavel', 'Confortável'], ['compacta', 'Compacta']])}
+                    </div>
+                    <div class="config-linha">
+                        <div class="config-texto"><strong>Animações</strong><small>Transições entre telas, entrada dos blocos e efeito do login.</small></div>
+                        <button type="button" class="config-interruptor" role="switch" aria-checked="${animar}" aria-label="Animações" data-config="animacoes"></button>
+                    </div>
+                    <div class="config-grupo">Navegação</div>
+                    <div class="config-linha">
+                        <div class="config-texto"><strong>Página inicial</strong><small>Tela aberta ao entrar no sistema.</small></div>
+                        ${opcoesPreferencia('paginaInicial', [['inicio', 'Início'], ['agendamentos', 'Agendamentos']])}
+                    </div>
+                    <div class="config-linha">
+                        <div class="config-texto"><strong>Notificações</strong><small>Exibe o sino com as pendências no topo.</small></div>
+                        <button type="button" class="config-interruptor" role="switch" aria-checked="${lerPreferencia('notificacoes') === 'ligadas'}" aria-label="Notificações" data-config="notificacoes"></button>
+                    </div>
+                    <div class="config-grupo">Sobre o sistema</div>
+                    <div class="config-sobre">
+                        <div><span>Sistema</span><strong>Painel de Bônus · AutoService</strong></div>
+                        <div><span>Versão</span><strong>1.0${versaoInfo ? ' · build ' + versaoInfo.build : ''}</strong></div>
+                        ${versaoInfo ? `<div><span>Última atualização</span><strong>${versaoInfo.data}</strong></div>` : ''}
+                    </div>
+                </div>
+                <div class="modal-rodape-metas">
+                    <button type="button" class="btn-salvar-modal" data-config="fechar">Fechar</button>
+                </div>
+            </div>
+        `;
+        overlay.onclick = e => {
+            if (e.target === overlay) { overlay.style.display = 'none'; return; }
+            const alvo = e.target.closest('[data-config]');
+            if (!alvo) return;
+            const acao = alvo.getAttribute('data-config');
+            if (acao === 'fechar') overlay.style.display = 'none';
+            if (acao === 'tema') {
+                const novo = alvo.getAttribute('data-valor');
+                salvarTema(novo);
+                aplicarTema(novo);
+                overlay.querySelectorAll('[data-config="tema"]').forEach(b => b.classList.toggle('ativo', b === alvo));
+            }
+            if (acao === 'pref') {
+                salvarPreferencia(alvo.getAttribute('data-pref'), alvo.getAttribute('data-valor'));
+                alvo.parentElement.querySelectorAll('[data-config="pref"]').forEach(b => b.classList.toggle('ativo', b === alvo));
+            }
+            if (acao === 'notificacoes') {
+                const ligar = alvo.getAttribute('aria-checked') !== 'true';
+                alvo.setAttribute('aria-checked', String(ligar));
+                salvarPreferencia('notificacoes', ligar ? 'ligadas' : 'desligadas');
+            }
+            if (acao === 'animacoes') {
+                const ligar = alvo.getAttribute('aria-checked') !== 'true';
+                alvo.setAttribute('aria-checked', String(ligar));
+                definirAnimacoes(ligar);
+            }
+        };
+        overlay.style.display = 'flex';
     }
 
     function aplicarTema(tema) {
@@ -78,6 +228,8 @@
         });
 
         aplicarTema(lerTema());
+    aplicarAnimacoes();
+    aplicarPreferencias();
     }
 
     window.mostrarLinksAdmin = function () {
@@ -103,6 +255,7 @@
         divergencias: SVG('<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>'),
         gestao: SVG('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'),
         relatorios: SVG('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
+        config: SVG('<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>'),
         fixar: SVG('<path d="M9 4h6l-1 6 3 3H7l3-3-1-6zM12 13v8"/>')
     };
 
@@ -159,6 +312,13 @@
             document.body.classList.toggle('ml-fixo', novo);
             try { localStorage.setItem(CHAVE_MENU_FIXO, novo ? '1' : '0'); } catch (e) {}
         });
+        const config = document.createElement('button');
+        config.type = 'button';
+        config.className = 'ml-fixar ml-config';
+        config.title = 'Configurações';
+        config.innerHTML = `<span class="ml-icone">${ICONES.config}</span><span class="ml-texto">Configurações</span>`;
+        config.addEventListener('click', abrirConfiguracoes);
+        aside.appendChild(config);
         aside.appendChild(fixar);
 
         document.body.classList.add('menu-lateral-ativo');
@@ -184,8 +344,30 @@
         montarMenuLateral();
     };
 
+    let entradaFeita = false;
+
+    window.entradaPagina = function (alvos) {
+        if (entradaFeita) return;
+        entradaFeita = true;
+        if (!window.animacoesAtivas()) return;
+        const centroX = window.innerWidth / 2;
+        const centroY = window.innerHeight / 2;
+        Array.from(alvos).forEach((el, i) => {
+            const r = el.getBoundingClientRect();
+            if (r.width === 0 || r.height === 0) return;
+            el.style.setProperty('--bx', Math.round(centroX - (r.left + r.width / 2)) + 'px');
+            el.style.setProperty('--by', Math.round(centroY - (r.top + r.height / 2)) + 'px');
+            el.style.setProperty('--b-atraso', Math.min(i, 14) * 45 + 'ms');
+            el.classList.add('entrada-bolha');
+            el.addEventListener('animationend', () => el.classList.remove('entrada-bolha'), { once: true });
+        });
+    };
+
     window.mostrarConteudo = function () {
         document.querySelectorAll('.conteudo-carregando').forEach(e => e.classList.remove('conteudo-carregando'));
+        if (document.body && !document.body.classList.contains('pagina-inicio') && !document.body.classList.contains('corpo-login')) {
+            requestAnimationFrame(() => window.entradaPagina(document.querySelectorAll('main > *:not(.oculto):not(script):not(style):not(#abas-gestao)')));
+        }
     };
 
     aplicarTema(lerTema());
@@ -197,4 +379,11 @@
         if (menuSalvo && menuSalvo.admin) document.querySelectorAll('#abas-gestao.oculto').forEach(e => e.classList.remove('oculto'));
         setTimeout(window.mostrarConteudo, 8000);
     });
+
+    if (location.protocol.startsWith('http') && window.HTMLScriptElement && HTMLScriptElement.supports && HTMLScriptElement.supports('speculationrules')) {
+        const regras = document.createElement('script');
+        regras.type = 'speculationrules';
+        regras.textContent = JSON.stringify({ prerender: [{ where: { selector_matches: '.link-nav, #abas-gestao a' }, eagerness: 'moderate' }] });
+        document.head.appendChild(regras);
+    }
 })();

@@ -148,6 +148,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         return `Bônus liberado. Faltam ${meta - qtd} para a meta.`;
     }
 
+    function entradaBolha(raiz) {
+        window.entradaPagina(raiz.querySelectorAll('.dash-hero, .dash-card'));
+    }
+
     async function montarConsultor() {
         const marcas = window.Bonus.listarMarcas(equipeUsuario);
         const agsEquipe = agendamentos.filter(a => marcas.includes(window.Bonus.normalizarMarca(a.marca)));
@@ -180,11 +184,13 @@ document.addEventListener('DOMContentLoaded', async function () {
             : '<div class="dash-card"><span class="dash-sub">Nenhuma marca vinculada ao seu usuário.</span></div>';
 
         const contagem = {};
-        agsEquipe.filter(a => !a.inativo && a.user_id && comparecido(a)).forEach(a => { contagem[a.user_id] = (contagem[a.user_id] || 0) + 1; });
-        const operadores = new Set(agsEquipe.filter(a => !a.inativo && a.user_id).map(a => a.user_id));
-        operadores.add(usuarioAtual.id);
-        const minhaContagem = contagem[usuarioAtual.id] || 0;
-        const posicao = 1 + Object.entries(contagem).filter(([id, q]) => id !== usuarioAtual.id && q > minhaContagem).length;
+        agendamentos.filter(a => !a.inativo && a.user_id).forEach(a => {
+            if (!contagem[a.user_id]) contagem[a.user_id] = { comp: 0, total: 0 };
+            contagem[a.user_id].total++;
+            if (comparecido(a)) contagem[a.user_id].comp++;
+        });
+        const minha = contagem[usuarioAtual.id] || { comp: 0, total: 0 };
+        const posicao = 1 + Object.entries(contagem).filter(([id, d]) => id !== usuarioAtual.id && (d.comp > minha.comp || (d.comp === minha.comp && d.total > minha.total))).length;
 
         const divergencias = await seguro(supabaseClient.from('divergencias').select('id, status').eq('user_id', usuarioAtual.id), []);
         const abertas = (divergencias || []).filter(d => d.status === 'aberta').length;
@@ -226,6 +232,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 </a>
                 ${cartaoAlmoco}
             </div>`;
+        entradaBolha(raiz);
     }
 
     async function montarAdmin() {
@@ -391,6 +398,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 <div class="dash-atv-col"><span class="dash-card-titulo">Últimas 24 horas</span><ul class="dash-lista dash-rolavel-curto">${linhasHistorico}</ul></div>
                 <div class="dash-atv-col"><span class="dash-card-titulo">Última importação</span>${imp ? `<strong class="dash-import-arquivo" title="${escaparHtml(impDados.arquivo || 'Planilha')}">${escaparHtml(impDados.arquivo || 'Planilha')}</strong><span class="dash-sub">${quando(imp.criado_em)}${impDados.periodo ? ' · período ' + escaparHtml(impDados.periodo) : ''}</span><span class="dash-import-resumo"><strong>${impDados.total ?? 0}</strong> agendamentos · <strong class="sucesso">${impDados.comparecidos ?? 0}</strong> comparecidos · <strong class="perigo">${impDados.no_show ?? 0}</strong> no&#8209;show</span>${impDados.marcas ? `<span class="dash-sub">Marcas: ${escaparHtml(impDados.marcas)}</span>` : ''}` : '<span class="dash-vazio">Nenhuma importação registrada.</span>'}</div>
             </div>`;
+        entradaBolha(raiz);
     }
 
     try {
