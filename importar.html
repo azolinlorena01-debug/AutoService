@@ -8,11 +8,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" async></script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <script src="tema.js?v=20261109a"></script>
-    <script src="avisos.js?v=20261109a"></script>
-    <script src="seletor-mes.js?v=20261109a" defer></script>
-    <script src="dropdown.js?v=20261109a" defer></script>
-    <link rel="stylesheet" href="style.css?v=20261109a">
+    <script src="tema.js?v=20261109h"></script>
+    <script src="avisos.js?v=20261109h"></script>
+    <script src="seletor-mes.js?v=20261109h" defer></script>
+    <script src="dropdown.js?v=20261109h" defer></script>
+    <link rel="stylesheet" href="style.css?v=20261109h">
 </head>
 <body class="pagina-importar">
     <div class="container">
@@ -430,6 +430,117 @@
                 return txt === 'MASTER' || txt.includes('SUPORTE') || txt.includes('PESQUISA') || txt.includes('BACKUP');
             }
 
+            function regrasDoRelatorio(modo) {
+                const comuns = [
+                    ['Código OP-20', 'Linhas com código OP-20 (agendam fora) são sempre excluídas.'],
+                    ['Status', 'Com O.S. preenchida (ou marcado como comparecido) = Compareceu. Sem O.S. e data anterior à leitura = Não compareceu. Demais = Pendente.'],
+                    ['Reagendados', 'Marcados quando o status da planilha indica reagendamento ou quando a mesma placa e revisão já existia no banco com outra data.']
+                ];
+                if (modo === 'toyota') {
+                    return [
+                        ['Operadoras', 'Somente operadoras cadastradas na Toyota e inativos já cadastrados com código sem espaços. Outros nomes são ignorados e listados.'],
+                        ['Visita', 'Chave da visita: data do agendamento + nome do cliente + placa + chassi.'],
+                        ['Revisões', 'Cada revisão numerada e cada Facilitada conta como agendamento e gera bonificação.'],
+                        ['Serviços junto de revisão', 'Serviços da mesma visita de uma revisão não são contados à parte.'],
+                        ['Visita só com serviços', 'Vira um único agendamento "Outros serviços", valor 0, conta como agendado/comparecido e não gera bonificação.'],
+                        ['Facilitada + revisão', 'Na mesma visita conta apenas a Facilitada, para confirmação manual.']
+                    ].concat(comuns);
+                }
+                return [
+                    ['Serviços', 'Todos os serviços são importados linha a linha, sem unificação por visita. Apenas revisões geram bonificação.'],
+                    ['Nomes sem usuário', 'Agendadores sem usuário são agrupados como inativos (equipe neutra) para o total bater com a planilha.'],
+                    ['Grupo de marcas', 'Operadoras que atuam somente na Toyota não entram neste arquivo.']
+                ].concat(comuns);
+            }
+
+            function mostrarAcoesRelatorio(rel) {
+                let caixa = document.getElementById('acoes-relatorio-importacao');
+                if (!caixa) {
+                    caixa = document.createElement('div');
+                    caixa.id = 'acoes-relatorio-importacao';
+                    caixa.className = 'acoes-relatorio-importacao';
+                    logBox.parentNode.insertBefore(caixa, logBox.nextSibling);
+                }
+                caixa.innerHTML = '<span>Relatório detalhado da última leitura</span><button type="button" class="btn-cancelar-modal" data-rel="xlsx">Baixar Excel</button><button type="button" class="btn-cancelar-modal" data-rel="pdf">Gerar PDF</button>';
+                caixa.querySelectorAll('button').forEach(b => b.addEventListener('click', () => acionarRelatorio(window.ultimoRelatorioImportacao, b.dataset.rel)));
+            }
+
+            function acionarRelatorio(rel, formato) {
+                if (!rel) return;
+                try {
+                    if (formato === 'xlsx') baixarRelatorioExcel(rel);
+                    else imprimirRelatorio(rel);
+                } catch (e) {
+                    avisar('Não foi possível gerar o relatório: ' + (e.message || e));
+                }
+            }
+
+            function dataBR(iso) { return iso ? String(iso).split('-').reverse().join('/') : ''; }
+
+            function baixarRelatorioExcel(rel) {
+                if (!window.XLSX) { avisar('A biblioteca de planilhas ainda está carregando. Tente novamente em instantes.'); return; }
+                const wb = XLSX.utils.book_new();
+                const add = (nome, linhas, larguras) => {
+                    const ws = XLSX.utils.aoa_to_sheet(linhas);
+                    ws['!cols'] = larguras.map(w => ({ wch: w }));
+                    XLSX.utils.book_append_sheet(wb, ws, nome);
+                };
+                const quando = rel.geradoEm.toLocaleString('pt-BR');
+                const resumo = [['Relatório de importação'], ['Arquivo', rel.arquivo], ['Aba', rel.aba], ['Tipo', rel.modo === 'toyota' ? 'Toyota' : 'Outras Marcas'], ['Gerado em', quando], ['Mês de referência', rel.mesReferencia.split('-').reverse().join('/')], []];
+                resumo.push(['Indicador', 'Valor']);
+                rel.resumo.forEach(l => resumo.push(l));
+                if (rel.alertas.length) { resumo.push([]); resumo.push(['Alertas']); rel.alertas.forEach(t => resumo.push([t])); }
+                const porTipo = {};
+                rel.anomalias.forEach(a => { porTipo[a.tipo] = (porTipo[a.tipo] || 0) + 1; });
+                resumo.push([]); resumo.push(['Anomalias por tipo', 'Quantidade']);
+                Object.entries(porTipo).sort((x, y) => y[1] - x[1]).forEach(l => resumo.push(l));
+                add('Resumo', resumo, [60, 40]);
+                add('Por operador', [['Operador', 'Total', 'Compareceu', 'Não compareceu', 'Pendente', 'Facilitadas']].concat(rel.porOperador), [44, 10, 12, 16, 10, 12]);
+                add('Validados', [['Linha na planilha', 'Data agendamento', 'Cliente', 'Placa', 'Chassi', 'Tipo', 'Serviços (observação)', 'Operador', 'Status', 'O.S.', 'Marca', 'Valor unitário']].concat(rel.validados.map(v => [v.linha, dataBR(v.data), v.cliente, v.placa, v.chassi, v.tipo, v.servicos, v.operador + (v.inativo ? ' (inativo)' : ''), v.status, v.os, v.marca, v.valor])), [10, 14, 34, 12, 22, 16, 30, 28, 16, 10, 14, 12]);
+                add('Anomalias', [['Tipo', 'Linha na planilha', 'Cliente', 'Placa/Chassi', 'Operador', 'Detalhe']].concat(rel.anomalias.map(a => [a.tipo, a.linha, a.cliente, a.placa, a.operador, a.detalhe])), [34, 10, 32, 20, 28, 90]);
+                add('Unificados', [['Linha', 'Data agendamento', 'Cliente', 'Placa', 'Chassi', 'Operador', 'Linhas de serviço unificadas', 'Serviços']].concat(rel.unificados.map(u => [u.linha, dataBR(u.data), u.cliente, u.placa, u.chassi, u.operador, u.linhasUnificadas, u.servicos])), [8, 14, 32, 12, 22, 28, 14, 60]);
+                add('Revisão + Facilitada', [['Linha descartada', 'Data agendamento', 'Cliente', 'Placa', 'Chassi', 'Operador', 'Revisão descartada', 'Motivo']].concat(rel.substituidas.map(u => [u.linha, dataBR(u.data), u.cliente, u.placa, u.chassi, u.agendador, u.servico, u.motivo])), [10, 14, 32, 12, 22, 28, 28, 70]);
+                add('Não contados', [['Linha na planilha', 'Data agendamento', 'Cliente', 'Placa', 'Chassi', 'Serviço', 'Operador', 'Motivo']].concat(rel.vinculados.concat(rel.substituidas).sort((x, y) => x.linha - y.linha).map(u => [u.linha, dataBR(u.data), u.cliente, u.placa, u.chassi, u.servico, u.agendador, u.motivo])), [10, 14, 32, 12, 22, 24, 28, 60]);
+                add('Ignorados', [['Agendador', 'Motivo', 'Linhas']].concat(rel.ignorados.map(i => [i.agendador, i.motivo, i.qtd])), [44, 52, 10]);
+                add('Regras aplicadas', [['Regra', 'Descrição']].concat(regrasDoRelatorio(rel.modo)), [30, 120]);
+                const nome = String(rel.arquivo).replace(/\.[^.]+$/, '').replace(/[^\w\-]+/g, '_');
+                XLSX.writeFile(wb, `relatorio-importacao-${nome}.xlsx`);
+            }
+
+            function imprimirRelatorio(rel) {
+                const esc = t => String(t === null || t === undefined ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+                const tabela = (cab, linhas, limite) => {
+                    const lista = limite ? linhas.slice(0, limite) : linhas;
+                    const extra = limite && linhas.length > limite ? `<p class="rel-nota">Mostrando ${limite} de ${linhas.length}. A lista completa está no Excel.</p>` : '';
+                    return `<table class="rel-tabela"><thead><tr>${cab.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${lista.map(l => `<tr>${l.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>${extra}`;
+                };
+                const secao = (titulo, corpo) => `<section class="rel-secao"><h2>${esc(titulo)}</h2>${corpo}</section>`;
+                const porTipo = {};
+                rel.anomalias.forEach(a => { porTipo[a.tipo] = (porTipo[a.tipo] || 0) + 1; });
+                const doTipo = t => rel.anomalias.filter(a => a.tipo === t).map(a => [a.linha, a.cliente, a.placa, a.operador, a.detalhe]);
+                const tiposDetalhe = ['Revisão + Facilitada na mesma visita', 'Mais de uma revisão na mesma visita', 'Possível duplicado', 'Linha sem placa válida', 'Linha sem data de agendamento', 'Comparecido sem O.S.', 'Data fora do mês de referência'];
+                let html = `<header class="rel-topo"><h1>Relatório de importação</h1><p>${esc(rel.arquivo)} · aba ${esc(rel.aba)} · ${rel.modo === 'toyota' ? 'Toyota' : 'Outras Marcas'}</p><p>Gerado em ${esc(rel.geradoEm.toLocaleString('pt-BR'))} · mês de referência ${esc(rel.mesReferencia.split('-').reverse().join('/'))}</p></header>`;
+                html += secao('Resumo', tabela(['Indicador', 'Valor'], rel.resumo));
+                if (rel.alertas.length) html += secao('Alertas', `<ul>${rel.alertas.map(t => `<li>${esc(t)}</li>`).join('')}</ul>`);
+                html += secao('Por operador', tabela(['Operador', 'Total', 'Comp.', 'No-show', 'Pend.', 'Facilit.'], rel.porOperador));
+                html += secao('Anomalias por tipo', Object.keys(porTipo).length ? tabela(['Tipo', 'Quantidade'], Object.entries(porTipo).sort((x, y) => y[1] - x[1])) : '<p>Nenhuma anomalia encontrada.</p>');
+                if (rel.unificados.length) html += secao(`Serviços unificados em um agendamento (${rel.unificados.length})`, tabela(['Linha', 'Cliente', 'Placa', 'Operador', 'Serviços unificados'], rel.unificados.map(u => [u.linha, u.cliente, u.placa || u.chassi, u.operador, `${u.linhasUnificadas} linhas: ${u.servicos}`]), 150));
+                tiposDetalhe.forEach(t => { const l = doTipo(t); if (l.length) html += secao(`${t} (${l.length})`, tabela(['Linha', 'Cliente', 'Placa/Chassi', 'Operador', 'Detalhe'], l, 100)); });
+                html += secao('Ignorados (agrupado por agendador)', tabela(['Agendador', 'Motivo', 'Linhas'], rel.ignorados.map(i => [i.agendador, i.motivo, i.qtd]), 40));
+                html += secao('Regras aplicadas', tabela(['Regra', 'Descrição'], regrasDoRelatorio(rel.modo)));
+                let area = document.getElementById('relatorio-impressao');
+                if (!area) {
+                    area = document.createElement('div');
+                    area.id = 'relatorio-impressao';
+                    document.body.appendChild(area);
+                }
+                area.innerHTML = html;
+                document.body.classList.add('imprimindo-relatorio');
+                const limpar = () => { document.body.classList.remove('imprimindo-relatorio'); window.removeEventListener('afterprint', limpar); };
+                window.addEventListener('afterprint', limpar);
+                setTimeout(() => window.print(), 100);
+            }
+
             function confirmarImportacao(resumo) {
                 return new Promise(resolve => {
                     let overlay = document.getElementById('modalConfirmarImportacao');
@@ -459,7 +570,14 @@
                                 <button type="button" id="btnImportarConfirmar" class="btn-salvar-modal">${(resumo.alertas || []).length ? 'Confirmar mesmo assim' : 'Confirmar e gravar'}</button>
                             </div>
                         </div>`;
-                    const fechar = (resposta) => { overlay.style.display = 'none'; resolve(resposta); };
+                    if (window.ultimoRelatorioImportacao) {
+                        const caixa = document.createElement('div');
+                        caixa.className = 'acoes-relatorio-importacao';
+                        caixa.innerHTML = '<span>Relatório detalhado desta leitura</span><button type="button" class="btn-cancelar-modal" data-rel="xlsx">Baixar Excel</button><button type="button" class="btn-cancelar-modal" data-rel="pdf">Gerar PDF</button>';
+                        overlay.querySelector('.resumo-confirmacao').appendChild(caixa);
+                        caixa.querySelectorAll('button').forEach(b => b.addEventListener('click', () => acionarRelatorio(window.ultimoRelatorioImportacao, b.dataset.rel)));
+                    }
+                    const fechar = (resposta) => { overlay.style.display = 'none'; if (resposta) ocupado(true); resolve(resposta); };
                     overlay.querySelectorAll('.btn-cadastrar-inativo').forEach(botao => {
                         botao.addEventListener('click', async () => {
                             const dealer = String(botao.dataset.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
@@ -475,6 +593,7 @@
                     });
                     overlay.querySelector('#btnImportarCancelar').addEventListener('click', () => fechar(false));
                     overlay.querySelector('#btnImportarConfirmar').addEventListener('click', () => fechar(true));
+                    ocupado(false);
                     overlay.style.display = 'flex';
                 });
             }
@@ -849,6 +968,7 @@
                                     } else {
                                         const tipo = rotuloServico(txt);
                                         if (!g.tipos.includes(tipo)) g.tipos.push(tipo);
+                                        g.qtdServicos = (g.qtdServicos || 0) + 1;
                                         if (g.primeiraServico === -1) g.primeiraServico = i;
                                     }
                                 }
@@ -873,6 +993,16 @@
                             const resumoPorConsultor = {};
                             const naoReconhecidos = {};
 
+                            const relatorio = { arquivo: file.name, aba: sheetName, modo: modoPlanilha, geradoEm: new Date(), mesReferencia: `${anoRef}-${mesPadrao}`, validados: [], vinculados: [], substituidas: [], unificados: [], ignoradosMapa: new Map(), anomalias: [], resumo: [], alertas: [], porOperador: [], porMarca: [], temCliente: colNomeCliente !== -1 };
+                            const textoCelula = v => (v === null || v === undefined) ? '' : String(v).trim();
+                            const baseLinha = (r, idx) => ({ linha: idx + 1, cliente: colNomeCliente !== -1 ? textoCelula(r[colNomeCliente]) : '', placa: textoCelula(r[colPlaca]), chassi: textoCelula(r[colChassi]), servico: textoCelula(r[colServico] || r[1]), agendador: textoCelula(r[colAgendador]), data: formatarDataSemHorario(r[colDataRevisao]) || '' });
+                            const registrarIgnorado = (agendador, motivo) => {
+                                const k = `${motivo}|${agendador}`;
+                                const atual = relatorio.ignoradosMapa.get(k) || { agendador, motivo, qtd: 0 };
+                                atual.qtd++;
+                                relatorio.ignoradosMapa.set(k, atual);
+                            };
+
                             for (let i = 1; i < linhasMatriz.length; i++) {
                                 const row = linhasMatriz[i];
                                 if (!row || row.length === 0) continue;
@@ -886,6 +1016,7 @@
                                 if (destinoEscolhido === 'auto' && ehExterno) {
                                     const nomeExterno = String(textoAgendador || '').trim();
                                     if (nomeExterno && !nomeIgnoravel(nomeExterno)) totalExternos++;
+                                    registrarIgnorado(nomeExterno || '(vazio)', 'Código OP-20 (agendam fora)');
                                     continue;
                                 }
 
@@ -898,6 +1029,7 @@
 
                                 if (!consultorAlvo) {
                                     const nomeBruto = String(textoAgendador || '').trim();
+                                    registrarIgnorado(nomeBruto || '(vazio)', nomeBruto && nomeIgnoravel(nomeBruto) ? 'Nome ignorado (Master, Suporte, Pesquisa ou Backup)' : 'Agendador sem usuário correspondente');
                                     if (nomeBruto && !nomeIgnoravel(nomeBruto)) {
                                         if (ehExterno) {
                                             totalExternos++;
@@ -918,7 +1050,11 @@
                                         const chaveVisita = chaveVisitaDe(row);
                                         const grupoVisita = gruposVisita.get(chaveVisita);
                                         if (grupoVisita) {
-                                            if (grupoVisita.temRevisao || grupoVisita.primeiraServico !== i) { totalServicosVinculadosToyota++; continue; }
+                                            if (grupoVisita.temRevisao || grupoVisita.primeiraServico !== i) {
+                                                totalServicosVinculadosToyota++;
+                                                relatorio.vinculados.push(Object.assign(baseLinha(row, i), { motivo: grupoVisita.temRevisao ? 'Serviço da mesma visita de uma revisão (não contado à parte)' : 'Serviço repetido da mesma visita (unificado em um agendamento)' }));
+                                                continue;
+                                            }
                                             tipoServicoLinha = grupoVisita.tipos.join(', ');
                                         }
                                     }
@@ -928,12 +1064,16 @@
 
                                 if (modoPlanilha === 'toyota' && numRevisao !== 'FACILITADA' && numRevisao !== 'SERVICO') {
                                     const grupoRev = gruposVisita.get(chaveVisitaDe(row));
-                                    if (grupoRev && grupoRev.temFacilitada) { totalRevisoesSubstituidasFacilitada++; continue; }
+                                    if (grupoRev && grupoRev.temFacilitada) {
+                                        totalRevisoesSubstituidasFacilitada++;
+                                        relatorio.substituidas.push(Object.assign(baseLinha(row, i), { motivo: 'Revisão numerada da mesma visita de uma Facilitada (contada apenas a Facilitada)' }));
+                                        continue;
+                                    }
                                 }
 
                                 if (destinoEscolhido === 'auto' && !consultorAlvo.inativo) {
-                                    if (modoPlanilha === 'outras' && consultorAlvo.soToyota) { totalIgnoradosOutroGrupo++; continue; }
-                                    if (modoPlanilha === 'toyota' && !consultorAlvo.temToyota) { totalIgnoradosOutroGrupo++; continue; }
+                                    if (modoPlanilha === 'outras' && consultorAlvo.soToyota) { totalIgnoradosOutroGrupo++; registrarIgnorado(String(textoAgendador || '').trim(), 'Operadora do outro grupo de marcas'); continue; }
+                                    if (modoPlanilha === 'toyota' && !consultorAlvo.temToyota) { totalIgnoradosOutroGrupo++; registrarIgnorado(String(textoAgendador || '').trim(), 'Operadora do outro grupo de marcas'); continue; }
                                 }
 
                                 if (numRevisao === 'FACILITADA') totalFacilitadas++;
@@ -1007,6 +1147,28 @@
                                 }
 
                                 if (consultorAlvo.inativo) totalInativos++;
+
+                                const grupoDaLinha = modoPlanilha === 'toyota' ? gruposVisita.get(chaveVisitaDe(row)) : null;
+                                const itemRelatorio = Object.assign(baseLinha(row, i), {
+                                    operador: consultorAlvo.nome || 'Inativo',
+                                    inativo: !!consultorAlvo.inativo,
+                                    tipo: numRevisao === 'FACILITADA' ? 'Facilitada' : (numRevisao === 'SERVICO' ? 'Outros serviços' : `Revisão ${String(numRevisao).padStart(2, '0')}`),
+                                    servicos: tipoServicoLinha || '',
+                                    status: statusCalculado === 'compareceu' ? 'Compareceu' : (statusCalculado === 'faltou' ? 'Não compareceu' : 'Pendente'),
+                                    os: temOS ? valorOSLinha : '',
+                                    marca: marcaDetectada,
+                                    valor: valorUnitario,
+                                    reagendado: !!(obs && obs.includes('Reagendado')),
+                                    semPlaca: placaBruta !== String(row[colPlaca] || '').toUpperCase().replace(/[^A-Z0-9]/g, ''),
+                                    semData: !formatarDataSemHorario(row[colDataRevisao]),
+                                    compSemOS: marcouSim && !temOS,
+                                    chaveVisita: chaveVisitaDe(row),
+                                    placaFinal: placaBruta
+                                });
+                                relatorio.validados.push(itemRelatorio);
+                                if (tipoServicoLinha && grupoDaLinha && grupoDaLinha.qtdServicos > 1) {
+                                    relatorio.unificados.push({ linha: itemRelatorio.linha, cliente: itemRelatorio.cliente, data: itemRelatorio.data, placa: itemRelatorio.placa, chassi: itemRelatorio.chassi, operador: itemRelatorio.operador, servicos: tipoServicoLinha, linhasUnificadas: grupoDaLinha.qtdServicos });
+                                }
 
                                 registrosParaSalvar.push({
                                     user_id: consultorAlvo.inativo ? null : consultorAlvo.id,
@@ -1142,6 +1304,46 @@
                                 { titulo: `Por marca (${Object.keys(porMarcaMapa).length})`, html: tabelaPrevia(['Marca', 'Total', 'Comp.', 'No-show', 'Pend.'], Object.entries(porMarcaMapa).sort((x, y) => y[1][0] - x[1][0]).map(([m, v]) => [m, ...v])) },
                                 { titulo: 'Amostra das primeiras 10 linhas', html: tabelaPrevia(['Revisão em', 'Placa', 'Tipo', 'O.S', 'Status', 'Marca'], registrosParaSalvar.slice(0, 10).map(r => [r.data_revisao.split('-').reverse().join('/'), r.placa, r.revisao, r.os, r.status === 'compareceu' ? 'Compareceu' : r.status === 'faltou' ? 'No-show' : 'Pendente', r.marca || 'Toyota'])) }
                             ];
+                            relatorio.resumo = linhasConfirmacao;
+                            relatorio.alertas = alertasMes;
+                            relatorio.porOperador = porOperadorLinhas;
+                            relatorio.porMarca = Object.entries(porMarcaMapa).sort((x, y) => y[1][0] - x[1][0]).map(([m, v]) => [m, ...v]);
+                            const anom = relatorio.anomalias;
+                            const itemAnom = (tipo, it, detalhe) => anom.push({ tipo, linha: it.linha, cliente: it.cliente, placa: it.placa || it.chassi, operador: it.operador || it.agendador || '', detalhe });
+                            const visitasRev = new Map();
+                            relatorio.validados.forEach(it => {
+                                if (it.tipo.startsWith('Revisão')) {
+                                    const lista = visitasRev.get(it.chaveVisita) || [];
+                                    lista.push(it);
+                                    visitasRev.set(it.chaveVisita, lista);
+                                }
+                                if (it.semPlaca) itemAnom('Linha sem placa válida', it, it.placaFinal === 'SEM-PLACA' ? 'Sem placa e sem chassi utilizável (gravada como SEM-PLACA)' : `Placa ausente; usado o final do chassi (${it.placaFinal})`);
+                                if (it.semData) itemAnom('Linha sem data de agendamento', it, 'Gravada no primeiro dia do mês de referência');
+                                if (it.compSemOS) itemAnom('Comparecido sem O.S.', it, 'Marcado como comparecido na planilha, mas sem número de O.S.');
+                                if (String(it.data || '').slice(0, 7) && String(it.data).slice(0, 7) !== relatorio.mesReferencia) itemAnom('Data fora do mês de referência', it, `Data do agendamento: ${String(it.data).split('-').reverse().join('/')}`);
+                                if (it.reagendado) itemAnom('Reagendado', it, 'Marcado como reagendado (status da planilha ou mudança de data para a mesma placa e revisão)');
+                            });
+                            visitasRev.forEach(lista => {
+                                if (lista.length > 1 && relatorio.temCliente) lista.forEach(it => itemAnom('Mais de uma revisão na mesma visita', it, `Mesmo cliente, veículo e dia com ${lista.length} revisões (${lista.map(x => x.tipo).join(' + ')}). Confira se é o mesmo veículo.`));
+                            });
+                            const facilitadasVisita = new Map();
+                            relatorio.validados.forEach(it => { if (it.tipo === 'Facilitada') facilitadasVisita.set(it.chaveVisita, it); });
+                            relatorio.substituidas.forEach(sub => {
+                                const dest = facilitadasVisita.get([sub.data, relatorio.temCliente ? normVisita(sub.cliente) : '', normVisita(sub.placa), normVisita(sub.chassi)].join('|'));
+                                itemAnom('Revisão + Facilitada na mesma visita', sub, `Revisão descartada: ${sub.servico}. Contada como Facilitada${dest ? ` (linha ${dest.linha})` : ''}. Confirmar manualmente qual vale.`);
+                            });
+                            const chavesDupRel = new Map();
+                            relatorio.validados.forEach(it => {
+                                const k = `${it.operador}|${it.placaFinal}|${it.tipo}|${it.data}|${it.tipo === 'Outros serviços' ? it.servicos : ''}`;
+                                const l = chavesDupRel.get(k) || [];
+                                l.push(it);
+                                chavesDupRel.set(k, l);
+                            });
+                            chavesDupRel.forEach(l => { if (l.length > 1) l.forEach(it => itemAnom('Possível duplicado', it, `Mesma operadora, placa, revisão e data em ${l.length} linhas (${l.map(x => x.linha).join(', ')})`)); });
+                            relatorio.unificados.forEach(u => anom.push({ tipo: 'Serviços unificados em um agendamento', linha: u.linha, cliente: u.cliente, placa: u.placa || u.chassi, operador: u.operador, detalhe: `${u.linhasUnificadas} linhas de serviço viraram 1 agendamento: ${u.servicos}` }));
+                            relatorio.ignorados = [...relatorio.ignoradosMapa.values()].sort((x, y) => y.qtd - x.qtd);
+                            window.ultimoRelatorioImportacao = relatorio;
+                            mostrarAcoesRelatorio(relatorio);
                             const confirmado = await confirmarImportacao({ alertas: alertasMes, linhas: linhasConfirmacao, detalhes: detalhesPrevia, naoReconhecidos: Object.entries(naoReconhecidos).sort((x, y) => y[1].q - x[1].q) });
                             if (!confirmado) {
                                 log('Importação cancelada. Nada foi alterado.');
@@ -1465,6 +1667,6 @@ td.c, th.c { text-align: center; }
             carregarHistorico();
         });
     </script>
-    <script src="conta.js?v=20261109a" defer></script>
+    <script src="conta.js?v=20261109h" defer></script>
 </body>
 </html>

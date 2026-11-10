@@ -116,7 +116,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (nome === 'backup' && moduloBackup) moduloBackup.carregarRegistro();
     }
 
-    Object.entries(abas).forEach(([chave, aba]) => aba.botao.addEventListener('click', () => trocarAba(chave)));
+    Object.entries(abas).forEach(([chave, aba]) => aba.botao.addEventListener('click', () => {
+        trocarAba(chave);
+        if (window.animarEntrada) window.animarEntrada([aba.secao]);
+    }));
 
     const inputMes = document.getElementById('admin-mes');
     const corpoFechamento = document.getElementById('corpo-fechamento');

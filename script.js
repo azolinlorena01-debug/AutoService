@@ -118,16 +118,33 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     async function buscarTodasLinhas(montarConsulta, tamanho = 1000) {
-        let todas = [];
-        let de = 0;
-        while (true) {
-            const { data, error } = await montarConsulta().range(de, de + tamanho - 1);
-            if (error) throw error;
-            const bloco = data || [];
-            todas = todas.concat(bloco);
-            if (bloco.length < tamanho) break;
-            de += tamanho;
+        const primeira = await montarConsulta({ count: 'exact' }).range(0, tamanho - 1);
+        if (primeira.error) throw primeira.error;
+        const bloco = primeira.data || [];
+        if (bloco.length < tamanho) return bloco;
+        if (typeof primeira.count !== 'number') {
+            let de = tamanho;
+            let acumulado = bloco;
+            while (true) {
+                const { data, error } = await montarConsulta().range(de, de + tamanho - 1);
+                if (error) throw error;
+                const prox = data || [];
+                acumulado = acumulado.concat(prox);
+                if (prox.length < tamanho) break;
+                de += tamanho;
+            }
+            return acumulado;
         }
+        const total = primeira.count;
+        if (total <= tamanho) return bloco;
+        const paginas = [];
+        for (let de = tamanho; de < total; de += tamanho) paginas.push(montarConsulta().range(de, de + tamanho - 1));
+        const resultados = await Promise.all(paginas);
+        let todas = bloco;
+        resultados.forEach(r => {
+            if (r.error) throw r.error;
+            todas = todas.concat(r.data || []);
+        });
         return todas;
     }
 
@@ -139,9 +156,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         try {
             const { inicio, fim } = intervaloDoMes(mesSelecionado);
-            const data = await buscarTodasLinhas(() => supabaseClient
+            const pMetaCentral = buscarMetaCentral(mesSelecionado);
+            pMetaCentral.catch(() => {});
+            const data = await buscarTodasLinhas(opcoes => supabaseClient
                 .from('vw_agendamentos_completos')
-                .select('*')
+                .select('*', opcoes)
                 .gte('data_revisao', inicio)
                 .lte('data_revisao', fim)
                 .order('data_revisao', { ascending: true })
@@ -153,7 +172,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 item.data_revisao && item.data_revisao.startsWith(mesSelecionado)
             );
 
-            atualizarBarraMetaCentral(agendamentosGeraisDoMes, await buscarMetaCentral(mesSelecionado));
+            atualizarBarraMetaCentral(agendamentosGeraisDoMes, await pMetaCentral);
 
             if (isAdmin) {
                 todosAgendamentosMes = agendamentosGeraisDoMes;
@@ -552,7 +571,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <td class="col-centro"><strong>${item.os || 'SEM-OS'}</strong></td>
                 <td class="col-centro">${textoRevisao}</td>
                 <td class="col-centro">${seletorStatusHTML}</td>
-                <td class="col-centro">${celulaObservacao}</td>
+                <td class="col-centro celula-obs">${celulaObservacao}</td>
                 <td class="col-centro celula-valor-bonus ${classesValor}">${conteudoValor}</td>
             `;
 
@@ -1038,6 +1057,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (filtroStatus && statusDaUrl && Array.from(filtroStatus.options).some(o => o.value === statusDaUrl)) filtroStatus.value = statusDaUrl;
 
     montarBotaoAdicionar();
-    await carregarDados();
     window.mostrarConteudo();
+    await carregarDados();
 });

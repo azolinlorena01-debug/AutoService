@@ -11,8 +11,21 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     async function buscarTodasLinhas(montarConsulta, tamanho = 1000) {
-        let todas = [];
-        let de = 0;
+        const primeira = await montarConsulta({ count: 'exact' }).range(0, tamanho - 1);
+        if (primeira.error) throw primeira.error;
+        let todas = primeira.data || [];
+        if (todas.length < tamanho) return todas;
+        if (typeof primeira.count === 'number') {
+            const paginas = [];
+            for (let de = tamanho; de < primeira.count; de += tamanho) paginas.push(montarConsulta().range(de, de + tamanho - 1));
+            const resultados = await Promise.all(paginas);
+            resultados.forEach(r => {
+                if (r.error) throw r.error;
+                todas = todas.concat(r.data || []);
+            });
+            return todas;
+        }
+        let de = tamanho;
         while (true) {
             const { data, error } = await montarConsulta().range(de, de + tamanho - 1);
             if (error) throw error;
@@ -663,8 +676,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         };
 
         try {
-            const dataView = await buscarTodasLinhas(() =>
-                aplicarFiltros(supabaseClient.from('vw_agendamentos_completos').select('*')));
+            const dataView = await buscarTodasLinhas(opcoes =>
+                aplicarFiltros(supabaseClient.from('vw_agendamentos_completos').select('*', opcoes)));
 
             if (dataView.length > 0) {
                 await window.aplicarInativos(supabaseClient, dataView);
@@ -701,16 +714,16 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    async function carregarDados() {
+    async function carregarDados(aguardar) {
         const mesSelecionado = (isAdmin ? filtroMesAdmin.value : filtroMesConsultor.value) || valorMesPadrao;
         window.atualizarSeloFechado(supabaseClient, mesSelecionado);
 
-        if (!isAdmin) {
-            await carregarFechamentoConsultor(mesSelecionado);
-        }
-
+        const pFechamento = !isAdmin ? carregarFechamentoConsultor(mesSelecionado) : null;
         const { inicio, fim } = intervaloDoMes(mesSelecionado);
-        const doMes = await lerAgendamentos({ inicio, fim });
+        const pDoMes = lerAgendamentos({ inicio, fim });
+        const pHistorico = !isAdmin ? lerAgendamentos({ userId: usuarioAtual.id }) : null;
+        if (pFechamento) await pFechamento;
+        const doMes = await pDoMes;
 
         agendamentosMesAtual = doMes.filter(item =>
             item.data_revisao && String(item.data_revisao).startsWith(mesSelecionado)
@@ -718,8 +731,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         todosAgendamentosHistorico = isAdmin
             ? agendamentosMesAtual
-            : await lerAgendamentos({ userId: usuarioAtual.id });
+            : await pHistorico;
 
+        if (aguardar) await aguardar;
         atualizarBotaoManuais();
         aplicarVisaoRelatorio();
     }
@@ -1690,16 +1704,16 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (filtroMesConsultor) filtroMesConsultor.value = parametroMes;
     }
 
-    await sincronizarMetasBanco();
-    await carregarOpcoesEquipes();
-    document.getElementById('btn-ver-manuais')?.addEventListener('click', abrirModalLancamentosManuais);
+    const aguardarPreparo = Promise.all([sincronizarMetasBanco(), carregarOpcoesEquipes()]).then(() => {
+        document.getElementById('btn-ver-manuais')?.addEventListener('click', abrirModalLancamentosManuais);
 
-    if (parametroEquipe && filtroEquipeAdmin) {
-        filtroEquipeAdmin.value = decodeURIComponent(parametroEquipe);
-        if (ddFiltroEquipe) ddFiltroEquipe.sincronizar();
-    }
+        if (parametroEquipe && filtroEquipeAdmin) {
+            filtroEquipeAdmin.value = decodeURIComponent(parametroEquipe);
+            if (ddFiltroEquipe) ddFiltroEquipe.sincronizar();
+        }
+    });
 
-    await carregarDados();
+    await carregarDados(aguardarPreparo);
     window.mostrarConteudo();
 
     if (dispararImpressao) {

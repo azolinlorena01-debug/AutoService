@@ -2,7 +2,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     const SUPABASE_URL = 'https://potvtrepcoswvzmkewic.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_iMbay5YOnrrehpqI9qU7HA_vMapr-DY';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    window.atualizarContadorDivergencias(supabaseClient, { marcarVisto: true });
+    const marcarComoVisto = () => window.atualizarContadorDivergencias(supabaseClient, { marcarVisto: true });
+    if (document.prerendering) document.addEventListener('prerenderingchange', marcarComoVisto, { once: true });
+    else marcarComoVisto();
 
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session || !session.user) {

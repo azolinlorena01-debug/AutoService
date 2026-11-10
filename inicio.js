@@ -63,17 +63,34 @@ document.addEventListener('DOMContentLoaded', async function () {
     const chavePct = p => (p >= 80 ? 'ok' : (p >= 50 ? 'alerta' : 'perigo'));
 
     async function buscarTodas(montar) {
-        let todas = [];
-        let de = 0;
         const tamanho = 1000;
-        while (true) {
-            const { data, error } = await montar().range(de, de + tamanho - 1);
-            if (error) throw error;
-            const bloco = data || [];
-            todas = todas.concat(bloco);
-            if (bloco.length < tamanho) break;
-            de += tamanho;
+        const primeira = await montar({ count: 'exact' }).range(0, tamanho - 1);
+        if (primeira.error) throw primeira.error;
+        const bloco = primeira.data || [];
+        if (bloco.length < tamanho) return bloco;
+        if (typeof primeira.count !== 'number') {
+            let de = tamanho;
+            let acumulado = bloco;
+            while (true) {
+                const { data, error } = await montar().range(de, de + tamanho - 1);
+                if (error) throw error;
+                const prox = data || [];
+                acumulado = acumulado.concat(prox);
+                if (prox.length < tamanho) break;
+                de += tamanho;
+            }
+            return acumulado;
         }
+        const total = primeira.count;
+        if (total <= tamanho) return bloco;
+        const paginas = [];
+        for (let de = tamanho; de < total; de += tamanho) paginas.push(montar().range(de, de + tamanho - 1));
+        const resultados = await Promise.all(paginas);
+        let todas = bloco;
+        resultados.forEach(r => {
+            if (r.error) throw r.error;
+            todas = todas.concat(r.data || []);
+        });
         return todas;
     }
 
@@ -87,8 +104,29 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
+    const inicioMes = `${mes}-01`;
+    const fimMes = `${mes}-${String(ultimoDia).padStart(2, '0')}`;
+    const sb = supabaseClient;
+    const pMetas = seguro(sb.from('metas_mensais').select('*').eq('mes_referencia', mes), []);
+    if (window.carregarPerfisInativos) window.carregarPerfisInativos(sb);
+    const pAgendamentos = buscarTodas(opcoes => sb.from('vw_agendamentos_completos').select('*', opcoes)
+        .gte('data_revisao', inicioMes).lte('data_revisao', fimMes)
+        .order('data_revisao', { ascending: true }).order('id', { ascending: true }));
+    pAgendamentos.catch(() => {});
+    const pFechamentoProprio = isAdmin ? null : seguro(sb.from('fechamentos').select('nota_monitoria').eq('mes', mes).eq('user_id', usuarioAtual.id).maybeSingle(), null);
+    const pDivergenciasProprias = isAdmin ? null : seguro(sb.from('divergencias').select('id, status').eq('user_id', usuarioAtual.id), []);
+    const pPerfis = isAdmin ? seguro(sb.from('perfis').select('*'), []) : null;
+    const pDivAbertas = isAdmin ? Promise.resolve(sb.from('divergencias').select('id', { count: 'exact', head: true }).eq('status', 'aberta')) : null;
+    const pMesesFechados = isAdmin ? seguro(sb.from('meses_fechados').select('mes'), []) : null;
+    const pFechamentosMes = isAdmin ? seguro(sb.from('fechamentos').select('user_id, valor_pago, nota_monitoria').eq('mes', mes), []) : null;
+    const pHistorico = isAdmin ? seguro(sb.from('historico_alteracoes').select('*').gte('criado_em', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()).order('criado_em', { ascending: false }).limit(50), []) : null;
+    const pUltimaImportacao = isAdmin ? seguro(sb.from('historico_alteracoes').select('*').eq('tabela', 'importacoes').order('criado_em', { ascending: false }).limit(1), []) : null;
+    const pAlmoco = (isAdmin || /toyota/i.test(equipeUsuario))
+        ? Promise.resolve(sb.from('almoco_itens').select('id', { count: 'exact', head: true }).eq('data', hojeISO).is('responsavel_id', null).eq('status', 'pendente')).catch(() => ({ count: 0, error: true }))
+        : null;
+
     const metasBanco = {};
-    const dadosMetas = await seguro(supabaseClient.from('metas_mensais').select('*').eq('mes_referencia', mes), []);
+    const dadosMetas = await pMetas;
     (dadosMetas || []).forEach(m => {
         const chave = m.equipe === 'Geral' ? 'Geral' : window.Bonus.normalizarMarca(m.equipe);
         metasBanco[chave] = parseInt(m.meta_valor, 10);
@@ -96,13 +134,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     const metaGeral = metasBanco.Geral > 0 ? metasBanco.Geral : META_GERAL_PADRAO;
     const obterMeta = marca => (metasBanco[marca] > 0 ? metasBanco[marca] : window.Bonus.metaPadrao(marca));
 
-    const inicioMes = `${mes}-01`;
-    const fimMes = `${mes}-${String(ultimoDia).padStart(2, '0')}`;
     let agendamentos = [];
     try {
-        agendamentos = await buscarTodas(() => supabaseClient.from('vw_agendamentos_completos').select('*')
-            .gte('data_revisao', inicioMes).lte('data_revisao', fimMes)
-            .order('data_revisao', { ascending: true }).order('id', { ascending: true }));
+        agendamentos = await pAgendamentos;
         await window.aplicarInativos(supabaseClient, agendamentos);
     } catch (e) {
         raiz.innerHTML = `<p class="dash-vazio">Não foi possível carregar os dados: ${escaparHtml(e.message || e)}</p>`;
@@ -161,7 +195,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         const pend = meus.filter(pendente).length;
         const presenca = (comp + falt) > 0 ? Math.round((comp / (comp + falt)) * 100) : 0;
 
-        const fechamento = await seguro(supabaseClient.from('fechamentos').select('nota_monitoria').eq('mes', mes).eq('user_id', usuarioAtual.id).maybeSingle(), null);
+        const fechamento = await pFechamentoProprio;
         const nota = fechamento && fechamento.nota_monitoria !== null && fechamento.nota_monitoria !== undefined ? parseFloat(fechamento.nota_monitoria) : null;
         const perfilAtual = { id: usuarioAtual.id, equipe: equipeUsuario };
         const atual = window.Bonus.calcularOperador(perfilAtual, agendamentos, obterMeta, nota);
@@ -192,13 +226,13 @@ document.addEventListener('DOMContentLoaded', async function () {
         const minha = contagem[usuarioAtual.id] || { comp: 0, total: 0 };
         const posicao = 1 + Object.entries(contagem).filter(([id, d]) => id !== usuarioAtual.id && (d.comp > minha.comp || (d.comp === minha.comp && d.total > minha.total))).length;
 
-        const divergencias = await seguro(supabaseClient.from('divergencias').select('id, status').eq('user_id', usuarioAtual.id), []);
+        const divergencias = await pDivergenciasProprias;
         const abertas = (divergencias || []).filter(d => d.status === 'aberta').length;
         const respondidas = (divergencias || []).filter(d => d.status !== 'aberta').length;
 
         let cartaoAlmoco = '';
         if (/toyota/i.test(equipeUsuario)) {
-            const { count, error } = await supabaseClient.from('almoco_itens').select('id', { count: 'exact', head: true }).eq('data', hojeISO).is('responsavel_id', null).eq('status', 'pendente');
+            const { count, error } = await pAlmoco;
             if (!error) {
                 cartaoAlmoco = `<a class="dash-card" href="almoco.html"><span class="dash-card-titulo">Almoço Toyota</span><span class="dash-valor ${count ? 'alerta' : 'sucesso'}">${count || 0}</span><span class="dash-sub">${count ? 'evento(s) sem responsável hoje' : 'Nenhum evento sem responsável hoje.'}</span></a>`;
             }
@@ -236,7 +270,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     async function montarAdmin() {
-        const perfis = await seguro(supabaseClient.from('perfis').select('*'), []);
+        const perfis = await pPerfis;
         const nomePor = new Map((perfis || []).map(p => [p.id, p.nome || 'Sem nome']));
         const inativosPerfil = new Set((perfis || []).filter(p => p.inativo_desde).map(p => p.id));
 
@@ -268,8 +302,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (fracaoMes >= 0.5 && pctPotencial < 80 && d.pend > 0) alertas.push({ tipo: 'perigo', texto: `${m}: mesmo se todos os pendentes comparecerem, chega a ${pctPotencial}% e não libera o bônus de equipe.` });
         });
 
-        const { count: totalDivAbertas } = await supabaseClient.from('divergencias').select('id', { count: 'exact', head: true }).eq('status', 'aberta');
-        const mesesFechados = await seguro(supabaseClient.from('meses_fechados').select('mes'), []);
+        const { count: totalDivAbertas } = await pDivAbertas;
+        const mesesFechados = await pMesesFechados;
         const fechados = new Set((mesesFechados || []).map(m => m.mes));
         const anteriorAberto = !fechados.has(mesAnterior);
 
@@ -277,7 +311,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (anteriorAberto) alertas.push({ tipo: 'alerta', texto: `O mês ${mesAnterior.split('-').reverse().join('/')} ainda não foi fechado.`, href: 'admin.html#fechamento' });
 
         const operadoresFech = (perfis || []).filter(p => p.role !== 'admin' && !p.inativo_desde);
-        const fechamentos = await seguro(supabaseClient.from('fechamentos').select('user_id, valor_pago, nota_monitoria').eq('mes', mes), []);
+        const fechamentos = await pFechamentosMes;
         const comPago = (fechamentos || []).filter(f => f.valor_pago !== null && f.valor_pago !== undefined).length;
         const comPagoIds = new Set((fechamentos || []).filter(f => f.valor_pago !== null && f.valor_pago !== undefined).map(f => f.user_id));
         const comAgendamento = new Set(agendamentos.filter(a => a.user_id).map(a => a.user_id));
@@ -303,12 +337,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         let almocoSemResponsavel = null;
         try {
-            const { count, error } = await supabaseClient.from('almoco_itens').select('id', { count: 'exact', head: true }).eq('data', hojeISO).is('responsavel_id', null).eq('status', 'pendente');
+            const { count, error } = await pAlmoco;
             if (!error) almocoSemResponsavel = count || 0;
         } catch (e) {}
 
-        const historico = await seguro(supabaseClient.from('historico_alteracoes').select('*').gte('criado_em', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()).order('criado_em', { ascending: false }).limit(50), []);
-        const ultimaImportacao = await seguro(supabaseClient.from('historico_alteracoes').select('*').eq('tabela', 'importacoes').order('criado_em', { ascending: false }).limit(1), []);
+        const historico = await pHistorico;
+        const ultimaImportacao = await pUltimaImportacao;
         const ROTULO_AREA = { agendamentos: 'Agendamento', perfis: 'Usuário', fechamentos: 'Fechamento', meses_fechados: 'Mês fechado', metas_mensais: 'Meta', divergencias: 'Divergência', importacoes: 'Importação' };
         const ROTULO_ACAO = { INSERT: 'Inclusão', UPDATE: 'Alteração', DELETE: 'Exclusão', IMPORTACAO: 'Importação' };
         const descrever = item => {

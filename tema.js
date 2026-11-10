@@ -198,6 +198,8 @@
         try {
             localStorage.removeItem(CHAVE_MENU);
             localStorage.removeItem('almoco-painel');
+            localStorage.removeItem('contadores-painel');
+            localStorage.removeItem('sino-painel');
         } catch (e) {}
     };
 
@@ -349,6 +351,10 @@
     window.entradaPagina = function (alvos) {
         if (entradaFeita) return;
         entradaFeita = true;
+        window.animarEntrada(alvos);
+    };
+
+    window.animarEntrada = function (alvos) {
         if (!window.animacoesAtivas()) return;
         const centroX = window.innerWidth / 2;
         const centroY = window.innerHeight / 2;
@@ -357,13 +363,17 @@
             if (r.width === 0 || r.height === 0) return;
             el.style.setProperty('--bx', Math.round(centroX - (r.left + r.width / 2)) + 'px');
             el.style.setProperty('--by', Math.round(centroY - (r.top + r.height / 2)) + 'px');
-            el.style.setProperty('--b-atraso', Math.min(i, 14) * 45 + 'ms');
+            el.style.setProperty('--b-atraso', Math.min(i, 10) * 30 + 'ms');
             el.classList.add('entrada-bolha');
             el.addEventListener('animationend', () => el.classList.remove('entrada-bolha'), { once: true });
         });
     };
 
     window.mostrarConteudo = function () {
+        if (document.prerendering) {
+            document.addEventListener('prerenderingchange', () => window.mostrarConteudo(), { once: true });
+            return;
+        }
         document.querySelectorAll('.conteudo-carregando').forEach(e => e.classList.remove('conteudo-carregando'));
         if (document.body && !document.body.classList.contains('pagina-inicio') && !document.body.classList.contains('corpo-login')) {
             requestAnimationFrame(() => window.entradaPagina(document.querySelectorAll('main > *:not(.oculto):not(script):not(style):not(#abas-gestao)')));

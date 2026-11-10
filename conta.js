@@ -108,15 +108,26 @@
         const contador = envoltorio.querySelector('#sino-contador');
         const lista = envoltorio.querySelector('#lista-sino');
 
-        async function atualizar() {
-            let itens = [];
-            try { itens = await coletarNotificacoes(); } catch (e) {}
+        function pintar(itens) {
             contador.textContent = String(itens.length);
             contador.classList.toggle('oculto', itens.length === 0);
             lista.innerHTML = itens.length
                 ? itens.map(i => `<li><a class="item-sino item-sino-${i.tipo}" href="${i.href}"><span class="ponto-sino"></span><span>${escaparHtml(i.texto)}</span></a></li>`).join('')
                 : '<li class="sino-vazio">Nenhuma pendência no momento.</li>';
         }
+
+        async function atualizar() {
+            let itens = null;
+            try { itens = await coletarNotificacoes(); } catch (e) {}
+            if (!itens) return;
+            pintar(itens);
+            try { localStorage.setItem('sino-painel', JSON.stringify(itens)); } catch (e) {}
+        }
+
+        try {
+            const salvo = JSON.parse(localStorage.getItem('sino-painel'));
+            if (Array.isArray(salvo)) pintar(salvo);
+        } catch (e) {}
 
         function alternar(abrir) {
             painel.classList.toggle('oculto', !abrir);

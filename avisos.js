@@ -23,8 +23,18 @@
         return el;
     }
 
+    function traduzirErro(texto) {
+        return String(texto)
+            .replace(/failed to fetch|networkerror when attempting to fetch resource|load failed|network request failed/ig, 'sem conexão com o servidor')
+            .replace(/jwt expired/ig, 'sessão expirada, entre novamente')
+            .replace(/permission denied|row-level security|violates row-level security policy/ig, 'sem permissão para esta ação')
+            .replace(/duplicate key value violates unique constraint/ig, 'registro já existente');
+    }
+
+    window.traduzirErro = traduzirErro;
+
     function avisar(mensagem, tipo) {
-        const texto = String(mensagem);
+        const texto = traduzirErro(mensagem);
         const categoria = tipo || detectarTipo(texto);
         const item = document.createElement('div');
         item.className = `aviso aviso-${categoria}`;
@@ -139,6 +149,31 @@
         marca.textContent = quantidade > 99 ? '99+' : String(quantidade);
     }
 
+    const CHAVE_CONTADORES = 'contadores-painel';
+
+    function lerContadores() {
+        try { return JSON.parse(localStorage.getItem(CHAVE_CONTADORES)) || {}; } catch (e) { return {}; }
+    }
+
+    function salvarContador(campo, valor) {
+        try {
+            const atual = lerContadores();
+            atual[campo] = valor;
+            localStorage.setItem(CHAVE_CONTADORES, JSON.stringify(atual));
+        } catch (e) {}
+    }
+
+    function aplicarContadoresCache() {
+        const c = lerContadores();
+        if (c.div !== undefined) {
+            definirContador(document.getElementById(c.admin ? 'link-menu-admin' : 'link-menu-divergencias'), c.div);
+            document.querySelectorAll('#abas-gestao a[href="divergencias.html"]').forEach(a => definirContador(a, c.admin ? c.div : 0));
+        }
+        if (c.almoco !== undefined) definirContador(document.getElementById('link-menu-almoco'), c.almoco);
+    }
+
+    document.addEventListener('DOMContentLoaded', aplicarContadoresCache);
+
     const CHAVE_ALMOCO = 'almoco-painel';
     let canalAlmocoMenu = null;
 
@@ -156,6 +191,7 @@
             link.classList.remove('oculto');
             try { localStorage.setItem(CHAVE_ALMOCO, '1'); } catch (e) {}
             definirContador(link, count || 0);
+            salvarContador('almoco', count || 0);
             return true;
         } catch (e) {
             link.classList.add('oculto');
@@ -202,6 +238,8 @@
                     quantidade = 0;
                 }
             }
+            salvarContador('admin', admin);
+            salvarContador('div', quantidade);
             definirContador(document.getElementById(admin ? 'link-menu-admin' : 'link-menu-divergencias'), quantidade);
             document.querySelectorAll('#abas-gestao a[href="divergencias.html"]').forEach(a => definirContador(a, admin ? quantidade : 0));
         } catch (e) {}

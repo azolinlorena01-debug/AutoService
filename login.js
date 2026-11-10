@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (error) throw error;
 
                 exibirMensagem('Login realizado com sucesso! Redirecionando...', 'sucesso');
+                preCarregarDestino();
                 executarEfeitoBolha().then(() => {
                     window.location.href = window.paginaInicialPainel ? window.paginaInicialPainel() : 'inicio.html';
                 });
@@ -157,11 +158,23 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         } catch (erro) {
             console.error('Erro na autenticação:', erro);
-            let msgAmigavel = erro.message;
+            let msgAmigavel = String((erro && erro.message) || '');
             if (msgAmigavel.includes('Invalid login credentials')) {
                 msgAmigavel = 'E-mail ou senha incorretos.';
             } else if (msgAmigavel.includes('User already registered')) {
                 msgAmigavel = 'Este e-mail já está cadastrado no sistema.';
+            } else if (/failed to fetch|networkerror|load failed|network request failed/i.test(msgAmigavel)) {
+                msgAmigavel = 'Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.';
+            } else if (/email not confirmed/i.test(msgAmigavel)) {
+                msgAmigavel = 'E-mail ainda não confirmado. Verifique sua caixa de entrada.';
+            } else if (/rate limit|too many requests|seconds/i.test(msgAmigavel)) {
+                msgAmigavel = 'Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente de novo.';
+            } else if (/password should be at least|weak password/i.test(msgAmigavel)) {
+                msgAmigavel = 'A senha é muito curta ou fraca. Use ao menos 6 caracteres.';
+            } else if (/signups not allowed|signup is disabled/i.test(msgAmigavel)) {
+                msgAmigavel = 'O cadastro de novas contas está desativado.';
+            } else if (/[a-z]{3,} [a-z]{3,} [a-z]{3,}/i.test(msgAmigavel) && !/[áéíóúãõç]/i.test(msgAmigavel)) {
+                msgAmigavel = 'Não foi possível concluir a operação. Tente novamente em instantes.';
             }
             exibirMensagem(msgAmigavel);
         } finally {
@@ -233,7 +246,24 @@ function executarEfeitoBolha() {
                 camada.appendChild(gota);
             }
             camada.classList.add('bolha-estourou');
-        }, 1000);
-        setTimeout(resolve, 1450);
+        }, 800);
+        setTimeout(resolve, 1100);
     });
+}
+
+function preCarregarDestino() {
+    try {
+        const destino = window.paginaInicialPainel ? window.paginaInicialPainel() : 'inicio.html';
+        if (HTMLScriptElement.supports && HTMLScriptElement.supports('speculationrules')) {
+            const regras = document.createElement('script');
+            regras.type = 'speculationrules';
+            regras.textContent = JSON.stringify({ prerender: [{ urls: [destino] }] });
+            document.head.appendChild(regras);
+        } else {
+            const link = document.createElement('link');
+            link.rel = 'prefetch';
+            link.href = destino;
+            document.head.appendChild(link);
+        }
+    } catch (e) {}
 }
