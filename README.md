@@ -4,7 +4,7 @@ Sistema web para controle de agendamentos e cálculo de bonificação de uma equ
 
 Criei este projeto para resolver um problema real do meu trabalho: o controle de agendamentos, comparecimentos e bônus era feito de forma manual, o que tomava tempo e abria espaço para erros. O sistema está em fase de testes, antes de entrar em uso na operação.
 
-🔗 **Acesse:** [azolinlorena01-debug.github.io/AutoService](https://azolinlorena01-debug.github.io/AutoService/) (acesso com login)
+🔗 **Acesse:** [lorena-mendes-azolin.github.io/AutoService](https://lorena-mendes-azolin.github.io/AutoService/) (acesso com login)
 
 <!-- Adicione aqui 2 ou 3 prints com dados fictícios, por exemplo:
 ![Tela de agendamentos](imagens/print-agendamentos.png)
