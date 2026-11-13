@@ -40,4 +40,4 @@ Este foi meu primeiro projeto. Usei ferramentas de IA como apoio para aprender e
 ## Autora
 
 **Lorena Mendes**, estudante de Análise e Desenvolvimento de Sistemas na Universidade Positivo
-[LinkedIn](https://www.linkedin.com/in/lorena-mendes-3611943a8)
+[LinkedIn](https://www.linkedin.com/in/lorena-mendes-tech)
