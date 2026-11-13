@@ -2,7 +2,7 @@
 
 Sistema web para controle de agendamentos e cálculo de bonificação de uma equipe de agendamento de revisões automotivas.
 
-Criei este projeto para resolver um problema real do meu trabalho: o controle de agendamentos, comparecimentos e bônus era feito manualmente em planilhas, o que tomava tempo e abria espaço para erros. Hoje o sistema é usado pela equipe no dia a dia.
+Criei este projeto para resolver um problema real do meu trabalho: o controle de agendamentos, comparecimentos e bônus era feito de forma manual, o que tomava tempo e abria espaço para erros. O sistema está em fase de testes, antes de entrar em uso na operação.
 
 🔗 **Acesse:** [azolinlorena01-debug.github.io/AutoService](https://azolinlorena01-debug.github.io/AutoService/) (acesso com login)
 
@@ -30,7 +30,7 @@ Criei este projeto para resolver um problema real do meu trabalho: o controle de
 
 ## O que aprendi
 
-Este foi meu primeiro projeto. Usei ferramentas de IA como apoio para aprender e resolver o que eu ainda não sabia, e com isso aprendi na prática a:
+Este é meu primeiro projeto. Usei ferramentas de IA como apoio para aprender e resolver o que eu ainda não sabia, e com isso aprendi na prática a:
 
 - transformar regras de negócio reais em funcionalidades
 - organizar permissões diferentes para cada tipo de usuário
